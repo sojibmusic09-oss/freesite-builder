@@ -1,6 +1,6 @@
 /**
- * FreeSite Builder & AI WhatsApp Bot SaaS — Master Server
- * Multi-Tenant | 3 Wildcard Domains | Neon DB | Super Admin Panel
+ * FreeSite SaaS — Multi-Tenant Branded WhatsApp AI Bot Platform
+ * Models: gemini-3.5-flash, gemini-2.5-flash, gemini-3.1-flash-lite, gemini-3.6-flash, gemini-3.8-flash
  */
 
 require('dotenv').config();
@@ -10,8 +10,9 @@ const rateLimit = require('express-rate-limit');
 const path = require('path');
 const pino = require('pino');
 
-// ১. ডাটাবেজ কানেক্টর ও অবিকৃত AI Engine লোড করা
+// ডাটাবেজ, অবিকৃত AI Engine ও ওয়েবসাইট এনালাইজার
 const { pool, initializeDatabase } = require('./database');
+const { analyzeAndExtractWebsiteKnowledge } = require('./website_analyzer');
 const {
   getActiveGenAIClient,
   rotateToNextApiKey,
@@ -45,25 +46,14 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// চ্যাট রেট-লিমিট
-const chatLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 60,
-  validate: { xForwardedForHeader: false }
-});
-
-// সক্রিয় বটের মেমোরি পুল ও চ্যাট হিস্ট্রি
 const activeSockets = new Map();
 const botChatHistories = new Map();
 
-// ================= ২. PostgreSQL-ভিত্তিক Baileys Auth Adapter =================
-// (Render রিস্টার্ট বা স্লিপ হলেও WhatsApp লগআউট হবে না)
+// PostgreSQL সেশন এডাপ্টার (সার্ভার স্লিপ বা রিস্টার্ট হলেও WhatsApp কানেক্টেড থাকবে)
 async function usePostgresAuthState(botId) {
   const getSession = async (key) => {
     const res = await pool.query('SELECT session_data FROM whatsapp_sessions WHERE bot_id = $1 AND session_key = $2', [botId, key]);
-    if (res.rows.length > 0) {
-      return JSON.parse(res.rows[0].session_data, BufferJSON.reviver);
-    }
+    if (res.rows.length > 0) return JSON.parse(res.rows[0].session_data, BufferJSON.reviver);
     return null;
   };
 
@@ -103,9 +93,7 @@ async function usePostgresAuthState(botId) {
         set: async (data) => {
           for (const category in data) {
             for (const id in data[category]) {
-              const value = data[category][id];
-              const key = `${category}-${id}`;
-              await setSession(key, value);
+              await setSession(`${category}-${id}`, data[category][id]);
             }
           }
         }
@@ -115,8 +103,7 @@ async function usePostgresAuthState(botId) {
   };
 }
 
-// ================= ৩. সাবডোমেইন রাউটিং ইঞ্জিন (৩টি ডোমেইনের জন্য) =================
-// ব্যবহারকারীর সাইট: user1.sojib.qd.je, shop.sojib.de5.net, test.sojub.cc.cd
+// ================= সাবডোমেন রাউটার: ইউজারের নিজস্ব ব্র্যান্ডেড ড্যাশবোর্ড =================
 app.use(async (req, res, next) => {
   const host = (req.headers.host || '').toLowerCase().split(':')[0];
   const targetDomains = ['sojib.qd.je', 'sojib.de5.net', 'sojub.cc.cd'];
@@ -125,36 +112,155 @@ app.use(async (req, res, next) => {
     if (host.endsWith(baseDomain) && host !== baseDomain && !host.startsWith('www.')) {
       const subdomain = host.replace(`.${baseDomain}`, '').trim();
 
-      // রিজার্ভড সাবডোমেন নিরাপত্তা
-      if (['admin', 'api', 'dashboard', 'mail', 'cpanel'].includes(subdomain)) {
-        return next();
-      }
+      if (['admin', 'api', 'dashboard', 'mail'].includes(subdomain)) return next();
 
       try {
-        const site = await pool.query(
-          'SELECT html_content FROM hosted_websites WHERE subdomain = $1 AND base_domain = $2 AND is_published = TRUE',
+        const botRes = await pool.query(
+          `SELECT b.*, h.theme_color, h.accent_color 
+           FROM whatsapp_bots b 
+           JOIN hosted_websites h ON b.id = h.bot_id 
+           WHERE h.subdomain = $1 AND h.base_domain = $2`,
           [subdomain, baseDomain]
         );
-        if (site.rows.length > 0) {
-          return res.send(site.rows[0].html_content);
+
+        if (botRes.rows.length > 0) {
+          const bot = botRes.rows[0];
+          // ইউজারের নিজস্ব ব্র্যান্ডেড ড্যাশবোর্ড রেন্ডার
+          return res.send(generateUserBrandedDashboard(bot, `${subdomain}.${baseDomain}`));
         } else {
           return res.status(404).send(`
             <div style="font-family:sans-serif; text-align:center; padding:50px; background:#09090b; color:#fff; min-height:100vh;">
-              <h2 style="color:#ef4444;">⚠️ Website Not Found</h2>
-              <p>The subdomain <b>${subdomain}.${baseDomain}</b> has not been created or published yet.</p>
-              <a href="https://${baseDomain}" style="color:#38bdf8;">Create your free website with FreeSite Builder</a>
+              <h2>⚠️ ড্যাশবোর্ড পাওয়া যায়নি!</h2>
+              <p><b>${subdomain}.${baseDomain}</b> এখনো তৈরি করা হয়নি।</p>
+              <a href="https://${baseDomain}" style="color:#38bdf8;">নতুন ড্যাশবোর্ড তৈরি করুন</a>
             </div>
           `);
         }
       } catch (err) {
-        return res.status(500).send('Database connection error on hosted domain.');
+        return res.status(500).send('Database Error on Subdomain');
       }
     }
   }
   next();
 });
 
-// ================= ৪. Dynamic Multi-Tenant AI মেসেজ হ্যান্ডলার =================
+// ইউজারের নিজস্ব ড্যাশবোর্ডের HTML জেনারেটর (কালার চেঞ্জ সহ)
+function generateUserBrandedDashboard(bot, fullUrl) {
+  const primaryColor = bot.theme_color || '#3b82f6';
+  return `<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${bot.bot_name} — AI WhatsApp Control Center</title>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <style>
+    :root { --primary: ${primaryColor}; --bg: #09090b; --card: #18181b; --border: #27272a; --text: #fafafa; }
+    * { box-sizing: border-box; margin:0; padding:0; font-family: 'Hind Siliguri', sans-serif; }
+    body { background: var(--bg); color: var(--text); padding: 15px; }
+    .container { max-width: 800px; margin: 0 auto; }
+    .header { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+    .brand-title { font-size: 22px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+    .card h3 { font-size: 17px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; color: var(--primary); }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; font-size: 13px; color: #a1a1aa; margin-bottom: 6px; }
+    input, select { width: 100%; padding: 12px; background: #000; border: 1px solid var(--border); border-radius: 8px; color: #fff; font-size: 14px; outline: none; }
+    button { width: 100%; padding: 12px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; }
+    .code-box { background: #000; border: 2px dashed var(--primary); padding: 18px; border-radius: 10px; text-align: center; margin-top: 15px; display: none; }
+    .code-text { font-size: 28px; font-weight: 800; letter-spacing: 5px; color: #4ade80; font-family: monospace; }
+    .color-picker-box { display: flex; gap: 10px; margin-top: 10px; }
+    .color-dot { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }
+    .color-dot.active { border-color: #fff; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <div class="brand-title"><i class="ti ti-robot"></i> ${bot.bot_name}</div>
+        <p style="font-size:12px; color:#a1a1aa;">🔗 ড্যাশবোর্ড লিংক: ${fullUrl}</p>
+      </div>
+      <div style="font-size:12px; color:#4ade80; background:rgba(74,222,128,0.1); padding:5px 12px; border-radius:20px; border:1px solid #16a34a;">
+        ● ${bot.status || 'DISCONNECTED'}
+      </div>
+    </div>
+
+    <!-- থিম কালার বদলানোর অপশন -->
+    <div class="card">
+      <h3><i class="ti ti-palette"></i> ড্যাশবোর্ডের থিম কালার পরিবর্তন করুন</h3>
+      <p style="font-size:13px; color:#a1a1aa;">আপনার পছন্দের রঙ বেছে নিন:</p>
+      <div class="color-picker-box">
+        <div class="color-dot" style="background:#3b82f6;" onclick="changeTheme('#3b82f6')"></div>
+        <div class="color-dot" style="background:#10b981;" onclick="changeTheme('#10b981')"></div>
+        <div class="color-dot" style="background:#8b5cf6;" onclick="changeTheme('#8b5cf6')"></div>
+        <div class="color-dot" style="background:#ef4444;" onclick="changeTheme('#ef4444')"></div>
+        <div class="color-dot" style="background:#f59e0b;" onclick="changeTheme('#f59e0b')"></div>
+        <div class="color-dot" style="background:#ec4899;" onclick="changeTheme('#ec4899')"></div>
+      </div>
+    </div>
+
+    <!-- হোয়াটসঅ্যাপ কানেক্ট ও পেয়ারিং কোড -->
+    <div class="card">
+      <h3><i class="ti ti-brand-whatsapp"></i> হোয়াটসঅ্যাপ কানেক্ট করুন (Pairing Code)</h3>
+      <div class="form-group">
+        <label>আপনার হোয়াটসঅ্যাপ মোবাইল নম্বর (যেমন: 88017...):</label>
+        <input type="text" id="phoneInput" placeholder="8801XXXXXXXXX" value="${bot.phone_number || ''}">
+      </div>
+      <button onclick="requestPairingCode(${bot.id})"><i class="ti ti-key"></i> পেয়ারিং কোড নিন</button>
+
+      <div id="codeBanner" class="code-box">
+        <div style="font-size:12px; color:#38bdf8; margin-bottom:5px;">WHATSAPP LINKING CODE:</div>
+        <div id="codeDisplay" class="code-text">----</div>
+        <p style="font-size:12px; color:#a1a1aa; margin-top:8px;">হোয়াটসঅ্যাপের Linked Devices ➔ Link with phone number-এ কোডটি দিন।</p>
+      </div>
+    </div>
+
+    <!-- এআই নলেজ বেজ (ওয়েবসাইট এনালাইসিস থেকে পাওয়া) -->
+    <div class="card">
+      <h3><i class="ti ti-brain"></i> এআই যে তথ্যগুলো শিখেছে</h3>
+      <p style="font-size:13px; color:#a1a1aa; margin-bottom:10px;"><b>ওয়েবসাইট:</b> <a href="${bot.website_url}" target="_blank" style="color:var(--primary);">${bot.website_url || 'N/A'}</a></p>
+      <p style="font-size:13px; color:#a1a1aa; margin-bottom:10px;"><b>ব্যবসার ধরন:</b> ${bot.business_type || 'ই-কমার্স শপ'}</p>
+      <p style="font-size:13px; color:#a1a1aa;"><b>ডেলিভারি পলিসি:</b> সিটির ভেতরে ৳${bot.delivery_inside}, বাইরে ৳${bot.delivery_outside}</p>
+    </div>
+  </div>
+
+  <script>
+    async function requestPairingCode(botId) {
+      const phone = document.getElementById('phoneInput').value;
+      if (!phone) return alert('ফোন নম্বর লিখুন!');
+      document.getElementById('codeBanner').style.display = 'block';
+      document.getElementById('codeDisplay').innerText = 'লোড হচ্ছে...';
+
+      const res = await fetch('/api/request-pairing-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ botId, phone })
+      });
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById('codeDisplay').innerText = data.pairingCode;
+      } else {
+        document.getElementById('codeDisplay').innerText = 'ব্যর্থ';
+        alert(data.message || 'কোড পাওয়া যায়নি');
+      }
+    }
+
+    async function changeTheme(color) {
+      document.documentElement.style.setProperty('--primary', color);
+      await fetch('/api/user/update-theme', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ botId: ${bot.id}, themeColor: color })
+      });
+    }
+  </script>
+</body>
+</html>`;
+}
+
+// ================= AI মেসেজ প্রসেসিং (অবিকৃত AI Engine সমন্বিত) =================
 async function handleDynamicCustomerMessage(botRow, customerPhone, text, sock, imageBuffer = null, imageMime = null) {
   const cleanInput = (text || '').trim();
   const botId = botRow.id;
@@ -169,11 +275,8 @@ async function handleDynamicCustomerMessage(botRow, customerPhone, text, sock, i
     if (lastUserMsg) combinedQuery = `${lastUserMsg.text} ${cleanInput}`;
   }
 
-  // বটের নিজস্ব প্রোডাক্ট ডাটাবেজ থেকে লোড
-  const productsQuery = await pool.query(
-    'SELECT id, name, price, category, in_stock, buy_link, description FROM bot_products WHERE bot_id = $1',
-    [botId]
-  );
+  // ওয়েবসাইট এনালাইসিস থেকে পাওয়া প্রোডাক্টস লোড
+  const productsQuery = await pool.query('SELECT * FROM bot_products WHERE bot_id = $1', [botId]);
   const cachedCatalog = productsQuery.rows.map(p => ({
     id: p.id,
     name: p.name,
@@ -184,17 +287,16 @@ async function handleDynamicCustomerMessage(botRow, customerPhone, text, sock, i
     description: p.description || ''
   }));
 
-  // অবিকৃত AI searchSmartProducts লজিক চালানো
   const searchResult = searchSmartProducts(combinedQuery, cachedCatalog);
 
   let catalogContext = '';
   if (searchResult.items && searchResult.items.length > 0) {
     catalogContext = searchResult.items.map(p => 
-      `• [ID:${p.id}] ${p.name} | মূল্য: ৳${p.price} | স্টক: ${p.in_stock ? 'মজুদ আছে' : 'স্টক শেষ'} | লিংক: ${p.buy_link}`
+      `• [ID:${p.id}] ${p.name} | মূল্য: ৳${p.price} | লিংক: ${p.buy_link}`
     ).join('\n');
   } else {
     catalogContext = cachedCatalog.slice(0, 8).map(p => 
-      `• [ID:${p.id}] ${p.name} | মূল্য: ৳${p.price} | স্টক: ${p.in_stock ? 'মজুদ আছে' : 'স্টক শেষ'} | লিংক: ${p.buy_link}`
+      `• [ID:${p.id}] ${p.name} | মূল্য: ৳${p.price} | লিংক: ${p.buy_link}`
     ).join('\n');
   }
 
@@ -202,31 +304,17 @@ async function handleDynamicCustomerMessage(botRow, customerPhone, text, sock, i
     ? history.map(h => `${h.role === 'user' ? 'গ্রাহক' : 'অ্যাসিস্ট্যান্ট'}: ${h.text}`).join('\n')
     : 'এখনই কথোপকথন শুরু হয়েছে।';
 
-  // ডাইনামিক টেন্যান্ট প্রম্পট
-  const businessName = botRow.bot_name || 'আমাদের শপ';
-  const shopUrl = botRow.website_url || '';
-  const addressing = botRow.addressing_style || 'ভাইয়া';
-  const delInside = botRow.delivery_inside || 70;
-  const delOutside = botRow.delivery_outside || 130;
-
-  const systemPrompt = `তুমি ${businessName} (${shopUrl}) এর শোরুমের একজন অত্যন্ত চটপটে, ভদ্র ও অভিজ্ঞ সিনিয়র সেলস অ্যাসিস্ট্যান্ট। তুমি কাস্টমারের সাথে রক্ত-মাংসের মানুষের মতো মিষ্টি ও সাবলীলভাবে কথা বলবে।
+  const systemPrompt = `তুমি ${botRow.bot_name} (${botRow.website_url || ''}) এর একজন সিনিয়র স্মার্ট সেলস অ্যাসিস্ট্যান্ট। ব্যবসার ধরন: ${botRow.business_type || 'ই-কমার্স'}।
 
 আচরণের মূল নিয়মাবলী:
-১. কাস্টমারকে আপন মানুষের মতো "${addressing}" সম্বোধন করবে। কথার টোন হবে মিষ্টি, হেল্পফুল ও আন্তরিক।
-২. সাধারণ আলাপ: কাস্টমার নরমালি কথা বলতে চাইলে বা গল্প করতে চাইলে বন্ধুর মতো সাধারণ কথা বলো।
-৩. ফানি ও মজা: কাস্টমার যদি মজা করে বা হাসির কথা বলে, তবে শালীনভাবে চটপটে ও ফানি মেজাজে হাসিখুশি মজা করো।
-৪. পণ্য দেখতে চাওয়া: কাস্টমার কোনো পণ্য দেখতে চাইলেই পণ্যের নাম, দাম এবং অবশ্যই পণ্যের লিংক উল্লেখ করবে।
-৫. ছবি দেখে চেনা: কাস্টমার কোনো পণ্যের ছবি পাঠালে মনোযোগ দিয়ে দেখে শনাক্ত করো এবং ক্যাটালগের সাথে মিলিয়ে দাম ও লিংক জানিয়ে দাও।
-৬. ফন্ট নিয়ম: কখনো ডাবল স্টার (**) ব্যবহার করবে না। বোল্ড করতে চাইলে শুধু সিঙ্গেল স্টার (*) ব্যবহার করবে।
-৭. ডেলিভারি তথ্য: ডেলিভারি চার্জ সিটির ভেতরে ৳${delInside}, বাইরে ৳${delOutside} (ক্যাশ অন ডেলিভারি, পার্সেল চেক করে টাকা দেওয়ার সুযোগ আছে)।
-৮. অর্ডার চাওয়া: কাস্টমার অর্ডার করতে চাইলে নিচের নির্ধারিত অর্ডার ফর্মটি পূরণ করতে বলবে:
-
-*১. আপনার পুরো নাম :*
-*২. মোবাইল নম্বর :* ${customerPhone}
-*৩. সম্পূর্ণ ঠিকানা :*
-*৪. জেলা ও থানা :*
-*৫. পণ্যের নাম :* [পণ্যটির নাম]
-━━━━━━━━━━━━━━━━━━━━
+১. কাস্টমারকে আপন মানুষের মতো "ভাইয়া" সম্বোধন করবে। কথার টোন হবে মিষ্টি, হেল্পফুল ও আন্তরিক।
+২. কাস্টমার কোনো পণ্য দেখতে চাইলেই পণ্যের নাম, দাম এবং অবশ্যই পণ্যের লিংক উল্লেখ করবে।
+৩. ডেলিভারি তথ্য: সিটির ভেতরে ৳${botRow.delivery_inside || 70}, বাইরে ৳${botRow.delivery_outside || 130} (ক্যাশ অন ডেলিভারি)।
+৪. অর্ডার চাইলে এই ফর্মটি পূরণ করতে বলবে:
+*১. আপনার নাম:*
+*২. মোবাইল নম্বর:* ${customerPhone}
+*৩. সম্পূর্ণ ঠিকানা:*
+*৪. পণ্যের নাম:*
 
 পূর্ববর্তী চ্যাট হিস্ট্রি:
 ${conversationHistoryText}
@@ -234,11 +322,8 @@ ${conversationHistoryText}
 আমাদের শপের প্রাসঙ্গিক পণ্য তালিকা:
 ${catalogContext}`;
 
-  const userPrompt = imageBuffer 
-    ? `গ্রাহক একটি পণ্যের ছবি পাঠিয়েছেন এবং লিখেছেন: "${cleanInput || 'এই পণ্যটি আছে কি?'}"`
-    : `গ্রাহক: "${cleanInput}"`;
+  const userPrompt = imageBuffer ? `গ্রাহক পণ্যের ছবি পাঠিয়েছেন এবং লিখেছেন: "${cleanInput}"` : `গ্রাহক: "${cleanInput}"`;
 
-  // অবিকৃত callGeminiUltraFast লজিক কল
   let reply = await callGeminiUltraFast(userPrompt, systemPrompt, imageBuffer, imageMime);
   reply = reply.replace(/\*\*/g, '*');
 
@@ -249,7 +334,7 @@ ${catalogContext}`;
   return reply;
 }
 
-// ================= ৫. ডাইনামিক Baileys Bot স্টার্টার =================
+// ================= ডাইনামিক Baileys Bot স্টার্টার =================
 async function startTenantBot(botId) {
   try {
     const res = await pool.query('SELECT * FROM whatsapp_bots WHERE id = $1', [botId]);
@@ -267,9 +352,7 @@ async function startTenantBot(botId) {
       browser: Browsers.ubuntu('Chrome'),
       syncFullHistory: false,
       markOnlineOnConnect: true,
-      connectTimeoutMs: 60000,
-      defaultQueryTimeoutMs: 60000,
-      keepAliveIntervalMs: 25000
+      connectTimeoutMs: 60000
     });
 
     activeSockets.set(botId, { sock, state: { connected: false, pairingCode: null } });
@@ -283,7 +366,7 @@ async function startTenantBot(botId) {
           try {
             await sock.rejectCall(call.id, call.from);
             await sock.sendMessage(call.from, {
-              text: `⚠️ *এটি আমাদের স্বয়ংক্রিয় এআই রোবট সিস্টেম।* \nসরাসরি কল রিসিভ করা সম্ভব নয়। দয়া করে আপনার কাঙ্ক্ষিত পণ্য বা তথ্য এখানে লিখে অথবা ভয়েস রেকর্ড করে জানান ❤️`
+              text: `⚠️ *এটি আমাদের স্বয়ংক্রিয় এআই রোবট সিস্টেম।* \nসরাসরি কল রিসিভ করা সম্ভব নয়। আপনার পছন্দের পণ্য বা তথ্য এখানে লিখে বা ভয়েস রেকর্ড দিয়ে জানান ❤️`
             });
           } catch (e) {}
         }
@@ -297,17 +380,13 @@ async function startTenantBot(botId) {
       if (connection === 'close') {
         if (b) b.state.connected = false;
         await pool.query("UPDATE whatsapp_bots SET status = 'DISCONNECTED' WHERE id = $1", [botId]);
-        const statusCode = lastDisconnect?.error?.output?.statusCode;
-        if (statusCode !== DisconnectReason.loggedOut) {
+        if (lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut) {
           setTimeout(() => startTenantBot(botId), 8000);
         }
       } else if (connection === 'open') {
-        if (b) {
-          b.state.connected = true;
-          b.state.pairingCode = null;
-        }
+        if (b) b.state.connected = true;
         await pool.query("UPDATE whatsapp_bots SET status = 'CONNECTED' WHERE id = $1", [botId]);
-        console.log(`[INFO]: ✅ WhatsApp Bot #${botId} (${botRow.bot_name}) is LIVE!`);
+        console.log(`[INFO]: ✅ Bot #${botId} (${botRow.bot_name}) is LIVE!`);
       }
     });
 
@@ -325,7 +404,6 @@ async function startTenantBot(botId) {
 
         const isAudio = Boolean(msgContent.audioMessage);
         const isImage = Boolean(msgContent.imageMessage);
-
         if (!text && !isAudio && !isImage) return;
 
         try {
@@ -335,7 +413,6 @@ async function startTenantBot(botId) {
 
         let imageBuffer = null;
         let imageMime = 'image/jpeg';
-
         if (isImage) {
           try {
             imageBuffer = await downloadMediaMessage(msg, 'buffer', {}, { logger: pino({ level: 'silent' }) });
@@ -346,66 +423,83 @@ async function startTenantBot(botId) {
         if (isAudio) {
           try {
             const buffer = await downloadMediaMessage(msg, 'buffer', {}, { logger: pino({ level: 'silent' }) });
-            const mime = msgContent.audioMessage.mimetype || 'audio/ogg';
-            text = await transcribeAudioWithGemini(buffer, mime);
+            text = await transcribeAudioWithGemini(buffer, msgContent.audioMessage.mimetype || 'audio/ogg');
           } catch (e) {}
         }
 
         if (!text && !isImage) return;
 
         let reply = await handleDynamicCustomerMessage(botRow, sender.replace(/[^0-9]/g, ''), text, sock, imageBuffer, imageMime);
-
-        if (isAudio) {
-          reply = `🎤 *আপনার ভয়েস:* "${text}"\n\n${reply}`;
-        }
+        if (isAudio) reply = `🎤 *আপনার ভয়েস:* "${text}"\n\n${reply}`;
 
         await sock.sendMessage(sender, { text: reply });
         await sock.sendPresenceUpdate('paused', sender);
-      } catch (err) {
-        console.error(`[ERROR]: Bot #${botId} message error:`, err.message);
-      }
+      } catch (err) {}
     });
 
     return sock;
   } catch (err) {
-    console.error(`[ERROR]: Failed to start bot #${botId}:`, err.message);
     return null;
   }
 }
 
-// ================= ৬. মোবাইল ড্যাশবোর্ড ও API এন্ডপয়েন্টস =================
+// ================= API ENDPOINTS =================
 
-// হেলথ চেক
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', server: 'FreeSite Master Render Node', timestamp: Date.now() });
-});
-
-// ১. বট তৈরি করা
-app.post('/api/create-bot', async (req, res) => {
+// ১. মেইন পেজ থেকে বট ও ড্যাশবোর্ড তৈরি করা (ওয়েবসাইট এনালাইসিস সহ)
+app.post('/api/launch-bot-dashboard', async (req, res) => {
   try {
-    const { bot_name, phone_number, website_url, addressing_style, delivery_inside, delivery_outside } = req.body;
-    const result = await pool.query(
-      `INSERT INTO whatsapp_bots (bot_name, phone_number, website_url, addressing_style, delivery_inside, delivery_outside, status)
-       VALUES ($1, $2, $3, $4, $5, $6, 'PAIRING') RETURNING id`,
-      [bot_name || 'My Shop Bot', phone_number, website_url, addressing_style || 'ভাইয়া', delivery_inside || 70, delivery_outside || 130]
+    const { bot_name, website_url, subdomain, base_domain } = req.body;
+    const cleanSub = String(subdomain || '').toLowerCase().replace(/[^a-z0-9-]/g, '');
+
+    if (!cleanSub || !base_domain) {
+      return res.status(400).json({ success: false, message: 'সঠিক সাবডোমেইন ও ডোমেন দিন।' });
+    }
+
+    // ব্যাকগ্রাউন্ডে ওয়েবসাইটের নলেজ এনালাইসিস
+    const siteKnowledge = await analyzeAndExtractWebsiteKnowledge(website_url);
+
+    // বট তৈরি
+    const botInsert = await pool.query(
+      `INSERT INTO whatsapp_bots (bot_name, website_url, system_prompt, status)
+       VALUES ($1, $2, $3, 'DISCONNECTED') RETURNING id`,
+      [bot_name || siteKnowledge.title, website_url, siteKnowledge.description]
     );
-    const botId = result.rows[0].id;
-    res.json({ success: true, botId, message: 'বট তৈরি হয়েছে! এবার পেয়ারিং কোড রিকোয়েস্ট করুন।' });
+    const botId = botInsert.rows[0].id;
+
+    // এক্সট্রাক্ট করা প্রোডাক্ট ডাটাবেজে সংরক্ষণ
+    for (const p of siteKnowledge.products) {
+      await pool.query(
+        `INSERT INTO bot_products (bot_id, name, price, category, description, buy_link)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [botId, p.name, p.price, p.category, p.description, p.buy_link]
+      );
+    }
+
+    // সাবডোমেন ড্যাশবোর্ড রেজিস্টার
+    await pool.query(
+      `INSERT INTO hosted_websites (subdomain, base_domain, bot_id, theme_color)
+       VALUES ($1, $2, $3, '#3b82f6')
+       ON CONFLICT (subdomain, base_domain) DO UPDATE SET bot_id = $3`,
+      [cleanSub, base_domain, botId]
+    );
+
+    res.json({
+      success: true,
+      botId,
+      dashboardUrl: `https://${cleanSub}.${base_domain}`,
+      message: `🎉 অভিনন্দন! আপনার "${bot_name}" ড্যাশবোর্ড তৈরি হয়েছে এবং ওয়েবসাইট অ্যানালাইসিস সম্পন্ন!`
+    });
   } catch (e) {
-    res.status(500).json({ success: false, error: e.message });
+    res.status(500).json({ success: false, message: e.message });
   }
 });
 
-// ২. পেয়ারিং কোড জেনারেট
+// ২. পেয়ারিং কোড রিকোয়েস্ট
 app.post('/api/request-pairing-code', async (req, res) => {
   try {
     const { botId, phone } = req.body;
     let cleanPhone = String(phone || '').replace(/[^0-9]/g, '');
     if (cleanPhone.startsWith('01') && cleanPhone.length === 11) cleanPhone = '88' + cleanPhone;
-
-    if (!cleanPhone || cleanPhone.length < 11) {
-      return res.status(400).json({ success: false, message: 'সঠিক আন্তর্জাতিক নম্বর দিন (যেমন: 88017...)' });
-    }
 
     let botObj = activeSockets.get(Number(botId));
     if (!botObj || !botObj.sock) {
@@ -417,142 +511,60 @@ app.post('/api/request-pairing-code', async (req, res) => {
     if (botObj && botObj.sock && !botObj.sock.authState.creds.registered) {
       await delay(1500);
       const code = await botObj.sock.requestPairingCode(cleanPhone);
-      botObj.state.pairingCode = code;
       return res.json({ success: true, pairingCode: code });
     }
-
-    return res.status(400).json({ success: false, message: 'বটটি ইতিমধ্যে সংযুক্ত রয়েছে।' });
+    return res.status(400).json({ success: false, message: 'বট ইতিমধ্যে সংযুক্ত আছে।' });
   } catch (e) {
-    res.status(500).json({ success: false, error: e.message });
+    res.status(500).json({ success: false, message: e.message });
   }
 });
 
-// ৩. ওয়েবসাইট সাবডোমেন পাবলিশ করা (৩টি ডোমেনের জন্য)
-app.post('/api/publish-website', async (req, res) => {
+// ৩. ড্যাশবোর্ডের থিম কালার আপডেট
+app.post('/api/user/update-theme', async (req, res) => {
   try {
-    const { subdomain, base_domain, html_content } = req.body;
-    const allowedDomains = ['sojib.qd.je', 'sojib.de5.net', 'sojub.cc.cd'];
-
-    if (!allowedDomains.includes(base_domain)) {
-      return res.status(400).json({ success: false, message: 'অনুমোদিত ডোমেন নির্বাচন করুন।' });
-    }
-
-    const cleanSub = String(subdomain || '').toLowerCase().replace(/[^a-z0-9-]/g, '');
-    if (!cleanSub || cleanSub.length < 2) {
-      return res.status(400).json({ success: false, message: 'সঠিক সাবডোমেইন নাম দিন।' });
-    }
-
-    if (['admin', 'api', 'dashboard', 'mail', 'www'].includes(cleanSub)) {
-      return res.status(400).json({ success: false, message: 'এই সাবডোমেনটি সিস্টেম সংরক্ষিত।' });
-    }
-
-    await pool.query(
-      `INSERT INTO hosted_websites (subdomain, base_domain, html_content, is_published)
-       VALUES ($1, $2, $3, TRUE)
-       ON CONFLICT (subdomain, base_domain)
-       DO UPDATE SET html_content = $3, is_published = TRUE`,
-      [cleanSub, base_domain, html_content]
-    );
-
-    res.json({
-      success: true,
-      url: `https://${cleanSub}.${base_domain}`,
-      message: `🎉 ওয়েবসাইট সফলভাবে লাইভ হয়েছে: https://${cleanSub}.${base_domain}`
-    });
+    const { botId, themeColor } = req.body;
+    await pool.query('UPDATE hosted_websites SET theme_color = $1 WHERE bot_id = $2', [themeColor, botId]);
+    res.json({ success: true });
   } catch (e) {
-    res.status(500).json({ success: false, error: e.message });
+    res.status(500).json({ success: false });
   }
 });
 
-// ================= ৭. SUPER ADMIN API এন্ডপয়েন্টস =================
+// ================= SUPER ADMIN ENDPOINTS =================
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
 
-// অ্যাডমিন ড্যাশবোর্ড লোড
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
-
-// অ্যাডমিনের সব তথ্য ওভারভিউ
 app.get('/api/admin/overview', async (req, res) => {
   try {
-    const users = await pool.query('SELECT id, email, role, plan, created_at FROM users ORDER BY id DESC');
-    const bots = await pool.query('SELECT id, bot_name, phone_number, server_id, status FROM whatsapp_bots ORDER BY id DESC');
-    const websites = await pool.query('SELECT id, subdomain, base_domain, is_published, created_at FROM hosted_websites ORDER BY id DESC');
-    const servers = await pool.query('SELECT id, server_name, server_url, current_load, max_capacity FROM worker_servers ORDER BY id DESC');
-
-    res.json({
-      success: true,
-      users: users.rows,
-      bots: bots.rows,
-      websites: websites.rows,
-      servers: servers.rows
-    });
-  } catch (e) {
-    res.status(500).json({ success: false, error: e.message });
-  }
-});
-
-// ইউজারের প্ল্যান Free ⇄ Premium করা
-app.post('/api/admin/update-user-plan', async (req, res) => {
-  try {
-    const { userId, plan } = req.body;
-    await pool.query('UPDATE users SET plan = $1 WHERE id = $2', [plan, userId]);
-    res.json({ success: true, message: `ইউজারের প্ল্যান ${plan}-এ পরিবর্তিত হয়েছে!` });
-  } catch (e) {
-    res.status(500).json({ success: false, error: e.message });
-  }
-});
-
-// ওয়েবসাইট ডিলিট করা
-app.post('/api/admin/delete-site', async (req, res) => {
-  try {
-    const { id } = req.body;
-    await pool.query('DELETE FROM hosted_websites WHERE id = $1', [id]);
-    res.json({ success: true, message: 'ওয়েবসাইটটি ডাটাবেজ থেকে ডিলিট করা হয়েছে।' });
-  } catch (e) {
-    res.status(500).json({ success: false, error: e.message });
-  }
-});
-
-// সার্ভার নোড যোগ ও বট ট্রান্সফার
-app.post('/api/admin/add-server', async (req, res) => {
-  try {
-    const { server_name, server_url, max_capacity } = req.body;
-    await pool.query(
-      'INSERT INTO worker_servers (server_name, server_url, max_capacity) VALUES ($1, $2, $3)',
-      [server_name, server_url, max_capacity || 10]
-    );
-    res.json({ success: true, message: 'নতুন রেন্ডার সার্ভার সফলভাবে যুক্ত হয়েছে।' });
-  } catch (e) {
-    res.status(500).json({ success: false, error: e.message });
-  }
+    const users = await pool.query('SELECT * FROM users');
+    const bots = await pool.query('SELECT * FROM whatsapp_bots');
+    const websites = await pool.query('SELECT * FROM hosted_websites');
+    const servers = await pool.query('SELECT * FROM worker_servers');
+    res.json({ success: true, users: users.rows, bots: bots.rows, websites: websites.rows, servers: servers.rows });
+  } catch (e) { res.status(500).json({ success: false }); }
 });
 
 app.post('/api/admin/transfer-bot', async (req, res) => {
   try {
     const { botId, targetServerId } = req.body;
     await pool.query('UPDATE whatsapp_bots SET server_id = $1 WHERE id = $2', [targetServerId, botId]);
-    res.json({ success: true, message: `বট #${botId} সফলভাবে নতুন সার্ভার #${targetServerId}-এ ট্রান্সফার করা হয়েছে!` });
-  } catch (e) {
-    res.status(500).json({ success: false, error: e.message });
-  }
+    res.json({ success: true, message: `বট #${botId} সফলভাবে সার্ভার #${targetServerId}-এ ট্রান্সফার করা হয়েছে!` });
+  } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// রুট ভিউ (User Portal)
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+// রুট ভিউ: একদম ক্লিন ও মিনিমাল ক্রিয়েশন পেজ
+app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
-// ================= ৮. সার্ভার চালু =================
+// সার্ভার চালু
 app.listen(PORT, '0.0.0.0', async () => {
-  console.log(`[INFO]: 🚀 FreeSite Master Server running on port ${PORT}`);
+  console.log(`[INFO]: 🚀 FreeSite Master Server is running on port ${PORT}`);
   try {
     await initializeDatabase();
-    // পূর্বে সংযুক্ত বটগুলো স্বয়ংক্রিয়ভাবে সক্রিয় করা
+    // ডাটাবেজে bot_id ও theme_color কলাম নিশ্চিত করা
+    await pool.query('ALTER TABLE hosted_websites ADD COLUMN IF NOT EXISTS bot_id INT REFERENCES whatsapp_bots(id) ON DELETE CASCADE;');
+    await pool.query('ALTER TABLE hosted_websites ADD COLUMN IF NOT EXISTS theme_color VARCHAR(30) DEFAULT \'#3b82f6\';');
+    await pool.query('ALTER TABLE whatsapp_bots ADD COLUMN IF NOT EXISTS business_type VARCHAR(100);');
+
     const bots = await pool.query("SELECT id FROM whatsapp_bots WHERE status = 'CONNECTED'");
-    for (const row of bots.rows) {
-      await startTenantBot(row.id);
-    }
-  } catch (e) {
-    console.error('[ERROR]: Server startup database check failed:', e.message);
-  }
+    for (const row of bots.rows) await startTenantBot(row.id);
+  } catch (e) {}
 });
