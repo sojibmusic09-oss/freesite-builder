@@ -3,167 +3,355 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Admin Center — by Sojib</title>
+    <title>Super Admin Control Center — by Sojib</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
     <style>
-        :root { --bg: #f8fafc; --card: #ffffff; --primary: #059669; --border: #e2e8f0; --text: #0f172a; --muted: #64748b; }
+        :root {
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --primary: #059669;
+            --primary-soft: #ecfdf5;
+            --border: #e2e8f0;
+            --text: #0f172a;
+            --muted: #64748b;
+        }
         * { box-sizing: border-box; margin:0; padding:0; font-family: 'Plus Jakarta Sans', 'Hind Siliguri', sans-serif; }
         body { background: var(--bg); color: var(--text); padding: 15px; }
-        .container { max-width: 950px; margin: 0 auto; }
-        .header { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 20px -2px rgba(0,0,0,0.03); }
+        .container { max-width: 1000px; margin: 0 auto; }
+        
+        .header {
+            background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px;
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+            box-shadow: 0 4px 20px -2px rgba(0,0,0,0.03);
+        }
+        .header-title { font-size: 19px; font-weight: 800; color: #047857; display: flex; align-items: center; gap: 8px; }
+
+        /* Tabs */
+        .tabs { display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 4px; }
+        .tab-btn {
+            background: #ffffff; border: 1px solid var(--border); color: #475569; padding: 10px 16px;
+            border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer; white-space: nowrap;
+            display: flex; align-items: center; gap: 6px; transition: 0.2s;
+        }
+        .tab-btn.active { background: #059669; color: #fff; border-color: #059669; }
+
+        .card {
+            background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 22px;
+            margin-bottom: 20px; box-shadow: 0 4px 20px -2px rgba(0,0,0,0.03);
+        }
         h3 { font-size: 16px; font-weight: 700; color: #065f46; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th, td { padding: 12px 10px; border-bottom: 1px solid var(--border); text-align: left; }
         th { color: var(--muted); font-weight: 600; }
-        button.btn-action { padding: 8px 14px; border-radius: 8px; border: none; cursor: pointer; font-weight: 700; font-size: 13px; }
+
+        button.btn-action {
+            padding: 8px 14px; border-radius: 8px; border: none; cursor: pointer; font-weight: 700; font-size: 13px;
+            transition: 0.2s; display: inline-flex; align-items: center; gap: 4px;
+        }
         .btn-approve { background: #10b981; color: #fff; }
-        .btn-rebalance { background: #0284c7; color: #fff; width: 100%; padding: 13px; font-size: 14px; margin-top: 10px; border-radius: 10px; }
+        .btn-approve:hover { background: #059669; }
+        .btn-danger { background: #fee2e2; color: #b91c1c; }
+        .btn-blue { background: #0284c7; color: #fff; }
+
+        input, select {
+            padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; outline: none;
+        }
+        input:focus { border-color: var(--primary); }
+
+        .footer {
+            text-align: center; padding: 20px 0; font-size: 12px; color: var(--muted);
+            border-top: 1px solid var(--border); margin-top: 25px;
+        }
+        .footer a { color: #059669; text-decoration: none; font-weight: 700; }
     </style>
 </head>
 <body>
+
 <div class="container">
     <div class="header">
         <div>
-            <h2 style="font-size:18px; font-weight:800; color:#047857;"><i class="ti ti-shield-lock"></i> Super Admin Central Panel</h2>
-            <p style="font-size:12px; color:var(--muted);">Architect: Sojib • WhatsApp: 01409084819</p>
-        </div>
-        <span style="font-size:12px; padding:6px 12px; border-radius:20px; background:#dcfce7; color:#15803d; font-weight:700;">● Master Live</span>
-    </div>
-
-    <!-- 🖥️ সার্ভার প্রতি কতটি করে বট চলবে তার ডায়নামিক লিমিট -->
-    <div class="card">
-        <h3><i class="ti ti-server-2"></i> সার্ভার ক্র্যাশ গার্ড (ডায়নামিক বট লিমিট)</h3>
-        <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">
-            সার্ভারে চাপ কমাতে প্রতি সার্ভারে সর্বোচ্চ কতটি বট চলবে তা নির্ধারণ করুন (যেমন: ৩, ৪, ১০ বা ১৫):
-        </p>
-        <div style="display:flex; gap:10px; max-width:400px;">
-            <input type="number" id="serverMaxBots" style="flex:1; padding:10px; border:1px solid var(--border); border-radius:8px;" placeholder="যেমন: 4">
-            <button class="btn-action btn-approve" onclick="saveMaxBotsLimit()"><i class="ti ti-check"></i> ক্যাপাসিটি সেট করুন</button>
-        </div>
-        <button class="btn-rebalance" onclick="triggerRebalance()"><i class="ti ti-arrows-shuffle"></i> 🔄 Auto-Rebalance (নতুন লিমিট অনুযায়ী বটগুলো ভাগ করুন)</button>
-    </div>
-
-    <!-- 💳 পেমেন্ট ভেরিফিকেশন সেকশন -->
-    <div class="card">
-        <h3><i class="ti ti-receipt-2"></i> পেন্ডিং পেমেন্ট ভেরিফিকেশন (bKash / Nagad / Rocket)</h3>
-        <div style="overflow-x:auto;">
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>বট নাম</th>
-                        <th>মেথড</th>
-                        <th>সেন্ডার নম্বর</th>
-                        <th>TrxID</th>
-                        <th>স্ট্যাটাস</th>
-                        <th>অ্যাকশন</th>
-                    </tr>
-                </thead>
-                <tbody id="paymentRows">
-                    <tr><td colspan="7" style="text-align:center;">লোড হচ্ছে...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- ⚙️ পেমেন্ট নম্বর পরিবর্তন -->
-    <div class="card">
-        <h3><i class="ti ti-settings"></i> পেমেন্ট নম্বর পরিবর্তন করুন</h3>
-        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
-            <div>
-                <label style="font-size:12px; color:var(--muted); font-weight:600;">bKash নম্বর:</label>
-                <input type="text" id="adminBkash" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px;" value="01409084819">
+            <div class="header-title">
+                <i class="ti ti-shield-lock" style="font-size:24px;"></i> Super Admin Central Panel
             </div>
-            <div>
-                <label style="font-size:12px; color:var(--muted); font-weight:600;">Nagad নম্বর:</label>
-                <input type="text" id="adminNagad" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px;" value="01409084819">
-            </div>
-            <div>
-                <label style="font-size:12px; color:var(--muted); font-weight:600;">Rocket নম্বর:</label>
-                <input type="text" id="adminRocket" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px;" value="01409084819">
+            <p style="font-size:12px; color:var(--muted); margin-top:3px;">
+                Architect: <b>Sojib</b> • WhatsApp: <a href="https://wa.me/8801409084819" target="_blank" style="color:#059669; font-weight:700;">01409084819</a>
+            </p>
+        </div>
+        <span style="font-size:12px; padding:6px 14px; border-radius:20px; background:#dcfce7; color:#15803d; font-weight:700;">
+          ● Master Node Live
+        </span>
+    </div>
+
+    <!-- ন্যাভিগেশন ট্যাব -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('tab-traffic')"><i class="ti ti-activity"></i> বটের তালিকা ও প্রেশার গার্ড</button>
+        <button class="tab-btn" onclick="switchTab('tab-payments')"><i class="ti ti-receipt-2"></i> পেমেন্ট ভেরিফিকেশন</button>
+        <button class="tab-btn" onclick="switchTab('tab-api')"><i class="ti ti-cloud-network"></i> Cloud API & Mobile Apps</button>
+        <button class="tab-btn" onclick="switchTab('tab-servers')"><i class="ti ti-server-2"></i> সার্ভার ক্যাপাসিটি ও স্মার্ট রিসেট</button>
+    </div>
+
+    <!-- TAB 1: বটের তালিকা ও প্রেশার গার্ড -->
+    <div id="tab-traffic" class="tab-content">
+        <div class="card">
+            <h3><i class="ti ti-activity"></i> বটের ট্রাফিক ও প্রেশার গার্ড</h3>
+            <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">
+                কোন সাবডোমেইন কত মেসেজ পাঠাচ্ছে তা সরাসরি ট্র্যাক করুন এবং প্রেশার বেশি হলে লিমিট সেট করুন:
+            </p>
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>বট নাম</th>
+                            <th>সাবডোমেইন</th>
+                            <th>সার্ভার ID</th>
+                            <th>আজকের মেসেজ</th>
+                            <th>প্ল্যান</th>
+                            <th>ডেইলি লিমিট</th>
+                            <th>অ্যাকশন</th>
+                        </tr>
+                    </thead>
+                    <tbody id="botRows">
+                        <tr><td colspan="8" style="text-align:center;">ডাটা লোড হচ্ছে...</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
-        <button onclick="savePaymentNumbers()" class="btn-action btn-approve" style="margin-top:12px;">
-          <i class="ti ti-device-floppy"></i> নম্বর সেভ করুন
-        </button>
     </div>
 
-    <!-- 📊 সার্ভার ট্রাফিক ও প্রেশার গার্ড -->
-    <div class="card">
-        <h3><i class="ti ti-activity"></i> বটের তালিকা ও প্রেশার ট্র্যাকিং</h3>
-        <div style="overflow-x:auto;">
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>বট নাম</th>
-                        <th>সাবডোমেইন</th>
-                        <th>সার্ভার ID</th>
-                        <th>আজকের মেসেজ</th>
-                        <th>প্ল্যান</th>
-                        <th>ডেইলি লিমিট</th>
-                        <th>অ্যাকশন</th>
-                    </tr>
-                </thead>
-                <tbody id="botRows">
-                    <tr><td colspan="8" style="text-align:center;">লোড হচ্ছে...</td></tr>
-                </tbody>
-            </table>
+    <!-- TAB 2: পেমেন্ট ভেরিফিকেশন ও নম্বর পরিবর্তন -->
+    <div id="tab-payments" class="tab-content" style="display:none;">
+        <div class="card">
+            <h3><i class="ti ti-receipt-2"></i> পেন্ডিং পেমেন্ট ভেরিফিকেশন (bKash / Nagad / Rocket)</h3>
+            <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">টাকা যাচাই করে "Approve" দিলেই ইউজারের অ্যাকাউন্ট সাথে সাথে প্রিমিয়াম হবে:</p>
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>বট নাম</th>
+                            <th>মেথড</th>
+                            <th>সেন্ডার নম্বর</th>
+                            <th>TrxID</th>
+                            <th>স্ট্যাটাস</th>
+                            <th>অ্যাকশন</th>
+                        </tr>
+                    </thead>
+                    <tbody id="paymentRows">
+                        <tr><td colspan="7" style="text-align:center;">ডাটা লোড হচ্ছে...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
+
+        <div class="card">
+            <h3><i class="ti ti-settings"></i> পেমেন্ট নম্বর পরিবর্তন করুন</h3>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:14px;">
+                <div>
+                    <label style="display:block; font-size:12px; color:var(--muted); font-weight:700; margin-bottom:4px;">bKash নম্বর:</label>
+                    <input type="text" id="adminBkash" style="width:100%;" value="01409084819">
+                </div>
+                <div>
+                    <label style="display:block; font-size:12px; color:var(--muted); font-weight:700; margin-bottom:4px;">Nagad নম্বর:</label>
+                    <input type="text" id="adminNagad" style="width:100%;" value="01409084819">
+                </div>
+                <div>
+                    <label style="display:block; font-size:12px; color:var(--muted); font-weight:700; margin-bottom:4px;">Rocket নম্বর:</label>
+                    <input type="text" id="adminRocket" style="width:100%;" value="01409084819">
+                </div>
+            </div>
+            <button onclick="savePaymentNumbers()" class="btn-action btn-approve"><i class="ti ti-device-floppy"></i> নম্বর সেভ করুন</button>
+        </div>
+    </div>
+
+    <!-- TAB 3: CLOUD PRODUCT API & MOBILE APPS -->
+    <div id="tab-api" class="tab-content" style="display:none;">
+        <div class="card" style="border-top: 4px solid #059669;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <h3><i class="ti ti-cloud-network" style="color:#059669;"></i> Universal Product Cloud API (v1)</h3>
+                <a href="/api/v1/docs" target="_blank" style="font-size:12px; background:#ecfdf5; color:#047857; padding:5px 12px; border-radius:20px; font-weight:700; text-decoration:none;">
+                  📖 Open Interactive Docs
+                </a>
+            </div>
+            <p style="font-size:13px; color:var(--muted); margin-bottom:15px;">
+                মোবাইল অ্যাপ (Android/iOS), আলাদা অ্যাডমিন অ্যাপ বা ই-কমার্স ERP কানেক্ট করতে নতুন API চাবি তৈরি করুন:
+            </p>
+
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+                <input type="text" id="newAppName" placeholder="অ্যাপ্লিকেশন নাম (যেমন: My Android Store App, Flutter Client)" style="flex:1;">
+                <button onclick="createNewAppCredentials()" class="btn-action btn-approve"><i class="ti ti-key"></i> Generate Keys</button>
+            </div>
+
+            <div id="newKeyBox" style="display:none; background:#ecfdf5; border:1px solid #10b981; padding:14px; border-radius:10px; margin-bottom:15px; font-size:13px;"></div>
+
+            <h4 style="font-size:14px; margin-bottom:8px; color:#334155;">কানেক্টেড অ্যাপ্লিকেশনসমূহ:</h4>
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>App Name</th>
+                            <th>App ID</th>
+                            <th>রিকোয়েস্ট সংখ্যা</th>
+                            <th>স্ট্যাটাস</th>
+                            <th>অ্যাকশন</th>
+                        </tr>
+                    </thead>
+                    <tbody id="appRows">
+                        <tr><td colspan="5" style="text-align:center;">ডাটা লোড হচ্ছে...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 4: সার্ভার ক্যাপাসিটি ও স্মার্ট রিসেট -->
+    <div id="tab-servers" class="tab-content" style="display:none;">
+        <div class="card">
+            <h3><i class="ti ti-server-2"></i> সার্ভার ক্র্যাশ গার্ড (ডায়নামিক বট লিমিট)</h3>
+            <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">
+                প্রতিটি সার্ভারে সর্বোচ্চ কতটি করে বট চলবে তা এখানে নির্ধারণ করুন (যেমন: ৩, ৪, ১০ বা ১৫):
+            </p>
+            <div style="display:flex; gap:10px; max-width:400px; margin-bottom:12px;">
+                <input type="number" id="serverMaxBots" style="flex:1;" placeholder="যেমন: 4">
+                <button class="btn-action btn-approve" onclick="saveMaxBotsLimit()"><i class="ti ti-check"></i> ক্যাপাসিটি সেট</button>
+            </div>
+            <button class="btn-action btn-blue" style="width:100%; padding:12px;" onclick="triggerRebalance()">
+                <i class="ti ti-arrows-shuffle"></i> 🔄 Auto-Rebalance (সার্ভারগুলোতে সমানভাবে বট ভাগ করুন)
+            </button>
+        </div>
+
+        <!-- ⚡ স্মার্ট সিস্টেম রিসেট কার্ড -->
+        <div class="card" style="border-left: 4px solid #0284c7;">
+            <h3><i class="ti ti-refresh-alert" style="color:#0284c7;"></i> স্মার্ট সিস্টেম রিসেট (Zero Data Loss)</h3>
+            <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">
+                সার্ভারে কোনো মেমরি জ্যাম বা সকেট হ্যাং হলে এই বাটনে চাপ দিন। কোনো ইউজার লগআউট হবে না এবং কোনো ডাটা নষ্ট হবে না—শুধু আটকে থাকা ক্যাশ পরিষ্কার হয়ে সিস্টেম নতুনের মতো রিফ্রেশ হবে।
+            </p>
+            <button onclick="triggerSmartReset()" class="btn-action btn-blue" style="width:100%; padding:14px; font-size:14px;">
+                <i class="ti ti-bolt"></i> ⚡ Smart Reset (মেমরি ফ্রেশ ও সকেট রিস্টার্ট)
+            </button>
+        </div>
+    </div>
+
+    <div class="footer">
+        Platform Architect: <b>Sojib</b> • WhatsApp: <a href="https://wa.me/8801409084819" target="_blank">01409084819</a> • TikTok: <a href="https://tiktok.com/@sojib..music" target="_blank">@sojib..music</a>
     </div>
 </div>
 
 <script>
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabId).style.display = 'block';
+        event.currentTarget.classList.add('active');
+    }
+
     async function loadAdminData() {
-        const res = await fetch('/api/admin/overview');
+        try {
+            const res = await fetch('/api/admin/overview');
+            const data = await res.json();
+            if (data.success) {
+                // সেটিংস লোড
+                data.settings.forEach(s => {
+                    if(s.key === 'max_bots_per_server') document.getElementById('serverMaxBots').value = s.value;
+                    if(s.key === 'bkash_no') document.getElementById('adminBkash').value = s.value;
+                    if(s.key === 'nagad_no') document.getElementById('adminNagad').value = s.value;
+                    if(s.key === 'rocket_no') document.getElementById('adminRocket').value = s.value;
+                });
+
+                // পেমেন্ট তালিকা
+                document.getElementById('paymentRows').innerHTML = data.payments.map(p => `
+                    <tr>
+                        <td>#${p.id}</td>
+                        <td><b>${p.bot_name || 'N/A'}</b></td>
+                        <td>${p.payment_method}</td>
+                        <td>${p.sender_number}</td>
+                        <td><code style="background:#e2e8f0; padding:2px 6px; border-radius:4px;">${p.trx_id}</code></td>
+                        <td><span style="color:${p.status === 'APPROVED' ? '#059669' : '#d97706'}; font-weight:700;">● ${p.status}</span></td>
+                        <td>
+                            ${p.status === 'PENDING' 
+                              ? `<button class="btn-action btn-approve" onclick="approvePayment(${p.id})">Approve</button>`
+                              : `<span style="color:#059669; font-weight:700;">অনুমোদিত</span>`
+                            }
+                        </td>
+                    </tr>
+                `).join('') || '<tr><td colspan="7" style="text-align:center;">কোনো পেমেন্ট পেন্ডিং নেই</td></tr>';
+
+                // বট তালিকা
+                document.getElementById('botRows').innerHTML = data.bots.map(b => `
+                    <tr>
+                        <td>#${b.id}</td>
+                        <td><b>${b.bot_name}</b></td>
+                        <td><a href="https://${b.subdomain}.sojib.de5.net" target="_blank" style="color:#059669; font-weight:600;">${b.subdomain}</a></td>
+                        <td>Server #${b.server_id || '1 (Main)'}</td>
+                        <td><b>${b.requests_today || 0}</b></td>
+                        <td><span style="font-weight:700; color:${b.plan === 'premium' ? '#d97706' : '#64748b'};">${(b.plan || 'free').toUpperCase()}</span></td>
+                        <td>${b.rate_limit_daily || 300} req/day</td>
+                        <td>
+                            <button class="btn-action" style="background:#e2e8f0;" onclick="changeLimit(${b.id})">Set Limit</button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        } catch(e) {}
+    }
+
+    async function loadApiApps() {
+        try {
+            const res = await fetch('/api/v1/integrations');
+            const d = await res.json();
+            if(d.success && d.connected_applications) {
+                document.getElementById('appRows').innerHTML = d.connected_applications.map(a => `
+                    <tr>
+                        <td><b>${a.app_name}</b></td>
+                        <td><code>${a.app_id}</code></td>
+                        <td>${a.request_count || 0}</td>
+                        <td><span style="color:${a.status === 'active' ? '#059669' : '#b91c1c'}; font-weight:700;">● ${a.status}</span></td>
+                        <td>
+                            ${a.status === 'active' 
+                              ? `<button onclick="revokeApp('${a.app_id}')" class="btn-action btn-danger">Revoke</button>`
+                              : `<span style="color:gray;">Revoked</span>`
+                            }
+                        </td>
+                    </tr>
+                `).join('') || '<tr><td colspan="5" style="text-align:center;">কোনো অ্যাপ কানেক্টেড নেই</td></tr>';
+            }
+        } catch(e) {}
+    }
+
+    async function createNewAppCredentials() {
+        const name = document.getElementById('newAppName').value.trim();
+        if(!name) return alert('অ্যাপ্লিকেশন নাম লিখুন!');
+        const res = await fetch('/api/admin/create-application', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ app_name: name })
+        });
         const data = await res.json();
-        if (data.success) {
-            // সেটিংস লোড
-            data.settings.forEach(s => {
-                if(s.key === 'max_bots_per_server') document.getElementById('serverMaxBots').value = s.value;
-                if(s.key === 'bkash_no') document.getElementById('adminBkash').value = s.value;
-                if(s.key === 'nagad_no') document.getElementById('adminNagad').value = s.value;
-                if(s.key === 'rocket_no') document.getElementById('adminRocket').value = s.value;
-            });
-
-            // পেমেন্ট তালিকা
-            document.getElementById('paymentRows').innerHTML = data.payments.map(p => `
-                <tr>
-                    <td>#${p.id}</td>
-                    <td><b>${p.bot_name || 'N/A'}</b></td>
-                    <td>${p.payment_method}</td>
-                    <td>${p.sender_number}</td>
-                    <td><code style="background:#e2e8f0; padding:2px 6px; border-radius:4px;">${p.trx_id}</code></td>
-                    <td><span style="color:${p.status === 'APPROVED' ? '#059669' : '#d97706'}; font-weight:700;">● ${p.status}</span></td>
-                    <td>
-                        ${p.status === 'PENDING' 
-                          ? `<button class="btn-action btn-approve" onclick="approvePayment(${p.id})">Approve</button>`
-                          : `<span>অনুমোদিত</span>`
-                        }
-                    </td>
-                </tr>
-            `).join('') || '<tr><td colspan="7" style="text-align:center;">কোনো পেমেন্ট পেন্ডিং নেই</td></tr>';
-
-            // বট তালিকা
-            document.getElementById('botRows').innerHTML = data.bots.map(b => `
-                <tr>
-                    <td>#${b.id}</td>
-                    <td><b>${b.bot_name}</b></td>
-                    <td><a href="https://${b.subdomain}.sojib.de5.net" target="_blank" style="color:#059669; font-weight:600;">${b.subdomain}</a></td>
-                    <td>Server #${b.server_id || '1 (Main)'}</td>
-                    <td><b>${b.requests_today || 0}</b></td>
-                    <td><span style="font-weight:700; color:${b.plan === 'premium' ? '#d97706' : '#64748b'};">${(b.plan || 'free').toUpperCase()}</span></td>
-                    <td>${b.rate_limit_daily || 300} req/day</td>
-                    <td>
-                        <button class="btn-action" style="background:#e2e8f0;" onclick="changeLimit(${b.id})">Set Limit</button>
-                    </td>
-                </tr>
-            `).join('');
+        if(data.success) {
+            const box = document.getElementById('newKeyBox');
+            box.style.display = 'block';
+            box.innerHTML = `
+                <b style="color:#047857;">⚠️ নতুন ক্রেডেনশিয়ালস নিরাপদে সেভ করুন (এটি আর দেখানো হবে না):</b><br>
+                <b>App ID:</b> <code>${data.credentials.app_id}</code><br>
+                <b>X-API-KEY:</b> <code>${data.credentials.api_key}</code><br>
+                <b>X-SECRET-KEY:</b> <code>${data.credentials.secret_key}</code>
+            `;
+            document.getElementById('newAppName').value = '';
+            loadApiApps();
         }
     }
-    loadAdminData();
+
+    async function revokeApp(appId) {
+        if(!confirm('আপনি কি এই অ্যাপটির অ্যাক্সেস বন্ধ করতে চান?')) return;
+        await fetch('/api/admin/revoke-application', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ app_id: appId })
+        });
+        loadApiApps();
+    }
 
     async function saveMaxBotsLimit() {
         const limit = document.getElementById('serverMaxBots').value;
@@ -178,7 +366,7 @@
     }
 
     async function approvePayment(paymentId) {
-        if(!confirm('আপনি কি নিশ্চিত এই TrxID টি সঠিক এবং প্রিমিয়াম সক্রিয় করতে চান?')) return;
+        if(!confirm('আপনি কি এই পেমেন্ট অনুমোদন করে প্রিমিয়াম সক্রিয় করতে চান?')) return;
         const res = await fetch('/api/admin/approve-payment', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -190,7 +378,7 @@
     }
 
     async function changeLimit(botId) {
-        const newLimit = prompt('নতুন ডেইলি লিমিট সংখ্যা লিখুন (যেমন: 500 বা 1000):');
+        const newLimit = prompt('নতুন ডেইলি লিমিট লিখুন (যেমন: 500 বা 1000):');
         if(!newLimit) return;
         await fetch('/api/admin/update-bot-limit', {
             method: 'POST',
@@ -220,6 +408,17 @@
         alert(data.message);
         loadAdminData();
     }
+
+    async function triggerSmartReset() {
+        if (!confirm('আপনি কি নিশ্চিত সার্ভারের মেমরি ও সকেট ফ্রেশ করতে চান? (কোনো ডাটা বা WhatsApp সেশন নষ্ট হবে না)')) return;
+        const res = await fetch('/api/admin/smart-reset', { method: 'POST' });
+        const data = await res.json();
+        alert(data.message);
+        loadAdminData();
+    }
+
+    loadAdminData();
+    loadApiApps();
 </script>
 </body>
 </html>
