@@ -1,5 +1,5 @@
 /**
- * FreeSite SaaS — Master Server (Full Bot Editor + Dynamic Server Capacity Guard)
+ * FreeSite SaaS — Master Server (Subdomain Priority Router Fixed)
  * Architect: Sojib | WhatsApp: 01409084819 | TikTok: @sojib..music
  */
 
@@ -44,7 +44,6 @@ app.set('trust proxy', 1);
 app.use(cors({ origin: '*' }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
 
 const activeSockets = new Map();
 const botChatHistories = new Map();
@@ -113,16 +112,23 @@ async function usePostgresAuthState(botId) {
   };
 }
 
-// ================= সাবডোমেন রাউটার =================
+// ================= ১ নম্বর অগ্রাধিকার: সাবডোমেন রাউটার (TOP PRIORITY) =================
 app.use(async (req, res, next) => {
+  // API বা Admin রুট হলে ছাড়বে
   if (req.path.startsWith('/api/') || req.path === '/admin') return next();
 
+  // Host বিশ্লেষণ
   const rawHost = req.headers['x-forwarded-host'] || req.headers.host || '';
   const host = rawHost.toLowerCase().split(':')[0].trim();
   const targetDomains = ['sojib.de5.net', 'sojub.cc.cd'];
 
   let detectedSub = req.query.sub || null;
   let detectedBase = 'sojib.de5.net';
+
+  // ডিরেক্ট পাথ সাপোর্ট: /dash/daimondghor
+  if (req.path.startsWith('/dash/')) {
+    detectedSub = req.path.replace('/dash/', '').split('/')[0].trim();
+  }
 
   for (const base of targetDomains) {
     if (host.endsWith(base) && host !== base && !host.startsWith('www.')) {
@@ -132,15 +138,17 @@ app.use(async (req, res, next) => {
     }
   }
 
+  // যদি সাবডোমেন ডিটেক্ট হয়
   if (detectedSub && !['admin', 'api', 'dashboard', 'mail', 'www'].includes(detectedSub)) {
     try {
+      const cleanSub = detectedSub.toLowerCase();
       const botRes = await pool.query(
         `SELECT b.*, h.theme_color 
          FROM whatsapp_bots b 
          LEFT JOIN hosted_websites h ON b.id = h.bot_id 
-         WHERE b.subdomain = $1 OR h.subdomain = $1 
+         WHERE LOWER(b.subdomain) = $1 OR LOWER(h.subdomain) = $1 
          ORDER BY b.id DESC LIMIT 1`,
-        [detectedSub]
+        [cleanSub]
       );
 
       if (botRes.rows.length > 0) {
@@ -149,7 +157,16 @@ app.use(async (req, res, next) => {
         const payConfig = {};
         pNumRes.rows.forEach(r => payConfig[r.key] = r.value);
 
-        return res.send(generateUserBrandedDashboard(bot, `${detectedSub}.${detectedBase}`, payConfig));
+        // সরাসরি ইউজার ড্যাশবোর্ড রিটার্ন করবে (কোনো ক্রিয়েটর পেজ ঢুকতে পারবে না!)
+        return res.send(generateUserBrandedDashboard(bot, `${cleanSub}.${detectedBase}`, payConfig));
+      } else {
+        return res.status(404).send(`
+          <div style="font-family:sans-serif; text-align:center; padding:50px; background:#f8fafc; color:#0f172a; min-height:100vh;">
+            <h2>⚠️ বট ড্যাশবোর্ড পাওয়া যায়নি!</h2>
+            <p>সাবডোমেইন <b>${cleanSub}</b> ডাটাবেজে এখনো তৈরি করা হয়নি।</p>
+            <a href="https://${detectedBase}" style="color:#059669; font-weight:700;">নতুন বট তৈরি করুন 👉</a>
+          </div>
+        `);
       }
     } catch (err) {
       console.error('[ROUTER ERROR]:', err);
@@ -158,7 +175,10 @@ app.use(async (req, res, next) => {
   next();
 });
 
-// ================= ইউজার ড্যাশবোর্ড জেনারেটর (বট এডিটিং ফর্ম সহ) =================
+// স্ট্যাটিক ফাইল মিডলওয়্যার (index: false দিয়ে বন্ধ করা হলো যাতে হাইজ্যাক না হয়)
+app.use(express.static(path.join(__dirname, 'public'), { index: false }));
+
+// ================= সম্পূর্ণ ইউজার ড্যাশবোর্ড জেনারেটর =================
 function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
   const primaryColor = bot.theme_color || '#10b981';
   const bkash = payConfig.bkash_no || '01409084819';
@@ -189,13 +209,14 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
     .header {
       background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px;
       display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+      box-shadow: 0 4px 20px -2px rgba(0,0,0,0.03);
     }
     .brand-title { font-size: 20px; font-weight: 800; color: #047857; display: flex; align-items: center; gap: 8px; }
     .status-badge { font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 30px; }
     .status-badge.connected { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
     .status-badge.disconnected { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
 
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 22px; margin-bottom: 20px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 22px; margin-bottom: 20px; box-shadow: 0 4px 20px -2px rgba(0,0,0,0.03); }
     .card h3 { font-size: 16px; font-weight: 700; color: #065f46; display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
 
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
@@ -485,12 +506,12 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
 </html>`;
 }
 
-// ================= AI মেসেজ এক্সিকিউশন (টোকেন কাউন্ট ও লিমিট গার্ড) =================
+// ================= AI মেসেজ এক্সিকিউশন =================
 async function executeGeminiForTenant(botRow, userPrompt, systemPrompt, imageBuffer = null, imageMime = 'image/jpeg') {
   const dailyLimit = botRow.rate_limit_daily || 300;
   if ((botRow.requests_today || 0) >= dailyLimit && botRow.plan !== 'premium') {
-    addBotLog(botRow.id, 'warn', `⚠️ আজকের ফ্রি লিমিট (${dailyLimit} মেসেজ) শেষ! প্রিমিয়াম আপগ্রেড করুন।`);
-    return 'ভাইয়া, আজকের জন্য আমাদের স্বয়ংক্রিয় এআই সেবার ফ্রি লিমিট শেষ হয়ে গিয়েছে। আরও দ্রুত ও আনলিমিটেড সেবার জন্য অনুগ্রহ করে অ্যাডমিনের সাথে যোগাযোগ করুন ❤️';
+    addBotLog(botRow.id, 'warn', `⚠️ আজকের ফ্রি লিমিট (${dailyLimit} মেসেজ) শেষ!`);
+    return 'ভাইয়া, আজকের জন্য আমাদের স্বয়ংক্রিয় এআই সেবার ফ্রি লিমিট শেষ হয়ে গিয়েছে। আরও আনলিমিটেড সেবার জন্য অ্যাডমিনের সাথে যোগাযোগ করুন ❤️';
   }
 
   let reply = '';
@@ -511,7 +532,7 @@ async function executeGeminiForTenant(botRow, userPrompt, systemPrompt, imageBuf
       reply = response.text?.trim() || response.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
       usedTokens = response.usageMetadata?.totalTokenCount || 50;
     } catch (err) {
-      addBotLog(botRow.id, 'warn', `ইউজার কী ব্যর্থ: ${err.message} (সেন্ট্রাল কী ট্রাই হচ্ছে)`);
+      addBotLog(botRow.id, 'warn', `ইউজার কী ব্যর্থ: ${err.message}`);
     }
   }
 
@@ -791,7 +812,7 @@ app.post('/api/user/update-bot-settings', async (req, res) => {
   }
 });
 
-// ৪. ইউজার পেমেন্ট সাবমিট (TrxID)
+// ৪. ইউজার পেমেন্ট সাবমিট
 app.post('/api/user/submit-payment', async (req, res) => {
   try {
     const { botId, method, sender, trxId } = req.body;
@@ -802,7 +823,7 @@ app.post('/api/user/submit-payment', async (req, res) => {
        VALUES ($1, $2, $3, $4, 300, 'PENDING')`,
       [botId, method, sender, trxId]
     );
-    addBotLog(botId, 'info', `💳 ৳৩০০ (${method}) পেমেন্ট সাবমিট হয়েছে (TrxID: ${trxId}) — পেন্ডিং`);
+    addBotLog(botId, 'info', `💳 ৳৩০০ (${method}) পেমেন্ট জমা হয়েছে (TrxID: ${trxId}) — পেন্ডিং`);
     res.json({ success: true, message: '✅ পেমেন্ট তথ্য জমা হয়েছে! অ্যাডমিন যাচাই করে প্রিমিয়াম সক্রিয় করবেন।' });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });
@@ -940,8 +961,43 @@ app.post('/api/admin/rebalance-servers', async (req, res) => {
   }
 });
 
-// রুট ভিউ
-app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+// ⚡ স্মার্ট সিস্টেম রিসেট (জিরো ডাটা লস — কোনো লগআউট ছাড়া মেমরি ও সকেট ফ্রেশ করা)
+app.post('/api/admin/smart-reset', async (req, res) => {
+  try {
+    console.log('[SYSTEM]: ⚡ Smart System Reset initiated by Admin...');
+
+    for (const [botId, bObj] of activeSockets.entries()) {
+      try {
+        if (bObj.sock) {
+          bObj.sock.ws?.close();
+          bObj.sock.ev?.removeAllListeners();
+        }
+      } catch (_) {}
+    }
+    activeSockets.clear();
+    botChatHistories.clear();
+
+    for (const [botId, logs] of botLiveLogs.entries()) {
+      if (logs.length > 10) logs.length = 10;
+    }
+
+    const bots = await pool.query("SELECT id FROM whatsapp_bots WHERE status = 'CONNECTED'");
+    for (const row of bots.rows) {
+      await delay(800);
+      startTenantBot(row.id);
+    }
+
+    res.json({
+      success: true,
+      message: `⚡ স্মার্ট রিসেট সম্পন্ন! কোনো ডাটা বা WhatsApp সেশন নষ্ট হয়নি। মেমরি ফ্রেশ হয়েছে এবং সক্রিয় ${bots.rows.length}টি বট পুনরায় কানেক্ট হয়েছে!`
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// মূল ডোমেইনে (শুধুমাত্র রুট হোস্টে) ক্রিয়েটর পেজ লোড হবে
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 // সার্ভার চালু
 app.listen(PORT, '0.0.0.0', async () => {
@@ -966,6 +1022,12 @@ app.listen(PORT, '0.0.0.0', async () => {
     `);
     await pool.query('ALTER TABLE whatsapp_bots ADD COLUMN IF NOT EXISTS rate_limit_daily INT DEFAULT 300;');
     await pool.query('ALTER TABLE whatsapp_bots ADD COLUMN IF NOT EXISTS plan VARCHAR(30) DEFAULT \'free\';');
+    await pool.query('ALTER TABLE whatsapp_bots ADD COLUMN IF NOT EXISTS subdomain VARCHAR(100);');
+    await pool.query('ALTER TABLE whatsapp_bots ADD COLUMN IF NOT EXISTS tokens_used INT DEFAULT 0;');
+    await pool.query('ALTER TABLE whatsapp_bots ADD COLUMN IF NOT EXISTS requests_today INT DEFAULT 0;');
+    await pool.query('ALTER TABLE whatsapp_bots ADD COLUMN IF NOT EXISTS gemini_api_key TEXT;');
+    await pool.query('ALTER TABLE hosted_websites ADD COLUMN IF NOT EXISTS bot_id INT REFERENCES whatsapp_bots(id) ON DELETE CASCADE;');
+    await pool.query('ALTER TABLE hosted_websites ADD COLUMN IF NOT EXISTS theme_color VARCHAR(30) DEFAULT \'#10b981\';');
 
     await pool.query(`
       INSERT INTO admin_settings (key, value) VALUES 
