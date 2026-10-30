@@ -1,6 +1,6 @@
 /**
- * FreeSite Builder & WhatsApp AI SaaS — Master Server
- * Multi-Tenant | Custom Subdomains (3 Domains) | Multi-Server Migration | Neon DB
+ * FreeSite Builder & AI WhatsApp Bot SaaS — Master Server
+ * Multi-Tenant | 3 Wildcard Domains | Neon DB | Super Admin Panel
  */
 
 require('dotenv').config();
@@ -9,9 +9,8 @@ const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 const pino = require('pino');
-const QRCode = require('qrcode');
 
-// ১. আমাদের নিজস্ব ডাটাবেজ ও অবিকৃত AI Engine লোড করা
+// ১. ডাটাবেজ কানেক্টর ও অবিকৃত AI Engine লোড করা
 const { pool, initializeDatabase } = require('./database');
 const {
   getActiveGenAIClient,
@@ -34,8 +33,7 @@ const {
   delay,
   Browsers,
   initAuthCreds,
-  BufferJSON,
-  proto
+  BufferJSON
 } = require('@whiskeysockets/baileys');
 
 const app = express();
@@ -54,12 +52,12 @@ const chatLimiter = rateLimit({
   validate: { xForwardedForHeader: false }
 });
 
-// সক্রিয় বটের মেমোরি পুল (Dynamic Multi-Tenant Bot Pool)
+// সক্রিয় বটের মেমোরি পুল ও চ্যাট হিস্ট্রি
 const activeSockets = new Map();
 const botChatHistories = new Map();
 
 // ================= ২. PostgreSQL-ভিত্তিক Baileys Auth Adapter =================
-// (এর ফলে Render স্লিপ বা রিস্টার্ট হলেও WhatsApp কখনো লগআউট হবে না)
+// (Render রিস্টার্ট বা স্লিপ হলেও WhatsApp লগআউট হবে না)
 async function usePostgresAuthState(botId) {
   const getSession = async (key) => {
     const res = await pool.query('SELECT session_data FROM whatsapp_sessions WHERE bot_id = $1 AND session_key = $2', [botId, key]);
@@ -126,6 +124,12 @@ app.use(async (req, res, next) => {
   for (const baseDomain of targetDomains) {
     if (host.endsWith(baseDomain) && host !== baseDomain && !host.startsWith('www.')) {
       const subdomain = host.replace(`.${baseDomain}`, '').trim();
+
+      // রিজার্ভড সাবডোমেন নিরাপত্তা
+      if (['admin', 'api', 'dashboard', 'mail', 'cpanel'].includes(subdomain)) {
+        return next();
+      }
+
       try {
         const site = await pool.query(
           'SELECT html_content FROM hosted_websites WHERE subdomain = $1 AND base_domain = $2 AND is_published = TRUE',
@@ -135,10 +139,10 @@ app.use(async (req, res, next) => {
           return res.send(site.rows[0].html_content);
         } else {
           return res.status(404).send(`
-            <div style="font-family:sans-serif; text-align:center; padding:50px;">
-              <h2>⚠️ Website Not Found</h2>
+            <div style="font-family:sans-serif; text-align:center; padding:50px; background:#09090b; color:#fff; min-height:100vh;">
+              <h2 style="color:#ef4444;">⚠️ Website Not Found</h2>
               <p>The subdomain <b>${subdomain}.${baseDomain}</b> has not been created or published yet.</p>
-              <a href="https://${baseDomain}">Create your website with FreeSite Builder</a>
+              <a href="https://${baseDomain}" style="color:#38bdf8;">Create your free website with FreeSite Builder</a>
             </div>
           `);
         }
@@ -165,7 +169,7 @@ async function handleDynamicCustomerMessage(botRow, customerPhone, text, sock, i
     if (lastUserMsg) combinedQuery = `${lastUserMsg.text} ${cleanInput}`;
   }
 
-  // বটের নিজস্ব প্রোডাক্ট ক্যাটালগ ডাটাবেজ থেকে লোড
+  // বটের নিজস্ব প্রোডাক্ট ডাটাবেজ থেকে লোড
   const productsQuery = await pool.query(
     'SELECT id, name, price, category, in_stock, buy_link, description FROM bot_products WHERE bot_id = $1',
     [botId]
@@ -198,7 +202,7 @@ async function handleDynamicCustomerMessage(botRow, customerPhone, text, sock, i
     ? history.map(h => `${h.role === 'user' ? 'গ্রাহক' : 'অ্যাসিস্ট্যান্ট'}: ${h.text}`).join('\n')
     : 'এখনই কথোপকথন শুরু হয়েছে।';
 
-  // ইউজার অনুযায়ী ডাইনামিক প্রম্পট
+  // ডাইনামিক টেন্যান্ট প্রম্পট
   const businessName = botRow.bot_name || 'আমাদের শপ';
   const shopUrl = botRow.website_url || '';
   const addressing = botRow.addressing_style || 'ভাইয়া';
@@ -279,7 +283,7 @@ async function startTenantBot(botId) {
           try {
             await sock.rejectCall(call.id, call.from);
             await sock.sendMessage(call.from, {
-              text: `⚠️ *এটি আমাদের স্বয়ংক্রিয় এআই রোবট সিস্টেম।* \nসরাসরি কল রিসিভ করা সম্ভব নয়। দয়া করে আপনার কাঙ্ক্ষিত পণ্য বা তথ্য এখানে লিখে অথবা ভয়েস রেকর্ড করে পাঠান ❤️`
+              text: `⚠️ *এটি আমাদের স্বয়ংক্রিয় এআই রোবট সিস্টেম।* \nসরাসরি কল রিসিভ করা সম্ভব নয়। দয়া করে আপনার কাঙ্ক্ষিত পণ্য বা তথ্য এখানে লিখে অথবা ভয়েস রেকর্ড করে জানান ❤️`
             });
           } catch (e) {}
         }
@@ -392,7 +396,7 @@ app.post('/api/create-bot', async (req, res) => {
   }
 });
 
-// ২. পেয়ারিং কোড জেনারেট (মোবাইল নম্বর দিয়ে লিঙ্ক করার কোড)
+// ২. পেয়ারিং কোড জেনারেট
 app.post('/api/request-pairing-code', async (req, res) => {
   try {
     const { botId, phone } = req.body;
@@ -423,7 +427,7 @@ app.post('/api/request-pairing-code', async (req, res) => {
   }
 });
 
-// ৩. ওয়েবসাইট সাবডোমেন পাবলিশ করা (৩টি ডোমেনের যেকোনোটিতে)
+// ৩. ওয়েবসাইট সাবডোমেন পাবলিশ করা (৩টি ডোমেনের জন্য)
 app.post('/api/publish-website', async (req, res) => {
   try {
     const { subdomain, base_domain, html_content } = req.body;
@@ -436,6 +440,10 @@ app.post('/api/publish-website', async (req, res) => {
     const cleanSub = String(subdomain || '').toLowerCase().replace(/[^a-z0-9-]/g, '');
     if (!cleanSub || cleanSub.length < 2) {
       return res.status(400).json({ success: false, message: 'সঠিক সাবডোমেইন নাম দিন।' });
+    }
+
+    if (['admin', 'api', 'dashboard', 'mail', 'www'].includes(cleanSub)) {
+      return res.status(400).json({ success: false, message: 'এই সাবডোমেনটি সিস্টেম সংরক্ষিত।' });
     }
 
     await pool.query(
@@ -456,7 +464,56 @@ app.post('/api/publish-website', async (req, res) => {
   }
 });
 
-// ৪. মাল্টি-সার্ভার স্কেলিং: নতুন রেন্ডার সার্ভার যুক্ত করা ও বট ট্রান্সফার
+// ================= ৭. SUPER ADMIN API এন্ডপয়েন্টস =================
+
+// অ্যাডমিন ড্যাশবোর্ড লোড
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+// অ্যাডমিনের সব তথ্য ওভারভিউ
+app.get('/api/admin/overview', async (req, res) => {
+  try {
+    const users = await pool.query('SELECT id, email, role, plan, created_at FROM users ORDER BY id DESC');
+    const bots = await pool.query('SELECT id, bot_name, phone_number, server_id, status FROM whatsapp_bots ORDER BY id DESC');
+    const websites = await pool.query('SELECT id, subdomain, base_domain, is_published, created_at FROM hosted_websites ORDER BY id DESC');
+    const servers = await pool.query('SELECT id, server_name, server_url, current_load, max_capacity FROM worker_servers ORDER BY id DESC');
+
+    res.json({
+      success: true,
+      users: users.rows,
+      bots: bots.rows,
+      websites: websites.rows,
+      servers: servers.rows
+    });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// ইউজারের প্ল্যান Free ⇄ Premium করা
+app.post('/api/admin/update-user-plan', async (req, res) => {
+  try {
+    const { userId, plan } = req.body;
+    await pool.query('UPDATE users SET plan = $1 WHERE id = $2', [plan, userId]);
+    res.json({ success: true, message: `ইউজারের প্ল্যান ${plan}-এ পরিবর্তিত হয়েছে!` });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// ওয়েবসাইট ডিলিট করা
+app.post('/api/admin/delete-site', async (req, res) => {
+  try {
+    const { id } = req.body;
+    await pool.query('DELETE FROM hosted_websites WHERE id = $1', [id]);
+    res.json({ success: true, message: 'ওয়েবসাইটটি ডাটাবেজ থেকে ডিলিট করা হয়েছে।' });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// সার্ভার নোড যোগ ও বট ট্রান্সফার
 app.post('/api/admin/add-server', async (req, res) => {
   try {
     const { server_name, server_url, max_capacity } = req.body;
@@ -464,7 +521,7 @@ app.post('/api/admin/add-server', async (req, res) => {
       'INSERT INTO worker_servers (server_name, server_url, max_capacity) VALUES ($1, $2, $3)',
       [server_name, server_url, max_capacity || 10]
     );
-    res.json({ success: true, message: 'নতুন রেন্ডার সার্ভার সফলভাবে তালিকায় যুক্ত হয়েছে।' });
+    res.json({ success: true, message: 'নতুন রেন্ডার সার্ভার সফলভাবে যুক্ত হয়েছে।' });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
   }
@@ -480,17 +537,17 @@ app.post('/api/admin/transfer-bot', async (req, res) => {
   }
 });
 
-// ড্যাশবোর্ড ভিউ
+// রুট ভিউ (User Portal)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// ================= ৭. সার্ভার স্টার্ট =================
+// ================= ৮. সার্ভার চালু =================
 app.listen(PORT, '0.0.0.0', async () => {
-  console.log(`[INFO]: 🚀 FreeSite Master Server is running on port ${PORT}`);
+  console.log(`[INFO]: 🚀 FreeSite Master Server running on port ${PORT}`);
   try {
     await initializeDatabase();
-    // সার্ভার চালু হলে যেসব বট আগে কানেক্টেড ছিল সেগুলো রিকানেক্ট করবে
+    // পূর্বে সংযুক্ত বটগুলো স্বয়ংক্রিয়ভাবে সক্রিয় করা
     const bots = await pool.query("SELECT id FROM whatsapp_bots WHERE status = 'CONNECTED'");
     for (const row of bots.rows) {
       await startTenantBot(row.id);
