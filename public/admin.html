@@ -17,9 +17,9 @@
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th, td { padding: 12px 10px; border-bottom: 1px solid var(--border); text-align: left; }
         th { color: var(--muted); font-weight: 600; }
-        button.btn-action { padding: 6px 12px; border-radius: 8px; border: none; cursor: pointer; font-weight: 700; font-size: 12px; }
+        button.btn-action { padding: 8px 14px; border-radius: 8px; border: none; cursor: pointer; font-weight: 700; font-size: 13px; }
         .btn-approve { background: #10b981; color: #fff; }
-        .btn-rebalance { background: #0284c7; color: #fff; width: 100%; padding: 12px; font-size: 14px; margin-top: 10px; border-radius: 10px; }
+        .btn-rebalance { background: #0284c7; color: #fff; width: 100%; padding: 13px; font-size: 14px; margin-top: 10px; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -32,10 +32,22 @@
         <span style="font-size:12px; padding:6px 12px; border-radius:20px; background:#dcfce7; color:#15803d; font-weight:700;">● Master Live</span>
     </div>
 
-    <!-- 💳 পেমেন্ট ভেরিফিকেশন সেকশন (ম্যানুয়াল অ্যাপ্রুভ) -->
+    <!-- 🖥️ সার্ভার প্রতি কতটি করে বট চলবে তার ডায়নামিক লিমিট -->
+    <div class="card">
+        <h3><i class="ti ti-server-2"></i> সার্ভার ক্র্যাশ গার্ড (ডায়নামিক বট লিমিট)</h3>
+        <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">
+            সার্ভারে চাপ কমাতে প্রতি সার্ভারে সর্বোচ্চ কতটি বট চলবে তা নির্ধারণ করুন (যেমন: ৩, ৪, ১০ বা ১৫):
+        </p>
+        <div style="display:flex; gap:10px; max-width:400px;">
+            <input type="number" id="serverMaxBots" style="flex:1; padding:10px; border:1px solid var(--border); border-radius:8px;" placeholder="যেমন: 4">
+            <button class="btn-action btn-approve" onclick="saveMaxBotsLimit()"><i class="ti ti-check"></i> ক্যাপাসিটি সেট করুন</button>
+        </div>
+        <button class="btn-rebalance" onclick="triggerRebalance()"><i class="ti ti-arrows-shuffle"></i> 🔄 Auto-Rebalance (নতুন লিমিট অনুযায়ী বটগুলো ভাগ করুন)</button>
+    </div>
+
+    <!-- 💳 পেমেন্ট ভেরিফিকেশন সেকশন -->
     <div class="card">
         <h3><i class="ti ti-receipt-2"></i> পেন্ডিং পেমেন্ট ভেরিফিকেশন (bKash / Nagad / Rocket)</h3>
-        <p style="font-size:12px; color:var(--muted); margin-bottom:12px;">টাকা যাচাই করে "Approve" দিলেই ইউজারের অ্যাকাউন্ট সাথে সাথে প্রিমিয়াম হবে:</p>
         <div style="overflow-x:auto;">
             <table>
                 <thead>
@@ -73,15 +85,14 @@
                 <input type="text" id="adminRocket" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px;" value="01409084819">
             </div>
         </div>
-        <button onclick="savePaymentNumbers()" class="btn-action btn-approve" style="margin-top:12px; padding:10px 16px;">
+        <button onclick="savePaymentNumbers()" class="btn-action btn-approve" style="margin-top:12px;">
           <i class="ti ti-device-floppy"></i> নম্বর সেভ করুন
         </button>
     </div>
 
-    <!-- 📊 সার্ভার ট্রাফিক ও প্রেশার গার্ড (বট তালিকা ও লিমিট সেট) -->
+    <!-- 📊 সার্ভার ট্রাফিক ও প্রেশার গার্ড -->
     <div class="card">
-        <h3><i class="ti ti-activity"></i> সার্ভার ট্রাফিক গার্ড ও ডেইলি লিমিট সেটিংস</h3>
-        <p style="font-size:12px; color:var(--muted); margin-bottom:12px;">কোন ডোমেইন কত মেসেজ দিচ্ছে দেখুন এবং প্রেশার লিমিট সেট করুন:</p>
+        <h3><i class="ti ti-activity"></i> বটের তালিকা ও প্রেশার ট্র্যাকিং</h3>
         <div style="overflow-x:auto;">
             <table>
                 <thead>
@@ -89,24 +100,18 @@
                         <th>ID</th>
                         <th>বট নাম</th>
                         <th>সাবডোমেইন</th>
+                        <th>সার্ভার ID</th>
                         <th>আজকের মেসেজ</th>
                         <th>প্ল্যান</th>
                         <th>ডেইলি লিমিট</th>
-                        <th>লিমিট পরিবর্তন</th>
+                        <th>অ্যাকশন</th>
                     </tr>
                 </thead>
                 <tbody id="botRows">
-                    <tr><td colspan="7" style="text-align:center;">লোড হচ্ছে...</td></tr>
+                    <tr><td colspan="8" style="text-align:center;">লোড হচ্ছে...</td></tr>
                 </tbody>
             </table>
         </div>
-    </div>
-
-    <!-- 🖥️ সার্ভার প্রতি ৩–৪ টি বটের স্লট রি-ব্যালেন্সিং -->
-    <div class="card">
-        <h3><i class="ti ti-server-2"></i> সার্ভার ক্যাপাসিটি গার্ড (প্রতি সার্ভারে ৩–৪ টি বট)</h3>
-        <p style="font-size:12px; color:var(--muted);">সার্ভার ক্র্যাশ রোধ করতে সবগুলো সার্ভারে বট সমান অনুপাতে ভাগ করে দিন:</p>
-        <button class="btn-rebalance" onclick="triggerRebalance()"><i class="ti ti-arrows-shuffle"></i> 🔄 Auto-Rebalance (সব সার্ভারে সমান ভাগে ইউজার ভাগ করুন)</button>
     </div>
 </div>
 
@@ -115,6 +120,14 @@
         const res = await fetch('/api/admin/overview');
         const data = await res.json();
         if (data.success) {
+            // সেটিংস লোড
+            data.settings.forEach(s => {
+                if(s.key === 'max_bots_per_server') document.getElementById('serverMaxBots').value = s.value;
+                if(s.key === 'bkash_no') document.getElementById('adminBkash').value = s.value;
+                if(s.key === 'nagad_no') document.getElementById('adminNagad').value = s.value;
+                if(s.key === 'rocket_no') document.getElementById('adminRocket').value = s.value;
+            });
+
             // পেমেন্ট তালিকা
             document.getElementById('paymentRows').innerHTML = data.payments.map(p => `
                 <tr>
@@ -139,6 +152,7 @@
                     <td>#${b.id}</td>
                     <td><b>${b.bot_name}</b></td>
                     <td><a href="https://${b.subdomain}.sojib.de5.net" target="_blank" style="color:#059669; font-weight:600;">${b.subdomain}</a></td>
+                    <td>Server #${b.server_id || '1 (Main)'}</td>
                     <td><b>${b.requests_today || 0}</b></td>
                     <td><span style="font-weight:700; color:${b.plan === 'premium' ? '#d97706' : '#64748b'};">${(b.plan || 'free').toUpperCase()}</span></td>
                     <td>${b.rate_limit_daily || 300} req/day</td>
@@ -150,6 +164,18 @@
         }
     }
     loadAdminData();
+
+    async function saveMaxBotsLimit() {
+        const limit = document.getElementById('serverMaxBots').value;
+        if(!limit) return alert('সংখ্যা দিন!');
+        const res = await fetch('/api/admin/set-max-bots-limit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ limit })
+        });
+        const d = await res.json();
+        alert(d.message);
+    }
 
     async function approvePayment(paymentId) {
         if(!confirm('আপনি কি নিশ্চিত এই TrxID টি সঠিক এবং প্রিমিয়াম সক্রিয় করতে চান?')) return;
@@ -188,7 +214,7 @@
     }
 
     async function triggerRebalance() {
-        if (!confirm('আপনি কি সার্ভারগুলোতে সমান অনুপাতে ৩-৪ টি করে বট ভাগ করতে চান?')) return;
+        if (!confirm('আপনি কি নির্ধারিত লিমিট অনুযায়ী বটগুলো সব সার্ভারে ভাগ করতে চান?')) return;
         const res = await fetch('/api/admin/rebalance-servers', { method: 'POST' });
         const data = await res.json();
         alert(data.message);
