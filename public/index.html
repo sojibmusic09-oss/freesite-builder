@@ -1,738 +1,159 @@
 <!DOCTYPE html>
-<html lang="bn"><head>
+<html lang="bn">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FreeSite Builder & AI Cloud Portal</title>
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
-    <!-- Tabler Icons -->
+    <title>Launch Your AI WhatsApp Bot Dashboard — FreeSite Builder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-    
     <style>
-        :root {
-            --bg-color: #09090b; /* zinc-950 */
-            --surface-color: rgba(9, 9, 11, 0.8); /* Card background */
-            --surface-light: rgba(9, 9, 11, 0.5); /* Panel background */
-            --text-main: #fafafa;
-            --text-muted: #a1a1aa;
-            --primary: #3b82f6;
-            --primary-hover: #2563eb;
-            --danger: #ef4444;
-            --danger-hover: #dc2626;
-            --border: #27272a; /* zinc-800 */
-        }
-
+        :root { --primary: #38bdf8; --bg: #09090b; --card: #18181b; --border: #27272a; --text: #fafafa; }
+        * { box-sizing: border-box; margin:0; padding:0; font-family: 'Hind Siliguri', sans-serif; }
         body {
-            margin: 0;
-            font-family: 'Inter', 'Hind Siliguri', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            background-color: var(--bg);
+            color: var(--text);
             min-height: 100vh;
-            background-image: 
-                radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.15), transparent 25%),
-                radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.15), transparent 25%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background-image: radial-gradient(circle at 50% 20%, rgba(56, 189, 248, 0.15), transparent 40%);
         }
-
-        .container {
-            background: var(--surface-color);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+        .setup-card {
+            background: var(--card);
             border: 1px solid var(--border);
             border-radius: 16px;
             padding: 30px;
+            max-width: 500px;
             width: 100%;
-            max-width: 400px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            transition: all 0.3s ease;
-            z-index: 10;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7);
         }
-
-        .dashboard-container {
-            max-width: 950px;
-            padding: 25px;
-            margin: 20px 0;
-        }
-
-        h2 {
-            margin-top: 0;
-            font-size: 22px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .form-group {
-            margin-bottom: 18px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 13px;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        input[type="text"],
-        input[type="password"],
-        input[type="number"],
-        select,
-        textarea {
-            width: 100%;
-            padding: 12px 14px;
-            background: rgba(0,0,0,0.3);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text-main);
-            font-family: inherit;
-            font-size: 14px;
-            box-sizing: border-box;
-            transition: border-color 0.2s, box-shadow 0.2s;
-            outline: none;
-        }
-
-        input:focus, select:focus, textarea:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-        }
-
-        button {
+        h2 { font-size: 22px; color: var(--primary); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        p { font-size: 14px; color: #a1a1aa; margin-bottom: 25px; }
+        .form-group { margin-bottom: 18px; }
+        label { display: block; font-size: 13px; color: #a1a1aa; margin-bottom: 6px; }
+        input, select {
             width: 100%;
             padding: 13px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s, transform 0.1s;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-        }
-
-        button:hover { background: var(--primary-hover); }
-        button:active { transform: scale(0.98); }
-
-        .top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 18px;
-        }
-
-        .tabs-nav {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 20px;
-            overflow-x: auto;
-            padding-bottom: 6px;
-        }
-
-        .nav-btn {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border);
-            color: var(--text-muted);
-            padding: 9px 15px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            white-space: nowrap;
-            width: auto;
-        }
-
-        .nav-btn.active {
-            background: var(--primary);
-            color: #fff;
-            border-color: var(--primary);
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: 1.1fr 1fr;
-            gap: 25px;
-        }
-        @media (max-width: 768px) {
-            .grid { grid-template-columns: 1fr; }
-        }
-
-        .panel {
-            background: var(--surface-light);
-            border-radius: 12px;
-            padding: 20px;
-            border: 1px solid var(--border);
-            position: relative;
-            backdrop-filter: blur(8px);
-        }
-
-        #projects-list {
-            max-height: 380px;
-            overflow-y: auto;
-            padding-right: 5px;
-        }
-
-        #projects-list::-webkit-scrollbar { width: 5px; }
-        #projects-list::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); }
-        #projects-list::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 4px; }
-
-        .project-item {
-            background: rgba(39, 39, 42, 0.3);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 14px;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.2s;
-        }
-        .project-item:hover {
-            border-color: rgba(59, 130, 246, 0.5);
-            background: rgba(39, 39, 42, 0.5);
-        }
-        .project-info h4 { margin: 0 0 4px 0; font-size: 15px; color: var(--text-main); }
-        .project-info p { margin: 0; font-size: 12px; color: var(--text-muted); }
-
-        .project-actions { display: flex; gap: 6px; }
-        .icon-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 6px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-decoration: none;
-            color: var(--text-main);
-            background: rgba(255,255,255,0.08);
-            border: none;
-            cursor: pointer;
-            padding: 0;
-            transition: all 0.2s;
-        }
-        .icon-btn:hover { background: var(--primary); }
-        .icon-btn.danger:hover { background: var(--danger); }
-
-        /* Pairing Code Banner */
-        .code-banner {
             background: #000;
-            border: 1px dashed var(--primary);
-            padding: 16px;
-            border-radius: 8px;
-            text-align: center;
-            margin-top: 15px;
-            display: none;
-        }
-        .code-banner h4 { font-size: 12px; color: var(--primary); margin: 0 0 6px 0; text-transform: uppercase; }
-        .code-banner .code-val { font-size: 26px; font-weight: 800; letter-spacing: 5px; color: #4ade80; font-family: monospace; }
-
-        #toast-container {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            z-index: 10000;
-        }
-        .toast {
-            background: rgba(24, 24, 27, 0.95);
-            border: 1px solid #3f3f46;
-            color: var(--text-main);
-            padding: 12px 16px;
-            border-radius: 8px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            min-width: 250px;
-            transform: translateX(120%);
-            transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1);
-        }
-        .toast.show { transform: translateX(0); }
-        .toast.error { border-left: 4px solid var(--danger); }
-        .toast.success { border-left: 4px solid #22c55e; }
-
-        #particles {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        .animated-field {
-            position: relative;
-            border-radius: 0.5rem;
             border: 1px solid var(--border);
-            background: var(--bg-color);
-            transition: all 0.3s ease-in-out;
-            overflow: hidden;
-            margin-bottom: 1rem;
-        }
-        .animated-field i.icon {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-muted);
-            font-size: 1.1rem;
-            pointer-events: none;
-            z-index: 2;
-        }
-        .animated-field input, .animated-field select {
-            width: 100%;
-            background: transparent;
-            border: none;
-            padding: 0.9rem 1rem 0.9rem 2.6rem;
-            color: var(--text-main);
-            font-size: 0.95rem;
-            box-shadow: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
             outline: none;
-            position: relative;
-            z-index: 2;
         }
-        .animated-field .hover-glow {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s;
-            z-index: 1;
-        }
-        .animated-field:hover .hover-glow { opacity: 1; }
-
-        /* Upload Zone */
-        .upload-zone {
-            position: relative;
-            border: 2px dashed var(--border);
-            border-radius: 10px;
-            background: rgba(0, 0, 0, 0.2);
-            padding: 20px;
-            text-align: center;
+        input:focus, select:focus { border-color: var(--primary); }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 700;
             cursor: pointer;
+            margin-top: 10px;
             display: flex;
-            flex-direction: column;
+            justify-content: center;
             align-items: center;
             gap: 8px;
-            margin-bottom: 15px;
         }
-        .upload-zone:hover { border-color: var(--text-main); background: rgba(255,255,255,0.02); }
-        .upload-zone input[type="file"] {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            opacity: 0; cursor: pointer;
+        button:hover { background: #1d4ed8; }
+        .success-box {
+            background: #064e3b;
+            border: 1px solid #059669;
+            color: #a7f3d0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+            text-align: center;
         }
     </style>
 </head>
 <body>
-    <div id="toast-container"></div>
-    <canvas id="particles"></canvas>
 
-    <!-- Main Container -->
-    <div class="container dashboard-container" id="main-view">
-        <div class="top-bar">
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <div style="width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #8b5cf6); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px;">
-                    FS
-                </div>
-                <div>
-                    <h2 style="margin: 0; font-size: 17px; font-weight: 700; color: var(--text-main);">FreeSite Builder</h2>
-                    <span style="font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 4px;">
-                        <i class="ti ti-server-2"></i> Multi-Domain & AI WhatsApp SaaS
-                    </span>
-                </div>
-            </div>
-            <div style="font-size: 12px; color: #4ade80; background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.2); padding: 5px 10px; border-radius: 20px;">
-                ● System Ready
-            </div>
+<div class="setup-card">
+    <h2><i class="ti ti-robot"></i> AI WhatsApp Bot ক্রিয়েটর</h2>
+    <p>আপনার ব্যবসার নাম এবং ওয়েবসাইটের লিংক দিন। এআই আপনার পুরো সাইট অ্যানালাইসিস করে স্বয়ংক্রিয়ভাবে আপনার নিজস্ব ড্যাশবোর্ড তৈরি করে দেবে।</p>
+
+    <form onsubmit="handleLaunch(event)">
+        <div class="form-group">
+            <label>আপনার ব্যবসার নাম / শপের নাম:</label>
+            <input type="text" id="bizName" required placeholder="যেমন: Sojib Gadget Store">
         </div>
 
-        <!-- Navigation Tabs -->
-        <div class="tabs-nav">
-            <button class="nav-btn active" onclick="switchTab('tab-websites')"><i class="ti ti-world"></i> Website Hosting</button>
-            <button class="nav-btn" onclick="switchTab('tab-bot')"><i class="ti ti-brand-whatsapp"></i> AI WhatsApp Bot</button>
-            <button class="nav-btn" onclick="switchTab('tab-servers')"><i class="ti ti-cpu"></i> Server Manager</button>
+        <div class="form-group">
+            <label>আপনার ওয়েবসাইটের লিংক (যা এআই অ্যানালাইসিস করবে):</label>
+            <input type="url" id="siteUrl" required placeholder="https://mywebsite.com">
         </div>
 
-        <!-- TAB 1: WEBSITE HOSTING -->
-        <div id="tab-websites" class="tab-pane">
-            <div class="grid">
-                <div class="panel">
-                    <h3 style="margin-top:0; font-size: 16px; display:flex; align-items:center; gap:8px; margin-bottom: 18px;">
-                        <i class="ti ti-cloud-upload"></i> নতুন ওয়েবসাইট পাবলিশ করুন
-                    </h3>
-                    <form id="site-deploy-form" onsubmit="handleWebsiteDeploy(event)">
-                        <label>আপনার সাবডোমেইন নাম:</label>
-                        <div class="animated-field" onmousemove="handleGlow(event, this)">
-                            <i class="ti ti-link icon"></i>
-                            <input type="text" id="subdomain-name" required placeholder="যেমন: myshop, portfolio, demo">
-                            <div class="hover-glow"></div>
-                        </div>
-
-                        <label>মূল ডোমেইন নির্বাচন করুন (আপনার ৩টি ডোমেন):</label>
-                        <div class="animated-field" onmousemove="handleGlow(event, this)">
-                            <i class="ti ti-world-www icon"></i>
-                            <select id="base-domain-select">
-                                <option value="sojib.de5.net">sojib.de5.net</option>
-                                <option value="sojib.qd.je">sojib.qd.je</option>
-                                <option value="sojub.cc.cd">sojub.cc.cd</option>
-                            </select>
-                            <div class="hover-glow"></div>
-                        </div>
-
-                        <label>HTML ফাইল আপলোড করুন অথবা কোড পেস্ট করুন:</label>
-                        <div class="upload-zone">
-                            <i class="ti ti-file-code" style="font-size:26px; color:var(--primary);"></i>
-                            <span id="file-label" style="font-size:13px;">ফাইল বেছে নিতে ট্যাপ করুন (.html)</span>
-                            <input type="file" id="html-file-input" accept=".html,.htm" onchange="handleFileSelect(this)">
-                        </div>
-
-                        <textarea id="html-text-content" rows="4" placeholder="অথবা সরাসরি আপনার HTML কোড এখানে পেস্ট করুন..."></textarea>
-                        
-                        <button type="submit" style="margin-top: 15px;">
-                            <i class="ti ti-rocket"></i> ১-ক্লিকে সাইট লাইভ করুন
-                        </button>
-                    </form>
-                </div>
-
-                <div class="panel">
-                    <h3 style="margin-top:0; font-size: 16px; display:flex; align-items:center; gap:8px;">
-                        <i class="ti ti-folder"></i> লাইভ ওয়েবসাইট তালিকা
-                    </h3>
-                    <div id="projects-list">
-                        <div class="project-item">
-                            <div class="project-info">
-                                <h4>Demo Shop</h4>
-                                <p><a href="https://demo.sojib.de5.net" target="_blank" style="color:var(--primary); text-decoration:none;">demo.sojib.de5.net</a></p>
-                            </div>
-                            <div class="project-actions">
-                                <a href="https://demo.sojib.de5.net" target="_blank" class="icon-btn" title="Visit"><i class="ti ti-external-link"></i></a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div class="form-group">
+            <label>আপনার পছন্দের সাবডোমেইন নাম:</label>
+            <input type="text" id="subdomain" required placeholder="যেমন: sojib, gadget, shop">
         </div>
 
-        <!-- TAB 2: AI WHATSAPP BOT -->
-        <div id="tab-bot" class="tab-pane" style="display:none;">
-            <div class="grid">
-                <div class="panel">
-                    <h3 style="margin-top:0; font-size: 16px; display:flex; align-items:center; gap:8px; margin-bottom: 18px;">
-                        <i class="ti ti-robot"></i> AI WhatsApp Bot কনফিগার
-                    </h3>
-                    <form onsubmit="handleCreateBot(event)">
-                        <label>ব্যবসার নাম:</label>
-                        <div class="animated-field" onmousemove="handleGlow(event, this)">
-                            <i class="ti ti-building-store icon"></i>
-                            <input type="text" id="bot-biz-name" required placeholder="যেমন: Smart Gadget Shop">
-                            <div class="hover-glow"></div>
-                        </div>
-
-                        <label>ওয়েবসাইট URL:</label>
-                        <div class="animated-field" onmousemove="handleGlow(event, this)">
-                            <i class="ti ti-link icon"></i>
-                            <input type="text" id="bot-site-url" placeholder="https://myshop.sojib.de5.net">
-                            <div class="hover-glow"></div>
-                        </div>
-
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                            <div>
-                                <label>ডেলিভারি (সিটির ভেতরে):</label>
-                                <input type="number" id="bot-del-in" value="70">
-                            </div>
-                            <div>
-                                <label>ডেলিভারি (সিটির বাইরে):</label>
-                                <input type="number" id="bot-del-out" value="130">
-                            </div>
-                        </div>
-
-                        <button type="submit" style="margin-top: 15px;">
-                            <i class="ti ti-device-floppy"></i> বট তৈরি ও সংরক্ষণ করুন
-                        </button>
-                    </form>
-                </div>
-
-                <div class="panel">
-                    <h3 style="margin-top:0; font-size: 16px; display:flex; align-items:center; gap:8px;">
-                        <i class="ti ti-qrcode"></i> WhatsApp Pairing Code
-                    </h3>
-                    <p style="font-size:13px; color:var(--text-muted); margin-bottom:15px;">
-                        আপনার মোবাইল নম্বর দিয়ে সরাসরি WhatsApp কানেক্ট করুন (কোনো কিউআর কোড স্ক্যানের ঝামেলা নেই)।
-                    </p>
-                    
-                    <label>Bot ID:</label>
-                    <input type="number" id="pairing-bot-id" placeholder="উপরে তৈরি হওয়া Bot ID (যেমন: 1)" style="margin-bottom:12px;">
-
-                    <label>WhatsApp মোবাইল নম্বর (880... সহ):</label>
-                    <input type="text" id="pairing-phone" placeholder="8801XXXXXXXXX" style="margin-bottom:15px;">
-
-                    <button onclick="handleRequestPairingCode()" style="background:#16a34a;">
-                        <i class="ti ti-key"></i> পেয়ারিং কোড তৈরি করুন
-                    </button>
-
-                    <div id="pairing-banner" class="code-banner">
-                        <h4>WhatsApp Link Code</h4>
-                        <div id="pairing-code-text" class="code-val">----</div>
-                        <p style="font-size:12px; color:var(--text-muted); margin-top:8px;">
-                            WhatsApp ➔ Linked Devices ➔ Link with phone number-এ এই কোডটি লিখুন।
-                        </p>
-                    </div>
-                </div>
-            </div>
+        <div class="form-group">
+            <label>মূল ডোমেইন নির্বাচন করুন:</label>
+            <select id="baseDomain">
+                <option value="sojib.de5.net">sojib.de5.net</option>
+                <option value="sojib.qd.je">sojib.qd.je</option>
+                <option value="sojub.cc.cd">sojub.cc.cd</option>
+            </select>
         </div>
 
-        <!-- TAB 3: SERVER MANAGER -->
-        <div id="tab-servers" class="tab-pane" style="display:none;">
-            <div class="grid">
-                <div class="panel">
-                    <h3 style="margin-top:0; font-size: 16px; display:flex; align-items:center; gap:8px; margin-bottom: 18px;">
-                        <i class="ti ti-plus"></i> নতুন রেন্ডার ওয়ার্কার সার্ভার যোগ করুন
-                    </h3>
-                    <label>সার্ভারের নাম:</label>
-                    <input type="text" id="worker-name" placeholder="Render Worker 2" style="margin-bottom:12px;">
+        <button type="submit" id="btnSubmit"><i class="ti ti-rocket"></i> আমার AI ড্যাশবোর্ড তৈরি করুন</button>
+    </form>
 
-                    <label>রেন্ডার সার্ভার URL:</label>
-                    <input type="text" id="worker-url" placeholder="https://worker-node-2.onrender.com" style="margin-bottom:15px;">
+    <div id="resultBox" class="success-box"></div>
+</div>
 
-                    <button onclick="handleAddServer()"><i class="ti ti-server"></i> সার্ভার যোগ করুন</button>
-                </div>
+<script>
+    async function handleLaunch(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btnSubmit');
+        btn.innerText = 'এআই আপনার ওয়েবসাইট বিশ্লেষণ করছে... অপেক্ষা করুন';
+        btn.disabled = true;
 
-                <div class="panel">
-                    <h3 style="margin-top:0; font-size: 16px; display:flex; align-items:center; gap:8px; margin-bottom: 18px;">
-                        <i class="ti ti-arrows-left-right"></i> অন্য সার্ভারে বট ট্রান্সফার করুন
-                    </h3>
-                    <p style="font-size:13px; color:var(--text-muted); margin-bottom:15px;">
-                        মূল সার্ভারে চাপ বাড়লে অ্যাডমিন প্যানেল থেকে যেকোনো বটকে নতুন ফ্রি রেন্ডার সার্ভারে সরিয়ে দিন।
-                    </p>
+        const data = {
+            bot_name: document.getElementById('bizName').value,
+            website_url: document.getElementById('siteUrl').value,
+            subdomain: document.getElementById('subdomain').value,
+            base_domain: document.getElementById('baseDomain').value
+        };
 
-                    <label>Bot ID:</label>
-                    <input type="number" id="transfer-bot-id" placeholder="1" style="margin-bottom:12px;">
+        try {
+            const res = await fetch('/api/launch-bot-dashboard', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            const box = document.getElementById('resultBox');
+            box.style.display = 'block';
 
-                    <label>টার্গেট সার্ভার ID:</label>
-                    <input type="number" id="transfer-server-id" placeholder="2" style="margin-bottom:15px;">
-
-                    <button onclick="handleTransferBot()" style="background:#ea580c;">
-                        <i class="ti ti-arrow-forward-up"></i> বট ট্রান্সফার করুন
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-pane').forEach(el => el.style.display = 'none');
-            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabId).style.display = 'block';
-            event.currentTarget.classList.add('active');
-        }
-
-        function showToast(msg, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            const icon = type === 'error' ? 'ti-alert-circle' : 'ti-check';
-            toast.innerHTML = `<i class="ti ${icon}"></i> <span>${msg}</span>`;
-            container.appendChild(toast);
-            setTimeout(() => toast.classList.add('show'), 10);
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 300);
-            }, 3500);
-        }
-
-        let selectedFileContent = '';
-        function handleFileSelect(input) {
-            if (input.files && input.files[0]) {
-                const file = input.files[0];
-                document.getElementById('file-label').innerText = file.name;
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    selectedFileContent = e.target.result;
-                };
-                reader.readAsText(file);
+            if (result.success) {
+                box.innerHTML = `
+                    <h4>🎉 ড্যাশবোর্ড সফলভাবে তৈরি হয়েছে!</h4>
+                    <p style="margin:8px 0;">আপনার ওয়েবসাইট অ্যানালাইসিস সম্পন্ন হয়েছে।</p>
+                    <a href="${result.dashboardUrl}" target="_blank" style="color:#fff; font-weight:700; text-decoration:underline;">
+                        আপনার নিজস্ব ড্যাশবোর্ডে প্রবেশ করুন 👉 ${result.dashboardUrl}
+                    </a>
+                `;
+            } else {
+                box.style.background = '#7f1d1d';
+                box.style.color = '#fecaca';
+                box.innerText = result.message || 'ত্রুটি ঘটেছে!';
             }
+        } catch (err) {
+            alert('কানেকশন সমস্যা হয়েছে!');
+        } finally {
+            btn.innerHTML = '<i class="ti ti-rocket"></i> আমার AI ড্যাশবোর্ড তৈরি করুন';
+            btn.disabled = false;
         }
+    }
+</script>
 
-        async function handleWebsiteDeploy(e) {
-            e.preventDefault();
-            const subdomain = document.getElementById('subdomain-name').value.trim();
-            const base_domain = document.getElementById('base-domain-select').value;
-            const html_content = selectedFileContent || document.getElementById('html-text-content').value || '<h1>স্বাগতম! আপনার ওয়েবসাইটটি সফলভাবে লাইভ হয়েছে।</h1>';
-
-            try {
-                const res = await fetch('/api/publish-website', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ subdomain, base_domain, html_content })
-                });
-                const data = await res.json();
-                if(data.success) {
-                    showToast(data.message);
-                    const list = document.getElementById('projects-list');
-                    const newItem = document.createElement('div');
-                    newItem.className = 'project-item';
-                    newItem.innerHTML = `
-                        <div class="project-info">
-                            <h4>${subdomain}</h4>
-                            <p><a href="${data.url}" target="_blank" style="color:var(--primary); text-decoration:none;">${subdomain}.${base_domain}</a></p>
-                        </div>
-                        <div class="project-actions">
-                            <a href="${data.url}" target="_blank" class="icon-btn" title="Visit"><i class="ti ti-external-link"></i></a>
-                        </div>
-                    `;
-                    list.prepend(newItem);
-                } else {
-                    showToast(data.message, 'error');
-                }
-            } catch(err) {
-                showToast('সার্ভার কানেকশন এরর!', 'error');
-            }
-        }
-
-        async function handleCreateBot(e) {
-            e.preventDefault();
-            const bot_name = document.getElementById('bot-biz-name').value;
-            const website_url = document.getElementById('bot-site-url').value;
-            const delivery_inside = document.getElementById('bot-del-in').value;
-            const delivery_outside = document.getElementById('bot-del-out').value;
-
-            try {
-                const res = await fetch('/api/create-bot', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ bot_name, website_url, delivery_inside, delivery_outside })
-                });
-                const data = await res.json();
-                if(data.success) {
-                    showToast(`বট তৈরি হয়েছে! Bot ID: ${data.botId}`);
-                    document.getElementById('pairing-bot-id').value = data.botId;
-                } else {
-                    showToast(data.error, 'error');
-                }
-            } catch(err) {
-                showToast('বট সংরক্ষণে ব্যর্থ!', 'error');
-            }
-        }
-
-        async function handleRequestPairingCode() {
-            const botId = document.getElementById('pairing-bot-id').value;
-            const phone = document.getElementById('pairing-phone').value;
-            if(!botId || !phone) return showToast('Bot ID এবং ফোন নম্বর দিন!', 'error');
-
-            document.getElementById('pairing-banner').style.display = 'block';
-            document.getElementById('pairing-code-text').innerText = 'লোড হচ্ছে...';
-
-            try {
-                const res = await fetch('/api/request-pairing-code', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ botId, phone })
-                });
-                const data = await res.json();
-                if(data.success && data.pairingCode) {
-                    document.getElementById('pairing-code-text').innerText = data.pairingCode;
-                    showToast('পেয়ারিং কোড তৈরি হয়েছে!');
-                } else {
-                    document.getElementById('pairing-code-text').innerText = 'ERROR';
-                    showToast(data.message || 'কোড পাওয়া যায়নি', 'error');
-                }
-            } catch(err) {
-                showToast('কানেকশন এরর!', 'error');
-            }
-        }
-
-        async function handleAddServer() {
-            const server_name = document.getElementById('worker-name').value;
-            const server_url = document.getElementById('worker-url').value;
-            if(!server_name || !server_url) return showToast('সব তথ্য দিন!', 'error');
-
-            try {
-                const res = await fetch('/api/admin/add-server', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ server_name, server_url })
-                });
-                const data = await res.json();
-                showToast(data.message);
-            } catch(e) { showToast('ব্যর্থ!', 'error'); }
-        }
-
-        async function handleTransferBot() {
-            const botId = document.getElementById('transfer-bot-id').value;
-            const targetServerId = document.getElementById('transfer-server-id').value;
-            if(!botId || !targetServerId) return showToast('সব তথ্য দিন!', 'error');
-
-            try {
-                const res = await fetch('/api/admin/transfer-bot', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ botId, targetServerId })
-                });
-                const data = await res.json();
-                showToast(data.message);
-            } catch(e) { showToast('ব্যর্থ!', 'error'); }
-        }
-
-        // Particle background
-        const canvas = document.getElementById('particles');
-        const ctx = canvas.getContext('2d');
-        function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-
-        class Particle {
-            constructor() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.size = Math.random() * 2 + 1;
-                this.speedX = (Math.random() - 0.5) * 0.4;
-                this.speedY = (Math.random() - 0.5) * 0.4;
-                this.opacity = Math.random() * 0.25;
-            }
-            update() {
-                this.x += this.speedX; this.y += this.speedY;
-                if (this.x > canvas.width) this.x = 0; if (this.x < 0) this.x = canvas.width;
-                if (this.y > canvas.height) this.y = 0; if (this.y < 0) this.y = canvas.height;
-            }
-            draw() {
-                ctx.fillStyle = `rgba(59, 130, 246, ${this.opacity})`;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
-        const particles = Array.from({length: 40}, () => new Particle());
-        function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            particles.forEach(p => { p.update(); p.draw(); });
-            requestAnimationFrame(animate);
-        }
-        animate();
-
-        function handleGlow(e, el) {
-            const rect = el.getBoundingClientRect();
-            const glow = el.querySelector('.hover-glow');
-            if (glow) {
-                glow.style.background = `radial-gradient(120px circle at ${e.clientX - rect.left}px ${e.clientY - rect.top}px, rgba(255, 255, 255, 0.08) 0%, transparent 100%)`;
-            }
-        }
-    </script>
 </body>
 </html>
