@@ -3,12 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Launch Your AI WhatsApp Bot — FreeSite Builder</title>
-    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>AI WhatsApp Bot Platform — by Sojib</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
     <style>
-        :root { --primary: #38bdf8; --bg: #09090b; --card: #18181b; --border: #27272a; --text: #fafafa; }
-        * { box-sizing: border-box; margin:0; padding:0; font-family: 'Hind Siliguri', sans-serif; }
+        :root {
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --primary: #059669;
+            --primary-soft: #ecfdf5;
+            --border: #e2e8f0;
+            --text: #0f172a;
+            --muted: #64748b;
+        }
+        * { box-sizing: border-box; margin:0; padding:0; font-family: 'Plus Jakarta Sans', 'Hind Siliguri', sans-serif; }
         body {
             background-color: var(--bg);
             color: var(--text);
@@ -17,69 +25,64 @@
             align-items: center;
             justify-content: center;
             padding: 20px;
-            background-image: radial-gradient(circle at 50% 20%, rgba(56, 189, 248, 0.12), transparent 40%);
         }
         .setup-card {
             background: var(--card);
             border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 26px;
-            max-width: 500px;
+            border-radius: 20px;
+            padding: 32px;
+            max-width: 480px;
             width: 100%;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8);
+            box-shadow: 0 10px 30px -5px rgba(0,0,0,0.05);
         }
-        h2 { font-size: 22px; color: var(--primary); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
-        p { font-size: 13px; color: #a1a1aa; margin-bottom: 20px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; font-size: 13px; color: #a1a1aa; margin-bottom: 6px; font-weight: 600; }
+        .brand-header {
+            text-align: center; margin-bottom: 24px;
+        }
+        .wa-logo {
+            width: 52px; height: 52px; background: #25d366; border-radius: 50%;
+            display: inline-flex; align-items: center; justify-content: center; color: #fff; font-size: 30px;
+            box-shadow: 0 8px 16px -4px rgba(37, 211, 102, 0.3); margin-bottom: 10px;
+        }
+        h2 { font-size: 22px; font-weight: 800; color: #047857; margin-bottom: 4px; }
+        p { font-size: 13px; color: var(--muted); }
+
+        .form-group { margin-bottom: 16px; }
+        label { display: block; font-size: 13px; color: #334155; margin-bottom: 6px; font-weight: 600; }
         input, select, textarea {
-            width: 100%;
-            padding: 12px;
-            background: #000;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: #fff;
-            font-size: 14px;
-            outline: none;
+            width: 100%; padding: 12px 14px; background: #ffffff; border: 1px solid var(--border);
+            border-radius: 10px; font-size: 14px; color: #0f172a; outline: none; transition: 0.2s;
         }
-        input:focus, select:focus, textarea:focus { border-color: var(--primary); }
+        input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.12); }
+
         button {
-            width: 100%;
-            padding: 14px;
-            background: #2563eb;
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            font-size: 15px;
-            font-weight: 700;
-            cursor: pointer;
-            margin-top: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
+            width: 100%; padding: 14px; background: var(--primary); color: #fff; border: none;
+            border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; display: flex;
+            justify-content: center; align-items: center; gap: 8px; margin-top: 10px; transition: 0.2s;
         }
-        button:hover { background: #1d4ed8; }
+        button:hover { background: #047857; }
+
         .success-box {
-            background: #064e3b;
-            border: 1px solid #059669;
-            color: #a7f3d0;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 20px;
-            display: none;
-            text-align: center;
+            background: #ecfdf5; border: 1px solid #10b981; color: #065f46;
+            padding: 16px; border-radius: 12px; margin-top: 20px; display: none; text-align: center;
         }
+
+        .creator-badge {
+            margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border); text-align: center;
+            font-size: 12px; color: var(--muted); display: flex; justify-content: center; align-items: center; gap: 12px;
+        }
+        .creator-badge a { color: #059669; text-decoration: none; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
     </style>
 </head>
 <body>
 
 <div class="setup-card">
-    <h2><i class="ti ti-robot"></i> AI WhatsApp Bot ক্রিয়েটর</h2>
-    <p>ব্যক্তিগত চ্যাটিং বা শপের সেলস—আপনার প্রয়োজন অনুযায়ী এআই বট তৈরি করুন।</p>
+    <div class="brand-header">
+        <div class="wa-logo"><i class="ti ti-brand-whatsapp"></i></div>
+        <h2>AI WhatsApp Bot ক্রিয়েটর</h2>
+        <p>ব্যক্তিগত চ্যাট বা শপের সেলস—১ ক্লিকে আপনার নিজস্ব ড্যাশবোর্ড তৈরি করুন</p>
+    </div>
 
     <form onsubmit="handleLaunch(event)">
-        <!-- ড্রপডাউন: বটের ধরন নির্বাচন -->
         <div class="form-group">
             <label>বটের ধরন নির্বাচন করুন (Bot Type):</label>
             <select id="botType" onchange="toggleBotFields()">
@@ -91,32 +94,28 @@
 
         <div class="form-group">
             <label id="lblBizName">আপনার নাম বা ব্যবসার নাম:</label>
-            <input type="text" id="bizName" required placeholder="যেমন: Sojib Store অথবা Sojib Ahmed">
+            <input type="text" id="bizName" required placeholder="যেমন: Diamond Ghor">
         </div>
 
-        <!-- ১. ওয়েবসাইট ফিল্ড (শুধু যাদের ওয়েবসাইট আছে) -->
         <div class="form-group" id="siteUrlGroup">
             <label>ওয়েবসাইট লিংক (যা এআই রিড করবে):</label>
             <input type="url" id="siteUrl" placeholder="https://mywebsite.com">
         </div>
 
-        <!-- ২. নো-ওয়েবসাইট ফিল্ড (পণ্য বা সাধারণ নির্দেশনা) -->
         <div class="form-group" id="manualDetailsGroup" style="display:none;">
-            <label id="lblManualDetails">ব্যবসার পণ্য বা নিয়মাবলী লিখে দিন:</label>
-            <textarea id="manualDetails" rows="3" placeholder="যেমন: আমাদের দোকানে ঘড়ি ও হেডফোন পাওয়া যায়। ডেলিভারি চার্জ ৭০ টাকা।"></textarea>
-        </div>
-
-        <!-- সাবডোমেইন সেকশন -->
-        <div class="form-group">
-            <label>আপনার ড্যাশবোর্ডের সাবডোমেইন নাম:</label>
-            <input type="text" id="subdomain" required placeholder="যেমন: sojib, mybot, shop">
+            <label id="lblManualDetails">পণ্য বা নিয়মাবলী লিখে দিন:</label>
+            <textarea id="manualDetails" rows="3" placeholder="যেমন: আমাদের দোকানে ঘড়ি ও গ্যাজেট পাওয়া যায়।"></textarea>
         </div>
 
         <div class="form-group">
-            <label>মূল ডোমেইন নির্বাচন করুন:</label>
+            <label>সাবডোমেইন নাম:</label>
+            <input type="text" id="subdomain" required placeholder="যেমন: daimondghor, shop, sojib">
+        </div>
+
+        <div class="form-group">
+            <label>মূল ডোমেইন:</label>
             <select id="baseDomain">
                 <option value="sojib.de5.net">sojib.de5.net</option>
-                <option value="sojib.qd.je">sojib.qd.je</option>
                 <option value="sojub.cc.cd">sojub.cc.cd</option>
             </select>
         </div>
@@ -125,6 +124,12 @@
     </form>
 
     <div id="resultBox" class="success-box"></div>
+
+    <div class="creator-badge">
+        <span>Architect: <b>Sojib</b></span>
+        <a href="https://wa.me/8801409084819" target="_blank"><i class="ti ti-brand-whatsapp"></i> 01409084819</a>
+        <a href="https://tiktok.com/@sojib..music" target="_blank"><i class="ti ti-brand-tiktok"></i> @sojib..music</a>
+    </div>
 </div>
 
 <script>
@@ -133,30 +138,27 @@
         const siteGrp = document.getElementById('siteUrlGroup');
         const manualGrp = document.getElementById('manualDetailsGroup');
         const lblBiz = document.getElementById('lblBizName');
-        const lblManual = document.getElementById('lblManualDetails');
 
         if (type === 'business_site') {
             siteGrp.style.display = 'block';
             manualGrp.style.display = 'none';
-            lblBiz.innerText = 'আপনার ব্যবসার নাম / শপের নাম:';
+            lblBiz.innerText = 'ব্যবসার নাম / শপের নাম:';
         } else if (type === 'business_no_site') {
             siteGrp.style.display = 'none';
             manualGrp.style.display = 'block';
             lblBiz.innerText = 'দোকান / ব্যবসার নাম:';
-            lblManual.innerText = 'পণ্য ও ডেলিভারি তথ্য লিখে দিন:';
         } else if (type === 'personal') {
             siteGrp.style.display = 'none';
             manualGrp.style.display = 'block';
             lblBiz.innerText = 'আপনার নিজের নাম (Your Name):';
-            lblManual.innerText = 'আপনার সম্পর্কে কিছু বলুন (এআই কী বলবে):';
-            document.getElementById('manualDetails').placeholder = 'যেমন: আমি একজন ডেভেলপার। কেউ মেসেজ দিলে বলবে ভাইয়া ব্যস্ত আছেন, জরুরি হলে কল দিতে বলুন।';
+            document.getElementById('manualDetails').placeholder = 'যেমন: আমি ব্যস্ত থাকলে বন্ধুদের বলবে পরে কল দিতে।';
         }
     }
 
     async function handleLaunch(e) {
         e.preventDefault();
         const btn = document.getElementById('btnSubmit');
-        btn.innerText = 'তৈরি হচ্ছে... দয়া করে অপেক্ষা করুন';
+        btn.innerText = 'তৈরি হচ্ছে... অনুগ্রহ করে অপেক্ষা করুন';
         btn.disabled = true;
 
         const data = {
@@ -181,13 +183,13 @@
             if (result.success) {
                 box.innerHTML = `
                     <h4>🎉 ড্যাশবোর্ড সফলভাবে তৈরি হয়েছে!</h4>
-                    <a href="${result.dashboardUrl}" target="_blank" style="color:#fff; font-weight:700; text-decoration:underline; display:inline-block; margin-top:8px;">
+                    <a href="${result.dashboardUrl}" target="_blank" style="color:#047857; font-weight:800; text-decoration:underline; display:inline-block; margin-top:8px;">
                         আপনার ড্যাশবোর্ডে প্রবেশ করুন 👉 ${result.dashboardUrl}
                     </a>
                 `;
             } else {
-                box.style.background = '#7f1d1d';
-                box.style.color = '#fecaca';
+                box.style.background = '#fee2e2';
+                box.style.color = '#991b1b';
                 box.innerText = result.message || 'ত্রুটি ঘটেছে!';
             }
         } catch (err) {
