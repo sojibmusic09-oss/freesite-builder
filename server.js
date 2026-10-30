@@ -283,12 +283,41 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
       </div>
     </div>
 
-    <!-- ✏️ সম্পূর্ণ বট এডিটিং সেকশন (User Can Edit Bot Info) -->
+    <!-- 💬 লাইভ এআই টেস্ট চ্যাটবক্স (Live Test AI Connection) -->
+    <div class="card" style="border: 2px solid #10b981;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3><i class="ti ti-messages" style="color:#059669;"></i> লাইভ এআই কানেকশন টেস্ট (Live Test Chat)</h3>
+        <span style="font-size:11px; padding:3px 8px; border-radius:12px; background:#dcfce7; color:#15803d; font-weight:700;">● AI Active</span>
+      </div>
+      <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">
+        WhatsApp কানেক্ট করার আগেই এখানে মেসেজ দিয়ে টেস্ট করুন এআই আপনার ওয়েবসাইটের তথ্য ঠিকমতো বলছে কি না:
+      </p>
+      <div id="testChatWindow" style="background:#f8fafc; border:1px solid var(--border); border-radius:10px; padding:12px; height:160px; overflow-y:auto; margin-bottom:10px; font-size:13px;">
+        <div style="color:#64748b; font-style:italic;">বটের সাথে কথা বলতে নিচে মেসেজ লিখুন...</div>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="testMsgInput" placeholder="যেমন: টুর্নামেন্টের ফি কত? অথবা নিয়ম কী?" style="flex:1;">
+        <button onclick="sendTestChatMessage(${bot.id})" style="width:auto; padding:0 20px; background:#059669;">
+          <i class="ti ti-send"></i> পাঠান
+        </button>
+      </div>
+    </div>
+
+    <!-- ✏️ সম্পূর্ণ বট এডিটিং ও ওয়েবসাইট রি-অ্যানালাইসিস সেকশন -->
     <div class="card">
-      <h3><i class="ti ti-edit"></i> বটের তথ্য ও নির্দেশিকা এডিট করুন</h3>
+      <h3><i class="ti ti-edit"></i> বটের তথ্য ও ওয়েবসাইট এডিট করুন</h3>
       <div class="form-group">
-        <label>বটের নাম / শপের নাম:</label>
+        <label>বটের নাম / প্ল্যাটফর্ম নাম:</label>
         <input type="text" id="editBotName" value="${bot.bot_name}">
+      </div>
+      <div class="form-group">
+        <label>ওয়েবসাইট লিংক (Website URL):</label>
+        <div style="display:flex; gap:8px;">
+          <input type="url" id="editSiteUrl" value="${bot.website_url || ''}" placeholder="https://tournament-site.com">
+          <button onclick="reanalyzeWebsite(${bot.id})" style="width:auto; white-space:nowrap; background:#0284c7; font-size:13px; padding:0 15px;">
+            <i class="ti ti-refresh"></i> রি-অ্যানালাইজ করুন
+          </button>
+        </div>
       </div>
       <div class="form-group">
         <label>বটের ধরন (Bot Type):</label>
@@ -500,6 +529,48 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ botId: ${bot.id}, themeColor: color })
       });
+    }
+
+    // 💬 লাইভ এআই টেস্ট চ্যাট ফাংশন
+    async function sendTestChatMessage(botId) {
+      const input = document.getElementById('testMsgInput');
+      const text = input.value.trim();
+      if(!text) return;
+      const win = document.getElementById('testChatWindow');
+      win.innerHTML += '<div style="margin-bottom:8px; text-align:right;"><span style="background:#059669; color:#fff; padding:6px 12px; border-radius:12px; display:inline-block;">' + text + '</span></div>';
+      input.value = '';
+      win.scrollTop = win.scrollHeight;
+
+      try {
+        const res = await fetch('/api/user/test-chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ botId, message: text })
+        });
+        const d = await res.json();
+        win.innerHTML += '<div style="margin-bottom:8px; text-align:left;"><span style="background:#e2e8f0; color:#0f172a; padding:6px 12px; border-radius:12px; display:inline-block;">' + (d.reply || 'কোনো উত্তর নেই') + '</span></div>';
+        win.scrollTop = win.scrollHeight;
+      } catch(e) {
+        win.innerHTML += '<div style="color:red; font-size:12px;">এআই রেসপন্স এরর!</div>';
+      }
+    }
+
+    // 🔄 ওয়েবসাইট রি-অ্যানালাইজ ফাংশন
+    async function reanalyzeWebsite(botId) {
+      const url = document.getElementById('editSiteUrl').value.trim();
+      if(!url) return alert('ওয়েবসাইট লিংক দিন!');
+      if(!confirm('এআই কি এই ওয়েবসাইটটি নতুন করে স্ক্যান করবে?')) return;
+
+      const btn = event.target;
+      btn.innerText = 'অ্যানালাইসিস হচ্ছে...';
+      const res = await fetch('/api/user/reanalyze-site', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ botId, website_url: url })
+      });
+      const d = await res.json();
+      alert(d.message);
+      location.reload();
     }
   </script>
 </body>
@@ -807,6 +878,55 @@ app.post('/api/user/update-bot-settings', async (req, res) => {
     );
     addBotLog(botId, 'success', '⚙️ বটের তথ্য ও নির্দেশিকা সফলভাবে আপডেট হয়েছে!');
     res.json({ success: true, message: '✅ বটের তথ্য সফলভাবে আপডেট হয়েছে!' });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// 🔄 ড্যাশবোর্ড থেকে ওয়েবসাইট রি-অ্যানালাইসিস API (Gemini AI Powered)
+app.post('/api/user/reanalyze-site', async (req, res) => {
+  try {
+    const { botId, website_url } = req.body;
+    const botRes = await pool.query('SELECT gemini_api_key FROM whatsapp_bots WHERE id = $1', [botId]);
+    const customKey = botRes.rows[0]?.gemini_api_key || null;
+
+    addBotLog(botId, 'info', `🌐 এআই দিয়ে ওয়েবসাইট রি-অ্যানালাইসিস শুরু হচ্ছে: ${website_url}`);
+    const knowledge = await analyzeAndExtractWebsiteKnowledge(website_url, customKey);
+
+    await pool.query(
+      `UPDATE whatsapp_bots 
+       SET website_url = $1, system_prompt = $2, business_type = $3 
+       WHERE id = $4`,
+      [website_url, knowledge.description, knowledge.businessType, botId]
+    );
+
+    // পুরনো পণ্য মুছে নতুন তথ্য যোগ
+    await pool.query('DELETE FROM bot_products WHERE bot_id = $1', [botId]);
+    for (const p of knowledge.products) {
+      await pool.query(
+        `INSERT INTO bot_products (bot_id, name, price, category, description, buy_link) 
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [botId, p.name, p.price, p.category, p.description, p.buy_link]
+      );
+    }
+
+    addBotLog(botId, 'success', `✅ এআই ওয়েবসাইট চিনে নিয়েছে: ${knowledge.businessType}। ক্যাটালগ ও নিয়ম সেভ হয়েছে!`);
+    res.json({ success: true, message: `🎉 এআই সফলভাবে ওয়েবসাইট অ্যানালাইসিস করেছে! ক্যাটাগরি: ${knowledge.businessType}` });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// 💬 ড্যাশবোর্ড থেকে লাইভ এআই টেস্ট চ্যাট API
+app.post('/api/user/test-chat', async (req, res) => {
+  try {
+    const { botId, message } = req.body;
+    const botRes = await pool.query('SELECT * FROM whatsapp_bots WHERE id = $1', [botId]);
+    if (botRes.rows.length === 0) return res.status(404).json({ success: false });
+
+    const botRow = botRes.rows[0];
+    const reply = await handleDynamicCustomerMessage(botRow, 'TEST_WEB_USER', message, null);
+    res.json({ success: true, reply });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });
   }
