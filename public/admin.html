@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin Dashboard — FreeSite Builder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <style>
+        :root {
+            --bg: #09090b;
+            --surface: #18181b;
+            --border: #27272a;
+            --primary: #3b82f6;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --text: #fafafa;
+            --muted: #a1a1aa;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', 'Hind Siliguri', sans-serif; }
+        body { background: var(--bg); color: var(--text); padding: 15px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        header { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+        .logo { font-size: 20px; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
+        
+        .grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+        .stat-card h4 { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+        .stat-card .val { font-size: 26px; font-weight: 700; color: var(--primary); }
+
+        .tabs { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .tab-btn { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 9px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+        .tab-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+        .section-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        h3 { font-size: 17px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; color: #38bdf8; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+        th, td { padding: 12px 10px; border-bottom: 1px solid var(--border); }
+        th { color: var(--muted); font-weight: 600; }
+        
+        .badge { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+        .badge.free { background: rgba(161, 161, 170, 0.2); color: var(--muted); }
+        .badge.premium { background: rgba(245, 158, 11, 0.2); color: var(--warning); border: 1px solid var(--warning); }
+        .badge.active { background: rgba(34, 197, 94, 0.2); color: var(--success); }
+
+        button.action-btn { padding: 6px 10px; border-radius: 6px; font-size: 12px; border: none; cursor: pointer; font-weight: 600; }
+        .btn-upgrade { background: var(--warning); color: #000; }
+        .btn-downgrade { background: #3f3f46; color: #fff; }
+        .btn-danger { background: var(--danger); color: #fff; }
+        .btn-transfer { background: #ea580c; color: #fff; }
+
+        .form-group { margin-bottom: 14px; }
+        label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+        input, select { width: 100%; padding: 10px; background: #09090b; border: 1px solid var(--border); border-radius: 8px; color: #fff; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="logo"><i class="ti ti-shield-lock"></i> Super Admin Panel</div>
+        <div style="font-size:12px; color:var(--muted);">Database: <span style="color:var(--success);">Connected (Neon DB)</span></div>
+    </header>
+
+    <!-- Stats -->
+    <div class="grid-stats">
+        <div class="stat-card">
+            <h4>মোট ইউজার</h4>
+            <div class="val" id="statUsers">...</div>
+        </div>
+        <div class="stat-card">
+            <h4>সক্রিয় WhatsApp বট</h4>
+            <div class="val" id="statBots">...</div>
+        </div>
+        <div class="stat-card">
+            <h4>মোট ওয়েবসাইট</h4>
+            <div class="val" id="statSites">...</div>
+        </div>
+        <div class="stat-card">
+            <h4>যুক্ত সার্ভার</h4>
+            <div class="val" id="statServers">...</div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="showAdminTab('tab-users')"><i class="ti ti-users"></i> ইউজার ও প্ল্যান (Free/Paid)</button>
+        <button class="tab-btn" onclick="showAdminTab('tab-bot-transfer')"><i class="ti ti-arrows-transfer-down"></i> বট ও সার্ভার ট্রান্সফার</button>
+        <button class="tab-btn" onclick="showAdminTab('tab-websites-admin')"><i class="ti ti-world"></i> সকল সাবডোমেইন সাইট</button>
+        <button class="tab-btn" onclick="showAdminTab('tab-servers-admin')"><i class="ti ti-server"></i> সার্ভার নোড ম্যানেজার</button>
+    </div>
+
+    <!-- TAB 1: USERS & PLAN MANAGEMENT -->
+    <div id="tab-users" class="tab-content">
+        <div class="section-card">
+            <h3><i class="ti ti-crown"></i> ইউজার প্ল্যান পরিচালনা (Free / Premium)</h3>
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User ID</th>
+                            <th>Email</th>
+                            <th>বর্তমান প্ল্যান</th>
+                            <th>অ্যাকশন (প্ল্যান পরিবর্তন)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userTableBody">
+                        <tr><td colspan="4" style="text-align:center;">ডাটা লোড হচ্ছে...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: BOT & SERVER TRANSFER -->
+    <div id="tab-bot-transfer" class="tab-content" style="display:none;">
+        <div class="section-card">
+            <h3><i class="ti ti-refresh"></i> অন্য সার্ভারে বট স্থানান্তর (Migrate Bot)</h3>
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Bot ID</th>
+                            <th>বট নাম</th>
+                            <th>ফোন নম্বর</th>
+                            <th>বর্তমান সার্ভার</th>
+                            <th>স্ট্যাটাস</th>
+                            <th>অন্য সার্ভারে পাঠান</th>
+                        </tr>
+                    </thead>
+                    <tbody id="botTableBody">
+                        <tr><td colspan="6" style="text-align:center;">ডাটা লোড হচ্ছে...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: WEBSITES -->
+    <div id="tab-websites-admin" class="tab-content" style="display:none;">
+        <div class="section-card">
+            <h3><i class="ti ti-world-upload"></i> সকল তৈরি হওয়া সাবডোমেইন সাইট</h3>
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Site ID</th>
+                            <th>সাবডোমেইন URL</th>
+                            <th>তৈরির তারিখ</th>
+                            <th>অ্যাকশন</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sitesTableBody">
+                        <tr><td colspan="4" style="text-align:center;">ডাটা লোড হচ্ছে...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 4: WORKER SERVERS -->
+    <div id="tab-servers-admin" class="tab-content" style="display:none;">
+        <div class="section-card">
+            <h3><i class="ti ti-plus"></i> নতুন Render Worker সার্ভার যুক্ত করুন</h3>
+            <div class="form-group">
+                <label>সার্ভার নাম:</label>
+                <input type="text" id="adminSrvName" placeholder="Worker Render 2">
+            </div>
+            <div class="form-group">
+                <label>সার্ভার লিংক (Render URL):</label>
+                <input type="text" id="adminSrvUrl" placeholder="https://worker-2.onrender.com">
+            </div>
+            <button class="action-btn" style="background:var(--primary); padding:10px 15px; color:#fff;" onclick="addNewServer()">সার্ভার সংরক্ষণ করুন</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showAdminTab(id) {
+        document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(id).style.display = 'block';
+        event.currentTarget.classList.add('active');
+    }
+
+    async function loadAdminData() {
+        try {
+            const res = await fetch('/api/admin/overview');
+            const data = await res.json();
+            if(!data.success) return;
+
+            // Stats
+            document.getElementById('statUsers').innerText = data.users.length;
+            document.getElementById('statBots').innerText = data.bots.length;
+            document.getElementById('statSites').innerText = data.websites.length;
+            document.getElementById('statServers').innerText = data.servers.length;
+
+            // Users Table
+            const uBody = document.getElementById('userTableBody');
+            uBody.innerHTML = data.users.map(u => `
+                <tr>
+                    <td>#${u.id}</td>
+                    <td>${u.email}</td>
+                    <td><span class="badge ${u.plan}">${u.plan}</span></td>
+                    <td>
+                        ${u.plan === 'free' 
+                          ? `<button class="action-btn btn-upgrade" onclick="toggleUserPlan(${u.id}, 'premium')">Upgrade to Premium</button>`
+                          : `<button class="action-btn btn-downgrade" onclick="toggleUserPlan(${u.id}, 'free')">Downgrade to Free</button>`
+                        }
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="4">কোনো ইউজার নেই</td></tr>';
+
+            // Bots Table
+            const bBody = document.getElementById('botTableBody');
+            bBody.innerHTML = data.bots.map(b => `
+                <tr>
+                    <td>#${b.id}</td>
+                    <td>${b.bot_name}</td>
+                    <td>${b.phone_number || 'N/A'}</td>
+                    <td>Server #${b.server_id || '1 (Main)'}</td>
+                    <td><span class="badge ${b.status === 'CONNECTED' ? 'active' : ''}">${b.status}</span></td>
+                    <td>
+                        <button class="action-btn btn-transfer" onclick="promptTransferBot(${b.id})">Transfer</button>
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="6">কোনো বট নেই</td></tr>';
+
+            // Sites Table
+            const sBody = document.getElementById('sitesTableBody');
+            sBody.innerHTML = data.websites.map(s => `
+                <tr>
+                    <td>#${s.id}</td>
+                    <td><a href="https://${s.subdomain}.${s.base_domain}" target="_blank" style="color:var(--primary);">${s.subdomain}.${s.base_domain}</a></td>
+                    <td>${new Date(s.created_at).toLocaleDateString()}</td>
+                    <td>
+                        <button class="action-btn btn-danger" onclick="deleteSite(${s.id})">Delete</button>
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="4">কোনো ওয়েবসাইট নেই</td></tr>';
+
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    async function toggleUserPlan(userId, newPlan) {
+        if(!confirm(`আপনি কি এই ইউজারের প্ল্যান ${newPlan}-এ পরিবর্তন করতে চান?`)) return;
+        await fetch('/api/admin/update-user-plan', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, plan: newPlan })
+        });
+        loadAdminData();
+    }
+
+    async function promptTransferBot(botId) {
+        const srvId = prompt("কোন সার্ভার আইডিতে (Server ID) ট্রান্সফার করতে চান? যেমন: 2");
+        if(!srvId) return;
+        await fetch('/api/admin/transfer-bot', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ botId, targetServerId: parseInt(srvId) })
+        });
+        alert(`বট #${botId} সফলভাবে সার্ভার #${srvId}-এ পাঠানো হয়েছে!`);
+        loadAdminData();
+    }
+
+    async function deleteSite(id) {
+        if(!confirm("আপনি কি নিশ্চিত এই ওয়েবসাইটটি ডিলিট করতে চান?")) return;
+        await fetch('/api/admin/delete-site', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id })
+        });
+        loadAdminData();
+    }
+
+    async function addNewServer() {
+        const server_name = document.getElementById('adminSrvName').value;
+        const server_url = document.getElementById('adminSrvUrl').value;
+        if(!server_name || !server_url) return alert('তথ্য দিন!');
+        await fetch('/api/admin/add-server', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ server_name, server_url })
+        });
+        alert('সার্ভার সফলভাবে যুক্ত হয়েছে!');
+        loadAdminData();
+    }
+
+    loadAdminData();
+</script>
+
+</body>
+</html>
