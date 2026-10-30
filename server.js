@@ -1,6 +1,5 @@
 /**
- * FreeSite SaaS — Multi-Tenant WhatsApp AI Bot Platform
- * White & Soft Mint Luxury Edition | Payment Verification | Server Traffic Guard
+ * FreeSite SaaS — Master Server (Full Bot Editor + Dynamic Server Capacity Guard)
  * Architect: Sojib | WhatsApp: 01409084819 | TikTok: @sojib..music
  */
 
@@ -146,7 +145,6 @@ app.use(async (req, res, next) => {
 
       if (botRes.rows.length > 0) {
         const bot = botRes.rows[0];
-        // পেমেন্ট নাম্বার লোড
         const pNumRes = await pool.query('SELECT key, value FROM admin_settings WHERE key IN (\'bkash_no\', \'nagad_no\', \'rocket_no\')');
         const payConfig = {};
         pNumRes.rows.forEach(r => payConfig[r.key] = r.value);
@@ -160,10 +158,9 @@ app.use(async (req, res, next) => {
   next();
 });
 
-// ================= সম্পূর্ণ প্রিমিয়াম ইউজার ড্যাশবোর্ড (White & Soft Mint) =================
+// ================= ইউজার ড্যাশবোর্ড জেনারেটর (বট এডিটিং ফর্ম সহ) =================
 function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
   const primaryColor = bot.theme_color || '#10b981';
-  const typeTitle = bot.bot_type === 'personal' ? 'ব্যক্তিগত AI সহকারী' : (bot.bot_type === 'business_no_site' ? 'শপ অ্যাসিস্ট্যান্ট' : 'ই-কমার্স সেলস বট');
   const bkash = payConfig.bkash_no || '01409084819';
   const nagad = payConfig.nagad_no || '01409084819';
   const rocket = payConfig.rocket_no || '01409084819';
@@ -173,13 +170,12 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${bot.bot_name} — AI Control Center</title>
+  <title>${bot.bot_name} — Control Center</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
   <style>
     :root {
       --primary: ${primaryColor};
-      --primary-soft: #ecfdf5;
       --bg: #f8fafc;
       --card: #ffffff;
       --border: #e2e8f0;
@@ -193,60 +189,43 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
     .header {
       background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px;
       display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
-      box-shadow: 0 4px 20px -2px rgba(0,0,0,0.03);
     }
     .brand-title { font-size: 20px; font-weight: 800; color: #047857; display: flex; align-items: center; gap: 8px; }
     .status-badge { font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 30px; }
     .status-badge.connected { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
     .status-badge.disconnected { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
 
-    .card {
-      background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 22px;
-      margin-bottom: 20px; box-shadow: 0 4px 20px -2px rgba(0,0,0,0.03);
-    }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 22px; margin-bottom: 20px; }
     .card h3 { font-size: 16px; font-weight: 700; color: #065f46; display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
 
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
     .stat-box { background: #f8fafc; border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; }
-    .stat-val { font-size: 26px; font-weight: 800; color: #059669; margin-top: 4px; }
+    .stat-val { font-size: 24px; font-weight: 800; color: #059669; margin-top: 4px; }
     .stat-lbl { font-size: 12px; color: var(--muted); font-weight: 600; }
 
     .form-group { margin-bottom: 14px; }
     label { display: block; font-size: 13px; color: #334155; margin-bottom: 6px; font-weight: 600; }
-    input, select {
+    input, select, textarea {
       width: 100%; padding: 12px 14px; background: #ffffff; border: 1px solid var(--border);
       border-radius: 10px; font-size: 14px; color: #0f172a; outline: none; transition: 0.2s;
     }
-    input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15); }
+    input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15); }
 
     button {
       width: 100%; padding: 13px; background: #059669; color: #fff; border: none;
       border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 14px;
-      transition: 0.2s;
     }
     button:hover { background: #047857; }
 
-    .code-box {
-      background: #f0fdf4; border: 2px dashed #059669; padding: 16px; border-radius: 12px;
-      text-align: center; margin-top: 15px; display: none;
-    }
+    .code-box { background: #f0fdf4; border: 2px dashed #059669; padding: 16px; border-radius: 12px; text-align: center; margin-top: 15px; display: none; }
     .code-val { font-size: 28px; font-weight: 800; letter-spacing: 6px; color: #047857; font-family: monospace; }
 
-    .terminal-window {
-      background: #0f172a; border-radius: 10px; padding: 14px; height: 180px; overflow-y: auto;
-      font-family: monospace; font-size: 13px; color: #f8fafc;
-    }
+    .terminal-window { background: #0f172a; border-radius: 10px; padding: 14px; height: 180px; overflow-y: auto; font-family: monospace; font-size: 13px; color: #f8fafc; }
     .log-line { margin-bottom: 6px; }
-    .log-time { color: #64748b; margin-right: 6px; }
 
-    .payment-box {
-      background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 16px; margin-top: 14px;
-    }
+    .payment-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 16px; margin-top: 14px; }
     .pay-methods { display: flex; gap: 8px; margin-bottom: 12px; }
-    .pay-badge {
-      flex: 1; text-align: center; padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 700;
-      border: 1px solid var(--border); cursor: pointer; background: #fff;
-    }
+    .pay-badge { flex: 1; text-align: center; padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 700; border: 1px solid var(--border); cursor: pointer; background: #fff; }
     .pay-badge.active { background: #ecfdf5; border-color: #059669; color: #059669; }
 
     .color-dot { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }
@@ -259,7 +238,7 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
       <div>
         <div class="brand-title"><i class="ti ti-brand-whatsapp" style="color:#25d366; font-size:26px;"></i> ${bot.bot_name}</div>
         <p style="font-size:12px; color:var(--muted); margin-top:4px;">
-          🌐 ডোমেইন: <a href="https://${fullUrl}" target="_blank" style="color:#059669; font-weight:600;">${fullUrl}</a> | প্ল্যান: <b>${bot.plan ? bot.plan.toUpperCase() : 'FREE'}</b>
+          🌐 ডোমেইন: <a href="https://${fullUrl}" target="_blank" style="color:#059669; font-weight:600;">${fullUrl}</a> | প্ল্যান: <b>${(bot.plan || 'free').toUpperCase()}</b>
         </p>
       </div>
       <span class="status-badge ${bot.status === 'CONNECTED' ? 'connected' : 'disconnected'}">
@@ -267,7 +246,7 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
       </span>
     </div>
 
-    <!-- 📊 লাইভ স্ট্যাটাস মিটার ও প্রেশার গার্ড -->
+    <!-- 📊 লাইভ স্ট্যাটাস মিটার -->
     <div class="stats-grid">
       <div class="stat-box">
         <div class="stat-lbl">মোট টোকেন খরচ</div>
@@ -278,41 +257,75 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
         <div class="stat-val" id="reqVal">${bot.requests_today || 0}</div>
       </div>
       <div class="stat-box">
-        <div class="stat-lbl">ডেইলি লিমিট (Server Guard)</div>
-        <div class="stat-val" style="color:#d97706;">${bot.rate_limit_daily || 300}</div>
+        <div class="stat-lbl">সার্ভার গার্ড লিমিট</div>
+        <div class="stat-val" style="color:#d97706;">${bot.rate_limit_daily || 300} req/day</div>
       </div>
+    </div>
+
+    <!-- ✏️ সম্পূর্ণ বট এডিটিং সেকশন (User Can Edit Bot Info) -->
+    <div class="card">
+      <h3><i class="ti ti-edit"></i> বটের তথ্য ও নির্দেশিকা এডিট করুন</h3>
+      <div class="form-group">
+        <label>বটের নাম / শপের নাম:</label>
+        <input type="text" id="editBotName" value="${bot.bot_name}">
+      </div>
+      <div class="form-group">
+        <label>বটের ধরন (Bot Type):</label>
+        <select id="editBotType">
+          <option value="business_site" ${bot.bot_type === 'business_site' ? 'selected' : ''}>🛍️ ই-কমার্স শপ (ওয়েবসাইট লিংক)</option>
+          <option value="business_no_site" ${bot.bot_type === 'business_no_site' ? 'selected' : ''}>🏬 সাধারণ দোকান (ওয়েবসাইট ছাড়া)</option>
+          <option value="personal" ${bot.bot_type === 'personal' ? 'selected' : ''}>👤 পার্সোনাল ইউজার (ব্যক্তিগত সহকারী)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>এআই নির্দেশিকা / বায়ো / পণ্য বিবরণ:</label>
+        <textarea id="editPrompt" rows="3">${bot.system_prompt || ''}</textarea>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <div class="form-group">
+          <label>ডেলিভারি (সিটির ভেতরে ৳):</label>
+          <input type="number" id="editDelIn" value="${bot.delivery_inside || 70}">
+        </div>
+        <div class="form-group">
+          <label>ডেলিভারি (সিটির বাইরে ৳):</label>
+          <input type="number" id="editDelOut" value="${bot.delivery_outside || 130}">
+        </div>
+      </div>
+      <button onclick="saveBotSettings(${bot.id})" style="background:#0284c7;">
+        <i class="ti ti-device-floppy"></i> বটের নতুন তথ্য সেভ করুন
+      </button>
     </div>
 
     <!-- 📲 WhatsApp পেয়ারিং কোড সেকশন -->
     <div class="card">
       <h3><i class="ti ti-qrcode"></i> WhatsApp লিঙ্ক করুন (Pairing Code)</h3>
       <div class="form-group">
-        <label>আপনার মোবাইল নম্বর (দেশীয় কোড সহ যেমন: 88017...):</label>
+        <label>আপনার মোবাইল নম্বর (যেমন: 88017...):</label>
         <input type="text" id="phoneInput" placeholder="8801XXXXXXXXX" value="${bot.phone_number || ''}">
       </div>
       <button onclick="requestPairingCode(${bot.id})"><i class="ti ti-key"></i> পেয়ারিং কোড তৈরি করুন</button>
 
       <div id="codeBanner" class="code-box">
-        <div style="font-size:12px; color:#047857; font-weight:700; margin-bottom:4px;">LINKING CODE:</div>
+        <div style="font-size:12px; color:#047857; font-weight:700; margin-bottom:4px;">WHATSAPP PAIRING CODE:</div>
         <div id="codeDisplay" class="code-val">----</div>
         <p style="font-size:12px; color:#475569; margin-top:6px;">WhatsApp ➔ Linked Devices ➔ Link with phone number-এ কোডটি দিন।</p>
       </div>
     </div>
 
-    <!-- 💳 প্রিমিয়াম আপগ্রেড ও পেমেন্ট ভেরিফিকেশন (bKash, Nagad, Rocket) -->
+    <!-- 💳 প্রিমিয়াম আপগ্রেড ও পেমেন্ট ভেরিফিকেশন -->
     <div class="card">
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <h3><i class="ti ti-crown" style="color:#d97706;"></i> প্রিমিয়াম আপগ্রেড ও পেমেন্ট সিস্টেম</h3>
         <span style="font-size:12px; color:#059669; font-weight:700;">ফি: ৳৩০০ / মাস</span>
       </div>
       <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">
-        আনলিমিটেড মেসেজ, আমাদের সুপারফাস্ট সেন্ট্রাল API এবং প্রায়োরিটি রেসপন্সের জন্য টাকা পাঠিয়ে TrxID দিন:
+        আনলিমিটেড মেসেজ ও সুপারফাস্ট রেসপন্সের জন্য টাকা পাঠিয়ে TrxID দিন:
       </p>
 
       <div class="pay-methods">
-        <div class="pay-badge active" id="badge-bkash" onclick="selectPay('bKash', '${bkash}')">bKash (Personal)</div>
-        <div class="pay-badge" id="badge-nagad" onclick="selectPay('Nagad', '${nagad}')">Nagad (Personal)</div>
-        <div class="pay-badge" id="badge-rocket" onclick="selectPay('Rocket', '${rocket}')">Rocket (Personal)</div>
+        <div class="pay-badge active" id="badge-bkash" onclick="selectPay('bKash', '${bkash}')">bKash</div>
+        <div class="pay-badge" id="badge-nagad" onclick="selectPay('Nagad', '${nagad}')">Nagad</div>
+        <div class="pay-badge" id="badge-rocket" onclick="selectPay('Rocket', '${rocket}')">Rocket</div>
       </div>
 
       <div class="payment-box">
@@ -326,13 +339,10 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
         <button onclick="submitPayment(${bot.id})" style="background:#0284c7; margin-top:10px;">
           <i class="ti ti-send"></i> ভেরিফিকেশনের জন্য জমা দিন
         </button>
-        <p style="font-size:11px; color:#64748b; margin-top:6px; text-align:center;">
-          *অ্যাডমিন ম্যানুয়ালি যাচাই করে অনুমোদন করলেই অ্যাকাউন্ট প্রিমিয়াম হবে।
-        </p>
       </div>
     </div>
 
-    <!-- 🔑 ইউজারের নিজস্ব Gemini API Key সেটিংস -->
+    <!-- 🔑 নিজস্ব Gemini API Key -->
     <div class="card">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
         <h3><i class="ti ti-key"></i> নিজস্ব Gemini API Key</h3>
@@ -340,7 +350,6 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
           ${bot.gemini_api_key ? '✅ নিজস্ব Key সক্রিয়' : 'ℹ️ প্ল্যাটফর্ম ডিফল্ট Key'}
         </span>
       </div>
-      <p style="font-size:13px; color:var(--muted); margin-bottom:10px;">নিজের ফ্রি API Key দিলে কোনো ফি ছাড়াই বট আনলিমিটেড ব্যবহার করতে পারবেন:</p>
       <div class="form-group">
         <input type="password" id="apiKeyInput" placeholder="AIzaSy..." value="${bot.gemini_api_key || ''}">
       </div>
@@ -355,7 +364,7 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
       </div>
     </div>
 
-    <!-- 🎨 হালকা রঙের থিম প্যালেট -->
+    <!-- 🎨 থিম কালার প্যালেট -->
     <div class="card">
       <h3><i class="ti ti-palette"></i> অ্যাকসেন্ট কালার পরিবর্তন</h3>
       <div class="color-picker">
@@ -367,7 +376,6 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
       </div>
     </div>
 
-    <!-- ব্র্যান্ডিং ফুটার -->
     <div style="text-align:center; padding:20px; font-size:12px; color:var(--muted);">
       Platform by <b>Sojib</b> • WhatsApp: <a href="https://wa.me/8801409084819" target="_blank" style="color:#059669;">01409084819</a> • TikTok: <a href="https://tiktok.com/@sojib..music" target="_blank" style="color:#059669;">@sojib..music</a>
     </div>
@@ -382,11 +390,28 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
       document.getElementById('sendNumberNotice').innerHTML = '👉 ' + method + ' পাঠান: <span style="color:#059669; font-size:15px;">' + number + '</span> (Send Money)';
     }
 
+    async function saveBotSettings(botId) {
+      const data = {
+        botId,
+        bot_name: document.getElementById('editBotName').value.trim(),
+        bot_type: document.getElementById('editBotType').value,
+        system_prompt: document.getElementById('editPrompt').value.trim(),
+        delivery_inside: document.getElementById('editDelIn').value,
+        delivery_outside: document.getElementById('editDelOut').value
+      };
+      const res = await fetch('/api/user/update-bot-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const d = await res.json();
+      alert(d.message);
+    }
+
     async function submitPayment(botId) {
       const sender = document.getElementById('senderNumber').value.trim();
       const trxId = document.getElementById('trxId').value.trim();
       if(!sender || !trxId) return alert('সেন্ডার নম্বর এবং TrxID দিন!');
-
       const res = await fetch('/api/user/submit-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -462,7 +487,6 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
 
 // ================= AI মেসেজ এক্সিকিউশন (টোকেন কাউন্ট ও লিমিট গার্ড) =================
 async function executeGeminiForTenant(botRow, userPrompt, systemPrompt, imageBuffer = null, imageMime = 'image/jpeg') {
-  // প্রেশার লিমিট চেক (Daily Rate Limit)
   const dailyLimit = botRow.rate_limit_daily || 300;
   if ((botRow.requests_today || 0) >= dailyLimit && botRow.plan !== 'premium') {
     addBotLog(botRow.id, 'warn', `⚠️ আজকের ফ্রি লিমিট (${dailyLimit} মেসেজ) শেষ! প্রিমিয়াম আপগ্রেড করুন।`);
@@ -750,7 +774,24 @@ app.get('/api/user/bot-logs', async (req, res) => {
   res.json({ success: true, logs, stats });
 });
 
-// ৩. ইউজার পেমেন্ট সাবমিট (TrxID)
+// ৩. ইউজার থেকে বটের তথ্য আপডেট (Edit Bot Info)
+app.post('/api/user/update-bot-settings', async (req, res) => {
+  try {
+    const { botId, bot_name, bot_type, system_prompt, delivery_inside, delivery_outside } = req.body;
+    await pool.query(
+      `UPDATE whatsapp_bots 
+       SET bot_name = $1, bot_type = $2, system_prompt = $3, delivery_inside = $4, delivery_outside = $5 
+       WHERE id = $6`,
+      [bot_name, bot_type, system_prompt, delivery_inside || 70, delivery_outside || 130, botId]
+    );
+    addBotLog(botId, 'success', '⚙️ বটের তথ্য ও নির্দেশিকা সফলভাবে আপডেট হয়েছে!');
+    res.json({ success: true, message: '✅ বটের তথ্য সফলভাবে আপডেট হয়েছে!' });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// ৪. ইউজার পেমেন্ট সাবমিট (TrxID)
 app.post('/api/user/submit-payment', async (req, res) => {
   try {
     const { botId, method, sender, trxId } = req.body;
@@ -768,7 +809,7 @@ app.post('/api/user/submit-payment', async (req, res) => {
   }
 });
 
-// ৪. API Key আপডেট
+// ৫. API Key আপডেট
 app.post('/api/user/update-api-key', async (req, res) => {
   try {
     const { botId, apiKey } = req.body;
@@ -780,7 +821,7 @@ app.post('/api/user/update-api-key', async (req, res) => {
   }
 });
 
-// ৫. পেয়ারিং কোড রিকোয়েস্ট
+// ৬. পেয়ারিং কোড রিকোয়েস্ট
 app.post('/api/request-pairing-code', async (req, res) => {
   try {
     const { botId, phone } = req.body;
@@ -806,7 +847,7 @@ app.post('/api/request-pairing-code', async (req, res) => {
   }
 });
 
-// ৬. থিম কালার আপডেট
+// ৭. থিম কালার আপডেট
 app.post('/api/user/update-theme', async (req, res) => {
   try {
     const { botId, themeColor } = req.body;
@@ -830,7 +871,18 @@ app.get('/api/admin/overview', async (req, res) => {
   } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// অ্যাডমিন থেকে পেমেন্ট অ্যাপ্রুভ (১-ক্লিকে প্রিমিয়াম সক্রিয়)
+// অ্যাডমিন থেকে প্রতি সার্ভারে ম্যাক্সিমাম বটের সীমা সেট করা
+app.post('/api/admin/set-max-bots-limit', async (req, res) => {
+  try {
+    const { limit } = req.body;
+    const numLimit = parseInt(limit, 10) || 4;
+    await pool.query('INSERT INTO admin_settings (key, value) VALUES (\'max_bots_per_server\', $1) ON CONFLICT (key) DO UPDATE SET value = $1', [String(numLimit)]);
+    await pool.query('UPDATE worker_servers SET max_capacity = $1', [numLimit]);
+    res.json({ success: true, message: `✅ সার্ভার প্রতি সর্বোচ্চ বটের ক্যাপাসিটি ${numLimit} সেট করা হয়েছে!` });
+  } catch (e) { res.status(500).json({ success: false }); }
+});
+
+// অ্যাডমিন থেকে পেমেন্ট অ্যাপ্রুভ
 app.post('/api/admin/approve-payment', async (req, res) => {
   try {
     const { paymentId } = req.body;
@@ -856,7 +908,7 @@ app.post('/api/admin/update-bot-limit', async (req, res) => {
   } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// অ্যাডমিন পেমেন্ট নম্বর পরিবর্তন (bKash, Nagad, Rocket)
+// অ্যাডমিন পেমেন্ট নম্বর পরিবর্তন
 app.post('/api/admin/update-payment-numbers', async (req, res) => {
   try {
     const { bkash, nagad, rocket } = req.body;
@@ -867,10 +919,10 @@ app.post('/api/admin/update-payment-numbers', async (req, res) => {
   } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// 🔄 সার্ভার প্রতি ৩–৪ টি বটের স্লট ভাগ করে দেওয়া (Auto-Rebalance)
+// 🔄 সার্ভার প্রতি ডাইনামিক বটের সীমা অনুযায়ী ভাগ করে দেওয়া (Auto-Rebalance)
 app.post('/api/admin/rebalance-servers', async (req, res) => {
   try {
-    const servers = await pool.query('SELECT id FROM worker_servers WHERE is_active = TRUE ORDER BY id ASC');
+    const servers = await pool.query('SELECT id, max_capacity FROM worker_servers WHERE is_active = TRUE ORDER BY id ASC');
     if (servers.rows.length === 0) {
       return res.status(400).json({ success: false, message: 'কোনো ওয়ার্কার সার্ভার নেই!' });
     }
@@ -882,7 +934,7 @@ app.post('/api/admin/rebalance-servers', async (req, res) => {
       await pool.query('UPDATE whatsapp_bots SET server_id = $1 WHERE id = $2', [assignedSrv, bots.rows[i].id]);
     }
 
-    res.json({ success: true, message: `🎉 মোট ${bots.rows.length} টি বট ${srvIds.length} টি সার্ভারে (প্রতিটিতে ৩-৪ টি করে) সমানভাবে ভাগ করা হয়েছে!` });
+    res.json({ success: true, message: `🎉 মোট ${bots.rows.length} টি বট ${srvIds.length} টি সার্ভারে সমানভাবে ভাগ করা হয়েছে!` });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });
   }
@@ -915,12 +967,12 @@ app.listen(PORT, '0.0.0.0', async () => {
     await pool.query('ALTER TABLE whatsapp_bots ADD COLUMN IF NOT EXISTS rate_limit_daily INT DEFAULT 300;');
     await pool.query('ALTER TABLE whatsapp_bots ADD COLUMN IF NOT EXISTS plan VARCHAR(30) DEFAULT \'free\';');
 
-    // ডিফল্ট পেমেন্ট নম্বর সেট
     await pool.query(`
       INSERT INTO admin_settings (key, value) VALUES 
       ('bkash_no', '01409084819'),
       ('nagad_no', '01409084819'),
-      ('rocket_no', '01409084819')
+      ('rocket_no', '01409084819'),
+      ('max_bots_per_server', '4')
       ON CONFLICT (key) DO NOTHING;
     `);
 
