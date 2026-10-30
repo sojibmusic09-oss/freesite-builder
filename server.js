@@ -1,7 +1,7 @@
 /**
  * FreeSite SaaS — Multi-Tenant WhatsApp AI Bot Platform
- * Full Dashboard (Token Stats + Live Logs + Color Picker + API Manager)
- * Multi-Server Health & Auto-Rebalancing Engine
+ * White & Soft Mint Luxury Edition | Payment Verification | Server Traffic Guard
+ * Architect: Sojib | WhatsApp: 01409084819 | TikTok: @sojib..music
  */
 
 require('dotenv').config();
@@ -12,7 +12,6 @@ const path = require('path');
 const pino = require('pino');
 const { GoogleGenAI } = require('@google/genai');
 
-// ডাটাবেজ, অবিকৃত AI Engine ও ওয়েবসাইট এনালাইজার
 const { pool, initializeDatabase } = require('./database');
 const { analyzeAndExtractWebsiteKnowledge } = require('./website_analyzer');
 const {
@@ -61,7 +60,7 @@ function addBotLog(botId, type, message) {
   if (logs.length > 50) logs.pop();
 }
 
-// PostgreSQL সেশন এডাপ্টার (Render স্লিপ বা রিস্টার্ট হলেও WhatsApp লগআউট হবে না)
+// PostgreSQL সেশন অ্যাডাপ্টার
 async function usePostgresAuthState(botId) {
   const getSession = async (key) => {
     const res = await pool.query('SELECT session_data FROM whatsapp_sessions WHERE bot_id = $1 AND session_key = $2', [botId, key]);
@@ -115,17 +114,15 @@ async function usePostgresAuthState(botId) {
   };
 }
 
-// ================= সাবডোমেন রাউটার (qd.je চিরতরে বাদ) =================
+// ================= সাবডোমেন রাউটার =================
 app.use(async (req, res, next) => {
-  // API বা Admin হলে পাস করবে
   if (req.path.startsWith('/api/') || req.path === '/admin') return next();
 
-  // Host বিশ্লেষণ
   const rawHost = req.headers['x-forwarded-host'] || req.headers.host || '';
   const host = rawHost.toLowerCase().split(':')[0].trim();
-  const targetDomains = ['sojib.de5.net', 'sojub.cc.cd']; // qd.je বাদ
+  const targetDomains = ['sojib.de5.net', 'sojub.cc.cd'];
 
-  let detectedSub = req.query.sub || null; // ?sub=daimondghor সাপোর্ট
+  let detectedSub = req.query.sub || null;
   let detectedBase = 'sojib.de5.net';
 
   for (const base of targetDomains) {
@@ -138,7 +135,6 @@ app.use(async (req, res, next) => {
 
   if (detectedSub && !['admin', 'api', 'dashboard', 'mail', 'www'].includes(detectedSub)) {
     try {
-      // বটের তথ্য ডাটাবেজ থেকে উদ্ধার
       const botRes = await pool.query(
         `SELECT b.*, h.theme_color 
          FROM whatsapp_bots b 
@@ -150,7 +146,12 @@ app.use(async (req, res, next) => {
 
       if (botRes.rows.length > 0) {
         const bot = botRes.rows[0];
-        return res.send(generateUserBrandedDashboard(bot, `${detectedSub}.${detectedBase}`));
+        // পেমেন্ট নাম্বার লোড
+        const pNumRes = await pool.query('SELECT key, value FROM admin_settings WHERE key IN (\'bkash_no\', \'nagad_no\', \'rocket_no\')');
+        const payConfig = {};
+        pNumRes.rows.forEach(r => payConfig[r.key] = r.value);
+
+        return res.send(generateUserBrandedDashboard(bot, `${detectedSub}.${detectedBase}`, payConfig));
       }
     } catch (err) {
       console.error('[ROUTER ERROR]:', err);
@@ -159,138 +160,242 @@ app.use(async (req, res, next) => {
   next();
 });
 
-// ================= সম্পূর্ণ প্রিমিয়াম ইউজার ড্যাশবোর্ড জেনারেটর =================
-function generateUserBrandedDashboard(bot, fullUrl) {
-  const primaryColor = bot.theme_color || '#38bdf8';
+// ================= সম্পূর্ণ প্রিমিয়াম ইউজার ড্যাশবোর্ড (White & Soft Mint) =================
+function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
+  const primaryColor = bot.theme_color || '#10b981';
   const typeTitle = bot.bot_type === 'personal' ? 'ব্যক্তিগত AI সহকারী' : (bot.bot_type === 'business_no_site' ? 'শপ অ্যাসিস্ট্যান্ট' : 'ই-কমার্স সেলস বট');
+  const bkash = payConfig.bkash_no || '01409084819';
+  const nagad = payConfig.nagad_no || '01409084819';
+  const rocket = payConfig.rocket_no || '01409084819';
 
   return `<!DOCTYPE html>
 <html lang="bn">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${bot.bot_name} — Control Center</title>
-  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+  <title>${bot.bot_name} — AI Control Center</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
   <style>
-    :root { --primary: ${primaryColor}; --bg: #09090b; --card: #18181b; --border: #27272a; --text: #fafafa; }
-    * { box-sizing: border-box; margin:0; padding:0; font-family: 'Hind Siliguri', sans-serif; }
+    :root {
+      --primary: ${primaryColor};
+      --primary-soft: #ecfdf5;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --muted: #64748b;
+    }
+    * { box-sizing: border-box; margin:0; padding:0; font-family: 'Plus Jakarta Sans', 'Hind Siliguri', sans-serif; }
     body { background: var(--bg); color: var(--text); padding: 15px; }
-    .container { max-width: 800px; margin: 0 auto; }
-    .header { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
-    .brand-title { font-size: 22px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px; }
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
-    .card h3 { font-size: 16px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; color: var(--primary); }
-    .form-group { margin-bottom: 15px; }
-    label { display: block; font-size: 13px; color: #a1a1aa; margin-bottom: 6px; }
-    input, select { width: 100%; padding: 12px; background: #000; border: 1px solid var(--border); border-radius: 8px; color: #fff; font-size: 14px; outline: none; }
-    button { width: 100%; padding: 12px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; }
+    .container { max-width: 850px; margin: 0 auto; }
     
-    /* Stats Grid */
-    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-    .stat-box { background: #000; border: 1px solid var(--border); border-radius: 10px; padding: 15px; text-align: center; }
-    .stat-val { font-size: 24px; font-weight: 700; color: var(--primary); margin-top: 4px; }
-    .stat-lbl { font-size: 12px; color: #a1a1aa; }
+    .header {
+      background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px;
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+      box-shadow: 0 4px 20px -2px rgba(0,0,0,0.03);
+    }
+    .brand-title { font-size: 20px; font-weight: 800; color: #047857; display: flex; align-items: center; gap: 8px; }
+    .status-badge { font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 30px; }
+    .status-badge.connected { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .status-badge.disconnected { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
 
-    /* Terminal Logs */
-    .terminal-window { background: #000; border: 1px solid #27272a; border-radius: 8px; padding: 12px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 13px; }
-    .log-line { margin-bottom: 6px; display: flex; gap: 8px; }
-    .log-time { color: #71717a; }
-    .log-msg { color: #e4e4e7; }
-    .log-msg.success { color: #4ade80; }
-    .log-msg.info { color: #38bdf8; }
-    .log-msg.warn { color: #fbbf24; }
+    .card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 22px;
+      margin-bottom: 20px; box-shadow: 0 4px 20px -2px rgba(0,0,0,0.03);
+    }
+    .card h3 { font-size: 16px; font-weight: 700; color: #065f46; display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
 
-    /* Code Box */
-    .code-box { background: #000; border: 2px dashed var(--primary); padding: 16px; border-radius: 10px; text-align: center; margin-top: 15px; display: none; }
-    .code-text { font-size: 26px; font-weight: 800; letter-spacing: 5px; color: #4ade80; font-family: monospace; }
-    .color-picker-box { display: flex; gap: 10px; margin-top: 10px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .stat-box { background: #f8fafc; border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; }
+    .stat-val { font-size: 26px; font-weight: 800; color: #059669; margin-top: 4px; }
+    .stat-lbl { font-size: 12px; color: var(--muted); font-weight: 600; }
+
+    .form-group { margin-bottom: 14px; }
+    label { display: block; font-size: 13px; color: #334155; margin-bottom: 6px; font-weight: 600; }
+    input, select {
+      width: 100%; padding: 12px 14px; background: #ffffff; border: 1px solid var(--border);
+      border-radius: 10px; font-size: 14px; color: #0f172a; outline: none; transition: 0.2s;
+    }
+    input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15); }
+
+    button {
+      width: 100%; padding: 13px; background: #059669; color: #fff; border: none;
+      border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 14px;
+      transition: 0.2s;
+    }
+    button:hover { background: #047857; }
+
+    .code-box {
+      background: #f0fdf4; border: 2px dashed #059669; padding: 16px; border-radius: 12px;
+      text-align: center; margin-top: 15px; display: none;
+    }
+    .code-val { font-size: 28px; font-weight: 800; letter-spacing: 6px; color: #047857; font-family: monospace; }
+
+    .terminal-window {
+      background: #0f172a; border-radius: 10px; padding: 14px; height: 180px; overflow-y: auto;
+      font-family: monospace; font-size: 13px; color: #f8fafc;
+    }
+    .log-line { margin-bottom: 6px; }
+    .log-time { color: #64748b; margin-right: 6px; }
+
+    .payment-box {
+      background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 16px; margin-top: 14px;
+    }
+    .pay-methods { display: flex; gap: 8px; margin-bottom: 12px; }
+    .pay-badge {
+      flex: 1; text-align: center; padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 700;
+      border: 1px solid var(--border); cursor: pointer; background: #fff;
+    }
+    .pay-badge.active { background: #ecfdf5; border-color: #059669; color: #059669; }
+
     .color-dot { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }
+    .color-picker { display: flex; gap: 10px; margin-top: 10px; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
       <div>
-        <div class="brand-title"><i class="ti ti-robot"></i> ${bot.bot_name}</div>
-        <p style="font-size:12px; color:#a1a1aa;">🔗 ডোমেইন: ${fullUrl} | মোড: ${typeTitle}</p>
+        <div class="brand-title"><i class="ti ti-brand-whatsapp" style="color:#25d366; font-size:26px;"></i> ${bot.bot_name}</div>
+        <p style="font-size:12px; color:var(--muted); margin-top:4px;">
+          🌐 ডোমেইন: <a href="https://${fullUrl}" target="_blank" style="color:#059669; font-weight:600;">${fullUrl}</a> | প্ল্যান: <b>${bot.plan ? bot.plan.toUpperCase() : 'FREE'}</b>
+        </p>
       </div>
-      <div style="font-size:12px; color:#4ade80; background:rgba(74,222,128,0.1); padding:5px 12px; border-radius:20px; border:1px solid #16a34a;">
+      <span class="status-badge ${bot.status === 'CONNECTED' ? 'connected' : 'disconnected'}">
         ● ${bot.status || 'DISCONNECTED'}
-      </div>
+      </span>
     </div>
 
-    <!-- 📊 API & Token Usage Stats -->
+    <!-- 📊 লাইভ স্ট্যাটাস মিটার ও প্রেশার গার্ড -->
     <div class="stats-grid">
       <div class="stat-box">
-        <div class="stat-lbl">মোট টোকেন খরচ (Total Tokens)</div>
+        <div class="stat-lbl">মোট টোকেন খরচ</div>
         <div class="stat-val" id="tokenVal">${bot.tokens_used || 0}</div>
       </div>
       <div class="stat-box">
-        <div class="stat-lbl">আজকের মোট মেসেজ (Requests Today)</div>
+        <div class="stat-lbl">আজকের মোট মেসেজ</div>
         <div class="stat-val" id="reqVal">${bot.requests_today || 0}</div>
       </div>
+      <div class="stat-box">
+        <div class="stat-lbl">ডেইলি লিমিট (Server Guard)</div>
+        <div class="stat-val" style="color:#d97706;">${bot.rate_limit_daily || 300}</div>
+      </div>
     </div>
 
-    <!-- 📲 WhatsApp Linking & Pairing Code -->
+    <!-- 📲 WhatsApp পেয়ারিং কোড সেকশন -->
     <div class="card">
-      <h3><i class="ti ti-brand-whatsapp"></i> হোয়াটসঅ্যাপ কানেক্ট করুন (Pairing Code)</h3>
+      <h3><i class="ti ti-qrcode"></i> WhatsApp লিঙ্ক করুন (Pairing Code)</h3>
       <div class="form-group">
-        <label>আপনার হোয়াটসঅ্যাপ মোবাইল নম্বর (যেমন: 88017...):</label>
+        <label>আপনার মোবাইল নম্বর (দেশীয় কোড সহ যেমন: 88017...):</label>
         <input type="text" id="phoneInput" placeholder="8801XXXXXXXXX" value="${bot.phone_number || ''}">
       </div>
-      <button onclick="requestPairingCode(${bot.id})"><i class="ti ti-key"></i> পেয়ারিং কোড জেনারেট করুন</button>
+      <button onclick="requestPairingCode(${bot.id})"><i class="ti ti-key"></i> পেয়ারিং কোড তৈরি করুন</button>
 
       <div id="codeBanner" class="code-box">
-        <div style="font-size:12px; color:var(--primary); margin-bottom:5px;">WHATSAPP PAIRING CODE:</div>
-        <div id="codeDisplay" class="code-text">----</div>
-        <p style="font-size:12px; color:#a1a1aa; margin-top:8px;">হোয়াটসঅ্যাপের Linked Devices ➔ Link with phone number-এ কোডটি লিখুন।</p>
+        <div style="font-size:12px; color:#047857; font-weight:700; margin-bottom:4px;">LINKING CODE:</div>
+        <div id="codeDisplay" class="code-val">----</div>
+        <p style="font-size:12px; color:#475569; margin-top:6px;">WhatsApp ➔ Linked Devices ➔ Link with phone number-এ কোডটি দিন।</p>
       </div>
     </div>
 
-    <!-- 📜 লাইভ কনসোল লগ উইন্ডো -->
+    <!-- 💳 প্রিমিয়াম আপগ্রেড ও পেমেন্ট ভেরিফিকেশন (bKash, Nagad, Rocket) -->
     <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <h3 style="margin:0;"><i class="ti ti-terminal-2"></i> লাইভ অ্যাক্টিভিটি লগ (Live Console)</h3>
-        <span style="font-size:11px; color:#4ade80;">● Auto-updating</span>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3><i class="ti ti-crown" style="color:#d97706;"></i> প্রিমিয়াম আপগ্রেড ও পেমেন্ট সিস্টেম</h3>
+        <span style="font-size:12px; color:#059669; font-weight:700;">ফি: ৳৩০০ / মাস</span>
       </div>
-      <div class="terminal-window" id="terminalBox">
-        <div class="log-line"><span class="log-time">[System]</span><span class="log-msg info">লগ টার্মিনাল সক্রিয়...</span></div>
+      <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">
+        আনলিমিটেড মেসেজ, আমাদের সুপারফাস্ট সেন্ট্রাল API এবং প্রায়োরিটি রেসপন্সের জন্য টাকা পাঠিয়ে TrxID দিন:
+      </p>
+
+      <div class="pay-methods">
+        <div class="pay-badge active" id="badge-bkash" onclick="selectPay('bKash', '${bkash}')">bKash (Personal)</div>
+        <div class="pay-badge" id="badge-nagad" onclick="selectPay('Nagad', '${nagad}')">Nagad (Personal)</div>
+        <div class="pay-badge" id="badge-rocket" onclick="selectPay('Rocket', '${rocket}')">Rocket (Personal)</div>
+      </div>
+
+      <div class="payment-box">
+        <div style="font-size:13px; font-weight:700; color:#0f172a; margin-bottom:6px;" id="sendNumberNotice">
+          👉 bKash পাঠান: <span style="color:#059669; font-size:15px;">${bkash}</span> (Send Money)
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+          <input type="text" id="senderNumber" placeholder="যে নম্বর থেকে পাঠিয়েছেন">
+          <input type="text" id="trxId" placeholder="Transaction ID (TrxID)">
+        </div>
+        <button onclick="submitPayment(${bot.id})" style="background:#0284c7; margin-top:10px;">
+          <i class="ti ti-send"></i> ভেরিফিকেশনের জন্য জমা দিন
+        </button>
+        <p style="font-size:11px; color:#64748b; margin-top:6px; text-align:center;">
+          *অ্যাডমিন ম্যানুয়ালি যাচাই করে অনুমোদন করলেই অ্যাকাউন্ট প্রিমিয়াম হবে।
+        </p>
       </div>
     </div>
 
     <!-- 🔑 ইউজারের নিজস্ব Gemini API Key সেটিংস -->
     <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <h3 style="margin:0;"><i class="ti ti-key"></i> আপনার নিজস্ব Gemini API Key</h3>
-        <span style="font-size:11px; padding:3px 8px; border-radius:5px; background:rgba(56,189,248,0.15); color:var(--primary);" id="keyBadge">
-          ${bot.gemini_api_key ? '✅ নিজস্ব API Key সক্রিয়' : 'ℹ️ প্ল্যাটফর্ম ডিফল্ট Key'}
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <h3><i class="ti ti-key"></i> নিজস্ব Gemini API Key</h3>
+        <span style="font-size:11px; font-weight:700; color:#059669;">
+          ${bot.gemini_api_key ? '✅ নিজস্ব Key সক্রিয়' : 'ℹ️ প্ল্যাটফর্ম ডিফল্ট Key'}
         </span>
       </div>
-      <p style="font-size:13px; color:#a1a1aa; margin-bottom:10px;">আপনার নিজস্ব Gemini API Key দিলে কোনো লিমিট ছাড়া বট চলবে:</p>
+      <p style="font-size:13px; color:var(--muted); margin-bottom:10px;">নিজের ফ্রি API Key দিলে কোনো ফি ছাড়াই বট আনলিমিটেড ব্যবহার করতে পারবেন:</p>
       <div class="form-group">
         <input type="password" id="apiKeyInput" placeholder="AIzaSy..." value="${bot.gemini_api_key || ''}">
       </div>
       <button onclick="saveApiKey(${bot.id})"><i class="ti ti-device-floppy"></i> API Key সংরক্ষণ করুন</button>
     </div>
 
-    <!-- 🎨 ড্যাশবোর্ড কালার চেঞ্জ -->
+    <!-- 📜 লাইভ কনসোল লগ -->
     <div class="card">
-      <h3><i class="ti ti-palette"></i> ড্যাশবোর্ডের রঙ পরিবর্তন করুন</h3>
-      <p style="font-size:13px; color:#a1a1aa;">আপনার পছন্দের নিয়ন থিম সিলেক্ট করুন:</p>
-      <div class="color-picker-box">
-        <div class="color-dot" style="background:#38bdf8;" onclick="changeTheme('#38bdf8')"></div>
-        <div class="color-dot" style="background:#10b981;" onclick="changeTheme('#10b981')"></div>
-        <div class="color-dot" style="background:#a855f7;" onclick="changeTheme('#a855f7')"></div>
-        <div class="color-dot" style="background:#ef4444;" onclick="changeTheme('#ef4444')"></div>
-        <div class="color-dot" style="background:#f59e0b;" onclick="changeTheme('#f59e0b')"></div>
-        <div class="color-dot" style="background:#ec4899;" onclick="changeTheme('#ec4899')"></div>
+      <h3><i class="ti ti-terminal"></i> লাইভ অ্যাক্টিভিটি টার্মিনাল</h3>
+      <div class="terminal-window" id="terminalBox">
+        <div class="log-line"><span class="log-time">[System]</span> টার্মিনাল প্রস্তুত...</div>
       </div>
+    </div>
+
+    <!-- 🎨 হালকা রঙের থিম প্যালেট -->
+    <div class="card">
+      <h3><i class="ti ti-palette"></i> অ্যাকসেন্ট কালার পরিবর্তন</h3>
+      <div class="color-picker">
+        <div class="color-dot" style="background:#10b981;" onclick="changeTheme('#10b981')"></div>
+        <div class="color-dot" style="background:#0284c7;" onclick="changeTheme('#0284c7')"></div>
+        <div class="color-dot" style="background:#8b5cf6;" onclick="changeTheme('#8b5cf6')"></div>
+        <div class="color-dot" style="background:#f43f5e;" onclick="changeTheme('#f43f5e')"></div>
+        <div class="color-dot" style="background:#d97706;" onclick="changeTheme('#d97706')"></div>
+      </div>
+    </div>
+
+    <!-- ব্র্যান্ডিং ফুটার -->
+    <div style="text-align:center; padding:20px; font-size:12px; color:var(--muted);">
+      Platform by <b>Sojib</b> • WhatsApp: <a href="https://wa.me/8801409084819" target="_blank" style="color:#059669;">01409084819</a> • TikTok: <a href="https://tiktok.com/@sojib..music" target="_blank" style="color:#059669;">@sojib..music</a>
     </div>
   </div>
 
   <script>
-    // লাইভ লগ ও স্ট্যাটস অটো-ফেচিং
+    let currentMethod = 'bKash';
+    function selectPay(method, number) {
+      currentMethod = method;
+      document.querySelectorAll('.pay-badge').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('sendNumberNotice').innerHTML = '👉 ' + method + ' পাঠান: <span style="color:#059669; font-size:15px;">' + number + '</span> (Send Money)';
+    }
+
+    async function submitPayment(botId) {
+      const sender = document.getElementById('senderNumber').value.trim();
+      const trxId = document.getElementById('trxId').value.trim();
+      if(!sender || !trxId) return alert('সেন্ডার নম্বর এবং TrxID দিন!');
+
+      const res = await fetch('/api/user/submit-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ botId, method: currentMethod, sender, trxId })
+      });
+      const data = await res.json();
+      alert(data.message);
+    }
+
     async function fetchLiveUpdates() {
       try {
         const res = await fetch('/api/user/bot-logs?botId=${bot.id}');
@@ -298,7 +403,7 @@ function generateUserBrandedDashboard(bot, fullUrl) {
         if (data.success) {
           if (data.logs && data.logs.length > 0) {
             document.getElementById('terminalBox').innerHTML = data.logs.map(l => 
-              \`<div class="log-line"><span class="log-time">[\${l.time}]</span> <span class="log-msg \${l.type}">\${l.message}</span></div>\`
+              \`<div class="log-line"><span class="log-time">[\${l.time}]</span> \${l.message}</div>\`
             ).join('');
           }
           if (data.stats) {
@@ -319,10 +424,7 @@ function generateUserBrandedDashboard(bot, fullUrl) {
         body: JSON.stringify({ botId, apiKey })
       });
       const data = await res.json();
-      if(data.success) {
-        alert('✅ API Key সফলভাবে আপডেট হয়েছে!');
-        document.getElementById('keyBadge').innerText = apiKey ? '✅ নিজস্ব API Key সক্রিয়' : 'ℹ️ প্ল্যাটফর্ম ডিফল্ট Key';
-      }
+      alert(data.message);
     }
 
     async function requestPairingCode(botId) {
@@ -358,8 +460,15 @@ function generateUserBrandedDashboard(bot, fullUrl) {
 </html>`;
 }
 
-// ================= AI মেসেজ এক্সিকিউশন (টোকেন কাউন্ট সহ) =================
+// ================= AI মেসেজ এক্সিকিউশন (টোকেন কাউন্ট ও লিমিট গার্ড) =================
 async function executeGeminiForTenant(botRow, userPrompt, systemPrompt, imageBuffer = null, imageMime = 'image/jpeg') {
+  // প্রেশার লিমিট চেক (Daily Rate Limit)
+  const dailyLimit = botRow.rate_limit_daily || 300;
+  if ((botRow.requests_today || 0) >= dailyLimit && botRow.plan !== 'premium') {
+    addBotLog(botRow.id, 'warn', `⚠️ আজকের ফ্রি লিমিট (${dailyLimit} মেসেজ) শেষ! প্রিমিয়াম আপগ্রেড করুন।`);
+    return 'ভাইয়া, আজকের জন্য আমাদের স্বয়ংক্রিয় এআই সেবার ফ্রি লিমিট শেষ হয়ে গিয়েছে। আরও দ্রুত ও আনলিমিটেড সেবার জন্য অনুগ্রহ করে অ্যাডমিনের সাথে যোগাযোগ করুন ❤️';
+  }
+
   let reply = '';
   let usedTokens = 0;
 
@@ -378,7 +487,7 @@ async function executeGeminiForTenant(botRow, userPrompt, systemPrompt, imageBuf
       reply = response.text?.trim() || response.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
       usedTokens = response.usageMetadata?.totalTokenCount || 50;
     } catch (err) {
-      addBotLog(botRow.id, 'warn', `ইউজার কী ব্যর্থ: ${err.message} (সেন্ট্রাল কী দিয়ে ট্রাই হচ্ছে)`);
+      addBotLog(botRow.id, 'warn', `ইউজার কী ব্যর্থ: ${err.message} (সেন্ট্রাল কী ট্রাই হচ্ছে)`);
     }
   }
 
@@ -387,7 +496,6 @@ async function executeGeminiForTenant(botRow, userPrompt, systemPrompt, imageBuf
     usedTokens = 45;
   }
 
-  // ডাটাবেজে টোকেন এবং রিকোয়েস্ট কাউন্টার আপডেট
   try {
     await pool.query(
       `UPDATE whatsapp_bots 
@@ -441,7 +549,7 @@ async function handleDynamicCustomerMessage(botRow, customerPhone, text, sock, i
 
   let systemPrompt = '';
   if (botRow.bot_type === 'personal') {
-    systemPrompt = `তুমি ${botRow.bot_name} এর অত্যন্ত বুদ্ধিমান ও মিষ্টি ব্যক্তিগত সহকারী (Personal AI Assistant)। ব্যবহারকারীর পরিচয়: ${botRow.system_prompt || 'ব্যক্তিগত ইউজার'}। কাস্টমারকে "ভাইয়া" সম্বোধন করবে। পূর্ববর্তী হিস্ট্রি: ${conversationHistoryText}`;
+    systemPrompt = `তুমি ${botRow.bot_name} এর অত্যন্ত বুদ্ধিমান ও মিষ্টি ব্যক্তিগত সহকারী (Personal AI Assistant)। ব্যবহারকারীর পরিচয়: ${botRow.system_prompt || 'ব্যক্তিগত ইউজার'}। কাস্টমারকে "ভাইয়া" সম্বোধন করবে। হিস্ট্রি: ${conversationHistoryText}`;
   } else if (botRow.bot_type === 'business_no_site') {
     systemPrompt = `তুমি ${botRow.bot_name} এর সেলস অ্যাসিস্ট্যান্ট। দোকান ও পণ্যের বিবরণ: ${botRow.system_prompt}। ডেলিভারি: ভেতরে ৳${botRow.delivery_inside || 70}, বাইরে ৳${botRow.delivery_outside || 130}। হিস্ট্রি: ${conversationHistoryText}`;
   } else {
@@ -494,7 +602,7 @@ async function startTenantBot(botId) {
       if (connection === 'close') {
         if (b) b.state.connected = false;
         await pool.query("UPDATE whatsapp_bots SET status = 'DISCONNECTED' WHERE id = $1", [botId]);
-        addBotLog(botId, 'warn', '⚠️ সেশন সাময়িক ডিসকানেক্ট। রি-কানেক্ট হচ্ছে...');
+        addBotLog(botId, 'warn', '⚠️ সেশন ডিসকানেক্ট। রি-কানেক্টের চেষ্টা চলছে...');
         if (lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut) {
           setTimeout(() => startTenantBot(botId), 10000);
         }
@@ -525,7 +633,7 @@ async function startTenantBot(botId) {
         const isImage = Boolean(msgContent.imageMessage);
         if (!text && !isAudio && !isImage) return;
 
-        // 🛡️ ANTI-BAN হিউম্যান রিডিং ডিলে
+        // 🛡️ হিউম্যান রিডিং ডিলে
         await delay(1200 + Math.random() * 800);
         try {
           await sock.readMessages([msg.key]);
@@ -576,7 +684,7 @@ async function startTenantBot(botId) {
 
 // ================= API ENDPOINTS =================
 
-// ১. ড্যাশবোর্ড তৈরি
+// ১. বট ও ড্যাশবোর্ড তৈরি
 app.post('/api/launch-bot-dashboard', async (req, res) => {
   try {
     const { bot_type, bot_name, website_url, custom_info, subdomain, base_domain } = req.body;
@@ -593,10 +701,9 @@ app.post('/api/launch-bot-dashboard', async (req, res) => {
       extractedProducts = siteKnowledge.products || [];
     }
 
-    // বটের রো তৈরি (subdomain সরাসরি সেভ হচ্ছে)
     const botInsert = await pool.query(
-      `INSERT INTO whatsapp_bots (bot_name, website_url, system_prompt, bot_type, subdomain, status)
-       VALUES ($1, $2, $3, $4, $5, 'DISCONNECTED') RETURNING id`,
+      `INSERT INTO whatsapp_bots (bot_name, website_url, system_prompt, bot_type, subdomain, status, rate_limit_daily, plan)
+       VALUES ($1, $2, $3, $4, $5, 'DISCONNECTED', 300, 'free') RETURNING id`,
       [bot_name || 'My Bot', website_url || '', finalPrompt, bot_type || 'personal', cleanSub]
     );
     const botId = botInsert.rows[0].id;
@@ -611,12 +718,12 @@ app.post('/api/launch-bot-dashboard', async (req, res) => {
 
     await pool.query(
       `INSERT INTO hosted_websites (subdomain, base_domain, bot_id, theme_color)
-       VALUES ($1, $2, $3, '#38bdf8')
+       VALUES ($1, $2, $3, '#10b981')
        ON CONFLICT (subdomain, base_domain) DO UPDATE SET bot_id = $3`,
       [cleanSub, base_domain || 'sojib.de5.net', botId]
     );
 
-    addBotLog(botId, 'info', `🚀 ড্যাশবোর্ড সক্রিয় হয়েছে!`);
+    addBotLog(botId, 'info', `🚀 ড্যাশবোর্ড তৈরি সম্পন্ন!`);
 
     res.json({
       success: true,
@@ -628,7 +735,7 @@ app.post('/api/launch-bot-dashboard', async (req, res) => {
   }
 });
 
-// ২. ড্যাশবোর্ডের লাইভ লগ ও টোকেন স্ট্যাটস ফেচ করা
+// ২. ড্যাশবোর্ডের লাইভ লগ ও স্ট্যাটস
 app.get('/api/user/bot-logs', async (req, res) => {
   const botId = Number(req.query.botId);
   const logs = botLiveLogs.get(botId) || [];
@@ -643,19 +750,37 @@ app.get('/api/user/bot-logs', async (req, res) => {
   res.json({ success: true, logs, stats });
 });
 
-// ৩. API Key আপডেট
-app.post('/api/user/update-api-key', async (req, res) => {
+// ৩. ইউজার পেমেন্ট সাবমিট (TrxID)
+app.post('/api/user/submit-payment', async (req, res) => {
   try {
-    const { botId, apiKey } = req.body;
-    await pool.query('UPDATE whatsapp_bots SET gemini_api_key = $1 WHERE id = $2', [apiKey ? apiKey.trim() : null, botId]);
-    addBotLog(botId, 'success', apiKey ? '🔑 নতুন Gemini API Key সংযুক্ত হয়েছে।' : 'ℹ️ প্ল্যাটফর্ম ডিফল্ট Key সক্রিয়।');
-    res.json({ success: true });
+    const { botId, method, sender, trxId } = req.body;
+    if (!trxId || !sender) return res.status(400).json({ success: false, message: 'সব তথ্য দিন।' });
+
+    await pool.query(
+      `INSERT INTO payments (bot_id, payment_method, sender_number, trx_id, amount, status)
+       VALUES ($1, $2, $3, $4, 300, 'PENDING')`,
+      [botId, method, sender, trxId]
+    );
+    addBotLog(botId, 'info', `💳 ৳৩০০ (${method}) পেমেন্ট সাবমিট হয়েছে (TrxID: ${trxId}) — পেন্ডিং`);
+    res.json({ success: true, message: '✅ পেমেন্ট তথ্য জমা হয়েছে! অ্যাডমিন যাচাই করে প্রিমিয়াম সক্রিয় করবেন।' });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });
   }
 });
 
-// ৪. পেয়ারিং কোড রিকোয়েস্ট
+// ৪. API Key আপডেট
+app.post('/api/user/update-api-key', async (req, res) => {
+  try {
+    const { botId, apiKey } = req.body;
+    await pool.query('UPDATE whatsapp_bots SET gemini_api_key = $1 WHERE id = $2', [apiKey ? apiKey.trim() : null, botId]);
+    addBotLog(botId, 'success', apiKey ? '🔑 নতুন Gemini API Key যুক্ত হয়েছে।' : 'ℹ️ প্ল্যাটফর্ম ডিফল্ট Key সক্রিয়।');
+    res.json({ success: true, message: '✅ API Key সংরক্ষিত হয়েছে!' });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// ৫. পেয়ারিং কোড রিকোয়েস্ট
 app.post('/api/request-pairing-code', async (req, res) => {
   try {
     const { botId, phone } = req.body;
@@ -672,7 +797,7 @@ app.post('/api/request-pairing-code', async (req, res) => {
     if (botObj && botObj.sock && !botObj.sock.authState.creds.registered) {
       await delay(1500);
       const code = await botObj.sock.requestPairingCode(cleanPhone);
-      addBotLog(botId, 'info', `📲 পেয়ারিং কোড তৈরি: ${code}`);
+      addBotLog(botId, 'info', `📲 পেয়ারিং কোড: ${code}`);
       return res.json({ success: true, pairingCode: code });
     }
     return res.status(400).json({ success: false, message: 'বট ইতিমধ্যে সংযুক্ত রয়েছে।' });
@@ -681,7 +806,7 @@ app.post('/api/request-pairing-code', async (req, res) => {
   }
 });
 
-// ৫. থিম কালার আপডেট
+// ৬. থিম কালার আপডেট
 app.post('/api/user/update-theme', async (req, res) => {
   try {
     const { botId, themeColor } = req.body;
@@ -692,34 +817,72 @@ app.post('/api/user/update-theme', async (req, res) => {
   }
 });
 
-// ================= SUPER ADMIN ENDPOINTS (Auto Rebalancing) =================
+// ================= SUPER ADMIN ENDPOINTS =================
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
 
 app.get('/api/admin/overview', async (req, res) => {
   try {
-    const users = await pool.query('SELECT * FROM users');
     const bots = await pool.query('SELECT * FROM whatsapp_bots ORDER BY id DESC');
     const servers = await pool.query('SELECT * FROM worker_servers ORDER BY id DESC');
-    res.json({ success: true, users: users.rows, bots: bots.rows, servers: servers.rows });
+    const payments = await pool.query('SELECT p.*, b.bot_name FROM payments p LEFT JOIN whatsapp_bots b ON p.bot_id = b.id ORDER BY p.id DESC');
+    const settings = await pool.query('SELECT key, value FROM admin_settings');
+    res.json({ success: true, bots: bots.rows, servers: servers.rows, payments: payments.rows, settings: settings.rows });
   } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// 🔄 সার্ভারে বেশি চাপ পড়লে এক ক্লিকে ইউজার ভাগ করে দেওয়া (Auto-Rebalance)
+// অ্যাডমিন থেকে পেমেন্ট অ্যাপ্রুভ (১-ক্লিকে প্রিমিয়াম সক্রিয়)
+app.post('/api/admin/approve-payment', async (req, res) => {
+  try {
+    const { paymentId } = req.body;
+    const payRes = await pool.query('SELECT bot_id FROM payments WHERE id = $1', [paymentId]);
+    if (payRes.rows.length === 0) return res.status(404).json({ success: false });
+    const botId = payRes.rows[0].bot_id;
+
+    await pool.query('UPDATE payments SET status = \'APPROVED\' WHERE id = $1', [paymentId]);
+    await pool.query('UPDATE whatsapp_bots SET plan = \'premium\', rate_limit_daily = 5000 WHERE id = $1', [botId]);
+    addBotLog(botId, 'success', '🎉 অভিনন্দন! অ্যাডমিন আপনার পেমেন্ট ভেরিফাই করেছেন এবং প্রিমিয়াম সক্রিয় হয়েছে!');
+    res.json({ success: true, message: '✅ পেমেন্ট অ্যাপ্রুভ হয়েছে এবং প্রিমিয়াম এক্টিভ হয়েছে!' });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// অ্যাডমিন থেকে ডেইলি প্রেশার লিমিট পরিবর্তন
+app.post('/api/admin/update-bot-limit', async (req, res) => {
+  try {
+    const { botId, newLimit } = req.body;
+    await pool.query('UPDATE whatsapp_bots SET rate_limit_daily = $1 WHERE id = $2', [newLimit, botId]);
+    res.json({ success: true, message: '✅ লিমিট আপডেট সম্পন্ন!' });
+  } catch (e) { res.status(500).json({ success: false }); }
+});
+
+// অ্যাডমিন পেমেন্ট নম্বর পরিবর্তন (bKash, Nagad, Rocket)
+app.post('/api/admin/update-payment-numbers', async (req, res) => {
+  try {
+    const { bkash, nagad, rocket } = req.body;
+    await pool.query('INSERT INTO admin_settings (key, value) VALUES (\'bkash_no\', $1) ON CONFLICT (key) DO UPDATE SET value = $1', [bkash]);
+    await pool.query('INSERT INTO admin_settings (key, value) VALUES (\'nagad_no\', $1) ON CONFLICT (key) DO UPDATE SET value = $1', [nagad]);
+    await pool.query('INSERT INTO admin_settings (key, value) VALUES (\'rocket_no\', $1) ON CONFLICT (key) DO UPDATE SET value = $1', [rocket]);
+    res.json({ success: true, message: '✅ পেমেন্ট নম্বর সংরক্ষিত হয়েছে!' });
+  } catch (e) { res.status(500).json({ success: false }); }
+});
+
+// 🔄 সার্ভার প্রতি ৩–৪ টি বটের স্লট ভাগ করে দেওয়া (Auto-Rebalance)
 app.post('/api/admin/rebalance-servers', async (req, res) => {
   try {
     const servers = await pool.query('SELECT id FROM worker_servers WHERE is_active = TRUE ORDER BY id ASC');
     if (servers.rows.length === 0) {
-      return res.status(400).json({ success: false, message: 'কোনো সক্রিয় ওয়ার্কার সার্ভার নেই!' });
+      return res.status(400).json({ success: false, message: 'কোনো ওয়ার্কার সার্ভার নেই!' });
     }
     const bots = await pool.query('SELECT id FROM whatsapp_bots ORDER BY id ASC');
     const srvIds = servers.rows.map(s => s.id);
 
     for (let i = 0; i < bots.rows.length; i++) {
-      const assignedSrv = srvIds[i % srvIds.length]; // সমভাবে ভাগ
+      const assignedSrv = srvIds[i % srvIds.length];
       await pool.query('UPDATE whatsapp_bots SET server_id = $1 WHERE id = $2', [assignedSrv, bots.rows[i].id]);
     }
 
-    res.json({ success: true, message: `🎉 সফল! মোট ${bots.rows.length} টি বট ${srvIds.length} টি সার্ভারে সমানভাবে ভাগ করে দেওয়া হয়েছে!` });
+    res.json({ success: true, message: `🎉 মোট ${bots.rows.length} টি বট ${srvIds.length} টি সার্ভারে (প্রতিটিতে ৩-৪ টি করে) সমানভাবে ভাগ করা হয়েছে!` });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });
   }
@@ -730,15 +893,36 @@ app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.ht
 
 // সার্ভার চালু
 app.listen(PORT, '0.0.0.0', async () => {
-  console.log(`[INFO]: 🚀 FreeSite Master Server running on port ${PORT}`);
+  console.log(`[INFO]: 🚀 FreeSite Master Node running on port ${PORT}`);
   try {
     await initializeDatabase();
-    await pool.query('ALTER TABLE whatsapp_bots ADD COLUMN IF NOT EXISTS subdomain VARCHAR(100);');
-    await pool.query('ALTER TABLE whatsapp_bots ADD COLUMN IF NOT EXISTS tokens_used INT DEFAULT 0;');
-    await pool.query('ALTER TABLE whatsapp_bots ADD COLUMN IF NOT EXISTS requests_today INT DEFAULT 0;');
-    await pool.query('ALTER TABLE whatsapp_bots ADD COLUMN IF NOT EXISTS gemini_api_key TEXT;');
-    await pool.query('ALTER TABLE hosted_websites ADD COLUMN IF NOT EXISTS bot_id INT REFERENCES whatsapp_bots(id) ON DELETE CASCADE;');
-    await pool.query('ALTER TABLE hosted_websites ADD COLUMN IF NOT EXISTS theme_color VARCHAR(30) DEFAULT \'#38bdf8\';');
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS payments (
+        id SERIAL PRIMARY KEY,
+        bot_id INT REFERENCES whatsapp_bots(id) ON DELETE CASCADE,
+        payment_method VARCHAR(50),
+        sender_number VARCHAR(50),
+        trx_id VARCHAR(100) UNIQUE,
+        amount NUMERIC(10, 2),
+        status VARCHAR(30) DEFAULT 'PENDING',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS admin_settings (
+        key VARCHAR(100) PRIMARY KEY,
+        value TEXT
+      );
+    `);
+    await pool.query('ALTER TABLE whatsapp_bots ADD COLUMN IF NOT EXISTS rate_limit_daily INT DEFAULT 300;');
+    await pool.query('ALTER TABLE whatsapp_bots ADD COLUMN IF NOT EXISTS plan VARCHAR(30) DEFAULT \'free\';');
+
+    // ডিফল্ট পেমেন্ট নম্বর সেট
+    await pool.query(`
+      INSERT INTO admin_settings (key, value) VALUES 
+      ('bkash_no', '01409084819'),
+      ('nagad_no', '01409084819'),
+      ('rocket_no', '01409084819')
+      ON CONFLICT (key) DO NOTHING;
+    `);
 
     const bots = await pool.query("SELECT id FROM whatsapp_bots WHERE status = 'CONNECTED'");
     for (const row of bots.rows) await startTenantBot(row.id);
