@@ -1,4 +1,4 @@
-<div align="center"><img src="https://media.giphy.com/media/11jGtzbG856acU/giphy.gif" width="100%" /><br />⚡ FreeSite
+<div align="center"><img src="./anime-banner.gif" width="100%" alt="FreeSite Anime Animated Banner"><br>⚡ FreeSite
 
 SaaS Website Builder & WhatsApp AI Automation Platform
 
@@ -6,188 +6,261 @@ Build Smarter. Automate Faster. Grow Without Limits.
 
 Developed with ❤️ by Sojib
 
-<p>
-  <img src="https://img.shields.io/badge/Platform-SaaS-7C3AED?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Runtime-Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" />
-  <img src="https://img.shields.io/badge/Database-Neon_PostgreSQL-00E599?style=for-the-badge&logo=postgresql&logoColor=white" />
-  <img src="https://img.shields.io/badge/Automation-WhatsApp_AI-25D366?style=for-the-badge&logo=whatsapp&logoColor=white" />
-  <img src="https://img.shields.io/badge/Status-Development-0EA5E9?style=for-the-badge" />
-</p>"🌐 Website" (#) • "📱 WhatsApp" (https://wa.me/8801409084819) • "🎵 TikTok" (https://tiktok.com/@sojib..music)
+<br>""WhatsApp" (https://img.shields.io/badge/WhatsApp-01409084819-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)" (https://wa.me/8801409084819)
+""TikTok" (https://img.shields.io/badge/TikTok-@sojib..music-black?style=for-the-badge&logo=tiktok&logoColor=white)" (https://tiktok.com/@sojib..music)
 
-</div>---
+"Platform" (https://img.shields.io/badge/Platform-SaaS-8B5CF6?style=for-the-badge)
+"Node.js" (https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+"Database" (https://img.shields.io/badge/Database-Neon_PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+"AI" (https://img.shields.io/badge/AI-Gemini-4285F4?style=for-the-badge)
+"Status" (https://img.shields.io/badge/Status-In_Development-orange?style=for-the-badge)
 
-✨ About The Project
+---
 
-FreeSite is a multi-tenant SaaS platform designed to make website management and WhatsApp AI automation easier.
+One Platform. Multiple Services. Intelligent Automation.
 
-Users can connect their websites, configure personalized AI assistants, manage product catalogs, automate customer conversations, and control their services from a centralized dashboard.
+</div>🌟 About The Project
 
-The platform focuses on scalability, automation, security, and a simple user experience.
+FreeSite is a modern Multi-Tenant SaaS platform designed to combine website integration, AI-powered customer assistance, and WhatsApp automation into one centralized ecosystem.
+
+The platform allows users to connect their websites, configure personalized AI assistants, manage product catalogs, automate customer conversations, and control their services through a modern dashboard.
+
+Our vision is to make website management and business automation accessible through a single platform.
+
+---
 
 🚀 Core Features
 
-🌐 Website Integration
+🌐 01. Website Integration Engine
 
 - Connect websites using a URL.
-- Automatically discover and extract publicly accessible product information.
+- Automatic website analysis.
+- Discover publicly accessible products.
+- Extract product names and prices.
+- Collect product images and links.
 - Generate structured product catalogs.
-- Support e-commerce and general-purpose websites.
-- Manage connected website information.
+- Support compatible e-commerce websites.
+- Manage multiple website connections.
 
-🤖 Personalized WhatsApp AI
+🤖 02. WhatsApp AI Automation
 
-- Individual AI assistants for each user.
-- Personalized bot name, personality, and system prompt.
+- Individual AI assistants for users.
+- Personalized bot names.
+- Custom AI personality and system prompts.
 - Natural conversational responses.
-- Product information and pricing assistance.
-- Custom delivery charge configuration.
+- AI-powered customer support.
+- Automatic customer inquiry handling.
+- Product information assistance.
 - Human support handover.
+- Individual WhatsApp session management.
 
-🛍️ Smart Product Assistant
+🛍️ 03. Smart Product Assistant
 
-- Automatic product catalog generation.
-- Product name and price extraction.
-- Product image and website link support.
-- Product search and recommendation.
-- Budget-based product suggestions.
+- Automatic product discovery.
+- Product catalog synchronization.
+- Intelligent product search.
+- Accurate product price retrieval.
+- Product image sharing.
+- Direct product link sharing.
+- Budget-based recommendations.
+- Product availability assistance.
 
-💳 Payment & Subscription Management
+💳 04. Payment & Subscription System
 
 - bKash payment support.
 - Nagad payment support.
 - Rocket payment support.
 - Manual Transaction ID submission.
 - Admin payment verification.
-- Subscription status management.
+- Subscription activation.
+- Subscription expiration management.
+- Flexible pricing configuration.
+- Payment history.
 
-🛡️ Security & Traffic Management
+🛡️ 05. Security & Traffic Management
 
 - API rate limiting.
 - Daily request limits.
 - User-level resource restrictions.
-- Server load monitoring.
-- Authentication and session management.
-- Secure API communication.
+- Secure authentication.
+- Session management.
+- API access control.
+- Server-side validation.
+- Activity logging.
+- Error monitoring.
 
-🖥️ Dynamic Server Management
+🖥️ 06. Dynamic Server Management
 
 - Multiple server support.
+- Dynamic server allocation.
 - Admin-controlled server capacity.
 - Maximum bot allocation per server.
 - Automatic resource assignment.
 - Server health monitoring.
-- User and bot activity tracking.
+- Bot connection monitoring.
+- Resource usage tracking.
 
-🎨 Modern Admin Dashboard
+🎨 07. Advanced Admin Dashboard
 
 - User management.
-- Subscription management.
 - Payment approval system.
-- Connected website management.
-- WhatsApp bot monitoring.
+- Subscription management.
+- Website connection monitoring.
+- WhatsApp bot management.
 - Server capacity configuration.
-- System activity logs.
+- System-wide settings.
+- User activity monitoring.
+- Platform statistics.
+- Administrative controls.
 
 ---
 
-🧠 Platform Architecture
+🧠 System Architecture
 
-The platform is designed around a multi-tenant architecture.
+                   FREE SITE SAAS
+                         |
+                 CENTRAL DASHBOARD
+                         |
+           +-------------+-------------+
+           |             |             |
+         USERS        PAYMENTS       ADMINS
+           |             |             |
+           +-------------+-------------+
+                         |
+                      CORE API
+                         |
+            +------------+------------+
+            |                         |
+       WEBSITE ENGINE              AI ENGINE
+            |                         |
+      WEBSITE ANALYZER            GEMINI AI
+            |                         |
+      PRODUCT CATALOG             AI ASSISTANT
+            |                         |
+            +------------+------------+
+                         |
+                  WHATSAPP ENGINE
+                         |
+                 CUSTOMER SUPPORT
+                         |
+                  HUMAN HANDOVER
 
-                FREE SITE SAAS
-                      |
-             CENTRAL DASHBOARD
-                      |
-          +-----------+-----------+
-          |           |           |
-       USERS       PAYMENTS     ADMINS
-          |           |           |
-          +-----------+-----------+
-                      |
-               CORE API SERVER
-                      |
-          +-----------+-----------+
-          |                       |
-     WEBSITE ENGINE          AI ENGINE
-          |                       |
-    PRODUCT CATALOG        GEMINI / AI
-          |                       |
-          +-----------+-----------+
-                      |
-               WHATSAPP ENGINE
-                      |
-              CUSTOMER SUPPORT
+---
 
 ⚙️ Technology Stack
 
 Technology| Purpose
-Node.js| Backend runtime
-Express.js| API server
-PostgreSQL| Cloud database
-Neon| Database hosting
-WhatsApp Baileys| WhatsApp integration
-Gemini AI| AI-powered responses
-HTML / CSS / JavaScript| Dashboard interface
-REST API| Website integration
-
-🔐 Security & Reliability
-
-- Isolated user configurations.
-- Server-side API key protection.
-- Request throttling.
-- Session management.
-- Database access controls.
-- Error handling and logging.
-- Responsible WhatsApp connection management.
-
-Note: Automated WhatsApp connections may still be subject to WhatsApp platform restrictions. No unofficial connection method can guarantee zero bans.
+Node.js| Backend Runtime
+Express.js| API Server
+PostgreSQL| Database
+Neon| Cloud Database
+Baileys| WhatsApp Connectivity
+Gemini AI| AI Intelligence
+HTML5| Dashboard Structure
+CSS3| User Interface
+JavaScript| Frontend Logic
+REST API| Website Integration
 
 ---
 
-💎 Subscription & Business Model
+💎 Subscription Plans
 
-The platform is designed to support flexible subscription plans.
+FreeSite is designed to support multiple subscription tiers.
 
-- Free Trial
-- Basic Plan
-- Standard Plan
-- Premium Plan
-- Enterprise Plan
+Plan| Access Level
+🆓 Free| Limited Features
+🥉 Basic| Essential Automation
+🥈 Standard| Extended Features
+🥇 Premium| Advanced Automation
+💎 Enterprise| Custom Capacity
 
-Subscription limits, bot capacity, and available features can be managed centrally by the administrator.
+Subscription pricing, resource limits, and feature access can be configured by the administrator.
+
+---
+
+🔐 Security & Reliability
+
+Security is an important part of the FreeSite architecture.
+
+- User-specific data isolation.
+- Secure API key storage.
+- Database access protection.
+- Request throttling.
+- Authentication management.
+- Session protection.
+- Server-side validation.
+- Error handling and logging.
+- Responsible WhatsApp connection management.
+
+«Note: Unofficial WhatsApp automation methods cannot guarantee zero bans. Production deployments should follow applicable platform policies.»
+
+---
+
+📊 Platform Capabilities
+
+Module| Description
+Website Engine| Website connection and analysis
+Product Engine| Product catalog management
+AI Engine| Intelligent conversation
+WhatsApp Engine| Customer communication
+Payment Engine| Subscription payments
+Server Engine| Resource allocation
+Admin Engine| Centralized management
+
+---
 
 🗺️ Development Roadmap
 
-- [x] Core project concept
-- [x] Multi-tenant architecture planning
-- [x] WhatsApp automation planning
-- [x] Website integration planning
-- [ ] User registration and authentication
-- [ ] Website URL connection engine
-- [ ] Automatic product catalog extraction
-- [ ] AI assistant configuration
-- [ ] WhatsApp session management
-- [ ] Subscription and payment verification
-- [ ] Server allocation system
-- [ ] Advanced admin dashboard
-- [ ] Production deployment
+Phase 01 — Platform Foundation
 
-👨‍💻 Developer & Project Owner
+- [x] Project concept.
+- [x] SaaS architecture planning.
+- [x] Multi-tenant architecture planning.
+- [x] Website integration planning.
+- [x] WhatsApp automation planning.
 
-<div align="center">Sojib
+Phase 02 — Core Development
+
+- [ ] User registration and authentication.
+- [ ] Website URL connection engine.
+- [ ] Automatic product extraction.
+- [ ] Product catalog synchronization.
+- [ ] AI assistant configuration.
+- [ ] WhatsApp session management.
+
+Phase 03 — Business Management
+
+- [ ] Payment verification.
+- [ ] Subscription management.
+- [ ] Server allocation system.
+- [ ] Dynamic bot capacity.
+- [ ] Advanced admin dashboard.
+
+Phase 04 — Production
+
+- [ ] Security testing.
+- [ ] Performance optimization.
+- [ ] Production deployment.
+- [ ] Monitoring and maintenance.
+
+---
+
+👨‍💻 Developer & Founder
+
+<div align="center">❤️ SOJIB
 
 Founder & Developer of FreeSite
 
-Building automation tools and intelligent SaaS solutions.
+Building intelligent automation systems and modern SaaS solutions.
 
-<br /><a href="https://wa.me/8801409084819">
-<img src="https://img.shields.io/badge/Contact_on_WhatsApp-01409084819-25D366?style=for-the-badge&logo=whatsapp" />
-</a><a href="https://tiktok.com/@sojib..music">
-<img src="https://img.shields.io/badge/Follow_on_TikTok-@sojib..music-black?style=for-the-badge&logo=tiktok" />
-</a><br /><br />
+<br>""WhatsApp" (https://img.shields.io/badge/Contact_Me-WhatsApp-25D366?style=for-the-badge&logo=whatsapp)" (https://wa.me/8801409084819)
 
-Made with ❤️ in Bangladesh
+""TikTok" (https://img.shields.io/badge/Follow_Me-TikTok-black?style=for-the-badge&logo=tiktok)" (https://tiktok.com/@sojib..music)
 
-FreeSite — One Platform. Unlimited Possibilities.
+<br>---
+
+🇧🇩 Made with Love in Bangladesh
+
+FreeSite — One Platform. Unlimited Possibilities. ⚡
 
 </div>
