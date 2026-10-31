@@ -902,8 +902,18 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
           <input type="number" id="dashPRegPrice" placeholder="আগের মূল্য (৳)">
         </div>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px;">
-          <input type="text" id="dashPCat" placeholder="ক্যাটাগরি (যেমন: গ্যাজেট)">
-          <input type="text" id="dashPLink" placeholder="বাই লিংক (অপশনাল)">
+          <div>
+            <div style="display:flex; gap:6px;">
+              <!-- 📋 আগের ক্যাটাগরি সিলেক্ট করার ড্রপডাউন -->
+              <select id="dashCatSelect" onchange="onDashCatSelect(this)" style="display:none; max-width:50%; padding:12px; font-size:13px; background:#fff; border:1px solid var(--glass-border-subtle); border-radius:12px; font-weight:700; color:#065f46;">
+                <option value="">-- ক্যাটাগরি --</option>
+              </select>
+              <input type="text" id="dashPCat" placeholder="ক্যাটাগরি (যেমন: গ্যাজেট)" style="flex:1;">
+            </div>
+          </div>
+          <div>
+            <input type="text" id="dashPLink" placeholder="বাই লিংক (অপশনাল)">
+          </div>
         </div>
 
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
@@ -1343,6 +1353,9 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
             return;
           }
 
+          // 📋 ড্রপডাউনে আগের ক্যাটাগরিগুলো অটো আপডেট
+          updateDashCategoryDropdown(loadedProductsList);
+
           container.innerHTML = loadedProductsList.map((p, idx) => {
             const singleLink = p.buy_link || ('https://${fullUrl}/p/' + p.id);
             return \`
@@ -1477,6 +1490,37 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
       btn.innerHTML = '<i class="ti ti-plus"></i> ১-ক্লিকে প্রোডাক্ট সেভ ও লিংক নিন';
       btn.style.background = '#059669';
       document.getElementById('btnDashCancelEdit').style.display = 'none';
+    }
+
+    // 📋 ড্যাশবোর্ড ক্যাটাগরি ড্রপডাউন অটো আপডেট ফাংশন
+    function updateDashCategoryDropdown(products) {
+      const catSet = new Set();
+      (products || []).forEach(p => {
+        if (p.category && p.category.trim() && p.category !== 'General') {
+          catSet.add(p.category.trim());
+        }
+      });
+
+      const select = document.getElementById('dashCatSelect');
+      if (catSet.size > 0) {
+        select.style.display = 'block';
+        select.innerHTML = '<option value="">-- ক্যাটাগরি সিলেক্ট --</option>' +
+          Array.from(catSet).map(cat => `<option value="${cat}">${cat}</option>`).join('') +
+          '<option value="__NEW__">➕ নতুন লিখুন</option>';
+      } else {
+        select.style.display = 'none';
+      }
+    }
+
+    function onDashCatSelect(el) {
+      const val = el.value;
+      const input = document.getElementById('dashPCat');
+      if (val === '__NEW__') {
+        input.value = '';
+        input.focus();
+      } else if (val) {
+        input.value = val;
+      }
     }
 
     function copyStoreUrl() {
