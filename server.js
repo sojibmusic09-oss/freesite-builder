@@ -446,9 +446,22 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
         <label>বটের ধরন (Bot Type):</label>
         <select id="editBotType">
           <option value="business_site" ${bot.bot_type === 'business_site' ? 'selected' : ''}>🛍️ ই-কমার্স শপ (ওয়েবসাইট লিংক)</option>
+          <option value="catalog_link" ${bot.bot_type === 'catalog_link' ? 'selected' : ''}>📦 ডিজিটাল ক্যাটালগ শপ</option>
           <option value="business_no_site" ${bot.bot_type === 'business_no_site' ? 'selected' : ''}>🏬 সাধারণ দোকান (ওয়েবসাইট ছাড়া)</option>
           <option value="personal" ${bot.bot_type === 'personal' ? 'selected' : ''}>👤 পার্সোনাল ইউজার (ব্যক্তিগত সহকারী)</option>
         </select>
+      </div>
+
+      <!-- 🎯 এআই কোন সোর্স থেকে তথ্য নিয়ে উত্তর দেবে তা সিলেক্ট করার ড্রপডাউন -->
+      <div class="form-group" style="background:#ecfdf5; border:1px solid #10b981; padding:12px; border-radius:12px;">
+        <label style="color:#065f46; font-weight:800;">🎯 এআই কোন সোর্স থেকে তথ্য নিয়ে উত্তর দেবে?</label>
+        <select id="editKnowledgeSource" style="background:#fff; font-weight:700; color:#065f46;">
+          <option value="catalog" ${bot.knowledge_source === 'catalog' ? 'selected' : ''}>📦 নিজস্ব ক্যাটালগ ও প্রোডাক্ট লিস্ট থেকে উত্তর দেবে (রিসার্ভড)</option>
+          <option value="website" ${bot.knowledge_source === 'website' ? 'selected' : ''}>🌐 ওয়েবসাইট লিংক থেকে উত্তর দেবে</option>
+        </select>
+        <small style="color:#047857; font-size:11px; display:block; margin-top:4px;">
+          👉 আপনার ওয়েবসাইট ও ক্যাটালগ উভয়ই থাকলে যে কোনো একটি সোর্স বেছে নিতে পারেন।
+        </small>
       </div>
       <div class="form-group">
         <label>এআই নির্দেশিকা / বায়ো / পণ্য বিবরণ:</label>
@@ -498,6 +511,17 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
           <input type="text" id="dashPCat" placeholder="ক্যাটাগরি (যেমন: গ্যাজেট)">
           <input type="text" id="dashPLink" placeholder="বাই লিংক (অপশনাল)">
         </div>
+
+        <!-- 📸 সরাসরি ক্যামেরা/গ্যালারি থেকে ছবি সিলেক্টের বক্স -->
+        <div style="margin-bottom:8px;">
+          <label style="font-size:12px; font-weight:700; color:#065f46;">📸 পণ্যের ছবি সিলেক্ট করুন (কাস্টমার চাইলে এআই সরাসরি পাঠাবে):</label>
+          <div onclick="document.getElementById('dashPImgFile').click()" style="border:2px dashed #059669; border-radius:10px; padding:10px; text-align:center; cursor:pointer; background:rgba(236,253,245,0.7); margin-top:4px;">
+            <span id="dashImgText" style="font-size:12px; color:#047857; font-weight:700;"><i class="ti ti-camera"></i> ছবি আপলোড করতে ট্যাপ করুন</span>
+            <img id="dashImgPreview" style="display:none; max-height:100px; margin:0 auto; border-radius:6px;">
+          </div>
+          <input type="file" id="dashPImgFile" accept="image/*" style="display:none;" onchange="handleDashImgSelect(event)">
+        </div>
+
         <textarea id="dashPDesc" rows="2" placeholder="পণ্যের বিবরণ বা ওয়ারেন্টি তথ্য" style="margin-bottom:8px;"></textarea>
         <button onclick="addNewProductDirect(${bot.id})" style="background:#059669; padding:11px;">
           <i class="ti ti-plus"></i> ১-ক্লিকে প্রোডাক্ট সেভ ও লিংক নিন
@@ -631,6 +655,7 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
         botId,
         bot_name: document.getElementById('editBotName').value.trim(),
         alert_phone: document.getElementById('editAlertPhone').value.trim(),
+        knowledge_source: document.getElementById('editKnowledgeSource').value,
         bot_type: document.getElementById('editBotType').value,
         system_prompt: document.getElementById('editPrompt').value.trim(),
         delivery_inside: document.getElementById('editDelIn').value,
@@ -825,7 +850,36 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
       } catch(e) {}
     }
 
-    // ➕ নতুন প্রোডাক্ট যুক্ত করার ফাংশন
+    let dashCurrentImgBase64 = '';
+
+    // ছবি সিলেক্ট এবং লাইটওয়েট কম্প্রেস (যাতে ডাটাবেজে সহজে সেভ হয়)
+    function handleDashImgSelect(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const maxDim = 600;
+          let w = img.width, h = img.height;
+          if (w > h && w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
+          else if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          dashCurrentImgBase64 = canvas.toDataURL('image/jpeg', 0.65);
+          document.getElementById('dashImgPreview').src = dashCurrentImgBase64;
+          document.getElementById('dashImgPreview').style.display = 'block';
+          document.getElementById('dashImgText').style.display = 'none';
+        };
+        img.src = evt.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // ➕ নতুন প্রোডাক্ট যুক্ত করার ফাংশন (ছবিসহ)
     async function addNewProductDirect(botId) {
       const name = document.getElementById('dashPName').value.trim();
       const price = document.getElementById('dashPPrice').value.trim();
@@ -838,7 +892,15 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
       const res = await fetch('/api/user/products/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ botId, name, price, category, buy_link, description })
+        body: JSON.stringify({ 
+          botId, 
+          name, 
+          price, 
+          category, 
+          buy_link, 
+          description, 
+          image_url: dashCurrentImgBase64 
+        })
       });
       const data = await res.json();
       if (data.success) {
@@ -847,6 +909,10 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
         document.getElementById('dashPCat').value = '';
         document.getElementById('dashPLink').value = '';
         document.getElementById('dashPDesc').value = '';
+        document.getElementById('dashPImgFile').value = '';
+        dashCurrentImgBase64 = '';
+        document.getElementById('dashImgPreview').style.display = 'none';
+        document.getElementById('dashImgText').style.display = 'block';
         
         // ১-ক্লিকে লিংক বক্স সামনে নিয়ে আসা
         document.getElementById('productSuccessBox').style.display = 'block';
@@ -949,8 +1015,14 @@ async function handleDynamicCustomerMessage(botRow, customerPhone, text, sock, i
   }
 
   let catalogContext = '';
-  // 🔒 ডাটা আইসোলেশন: business_site অথবা catalog_link যাই হোক, শুধুমাত্র এই নির্দিষ্ট bot_id-এর ডাটাই লোড হবে
-  if (botRow.bot_type === 'business_site' || botRow.bot_type === 'catalog_link') {
+  const source = botRow.knowledge_source || (botRow.bot_type === 'business_site' ? 'website' : 'catalog');
+
+  // 👉 যদি ইউজার "ওয়েবসাইট" সিলেক্ট করে রাখে
+  if (source === 'website' && botRow.website_url) {
+    catalogContext = `আমাদের মূল ওয়েবসাইটের তথ্য ও লিংক: ${botRow.website_url}। ওয়েবসাইটের পণ্য ও নিয়মাবলী অনুযায়ী উত্তর দাও: ${botRow.system_prompt || ''}`;
+  } 
+  // 👉 যদি ইউজার "ক্যাটালগ" সিলেক্ট করে রাখে (ডিফল্ট ও সবচেয়ে নিখুঁত)
+  else {
     const productsQuery = await pool.query('SELECT * FROM bot_products WHERE bot_id = $1', [botId]);
     const cachedCatalog = productsQuery.rows.map(p => ({
       id: p.id,
@@ -964,7 +1036,7 @@ async function handleDynamicCustomerMessage(botRow, customerPhone, text, sock, i
 
     const searchResult = searchSmartProducts(combinedQuery, cachedCatalog);
     if (searchResult.items && searchResult.items.length > 0) {
-      catalogContext = searchResult.items.map(p => `• [ID:${p.id}] ${p.name} | মূল্য: ৳${p.price} | লিংক: ${p.buy_link}`).join('\n');
+      catalogContext = searchResult.items.map(p => `• [ID:${p.id}] ${p.name} | মূল্য: ৳${p.price} | ক্যাটাগরি: ${p.category} | লিংক: ${p.buy_link}`).join('\n');
     }
   }
 
@@ -972,16 +1044,35 @@ async function handleDynamicCustomerMessage(botRow, customerPhone, text, sock, i
     ? history.map(h => `${h.role === 'user' ? 'গ্রাহক' : 'অ্যাসিস্ট্যান্ট'}: ${h.text}`).join('\n')
     : 'এখনই কথোপকথন শুরু হয়েছে।';
 
+  // 🛍️ ক্যাটালগে মোট কী কী আইটেম বা ক্যাটাগরি আছে তার সংক্ষিপ্ত সামারি
+  const prodsQuery = await pool.query('SELECT name, price, category FROM bot_products WHERE bot_id = $1 LIMIT 15', [botId]);
+  const availableCategories = [...new Set(prodsQuery.rows.map(p => p.category).filter(Boolean))].join(', ');
+  const sampleProducts = prodsQuery.rows.map(p => p.name).slice(0, 5).join(', ');
+
   let systemPrompt = '';
   if (botRow.bot_type === 'personal') {
     systemPrompt = `তুমি ${botRow.bot_name} এর অত্যন্ত বুদ্ধিমান ও মিষ্টি ব্যক্তিগত সহকারী (Personal AI Assistant)। ব্যবহারকারীর পরিচয়: ${botRow.system_prompt || 'ব্যক্তিগত ইউজার'}। কাস্টমারকে "ভাইয়া" সম্বোধন করবে। হিস্ট্রি: ${conversationHistoryText}`;
-  } else if (botRow.bot_type === 'business_no_site') {
-    systemPrompt = `তুমি ${botRow.bot_name} এর সেলস অ্যাসিস্ট্যান্ট। দোকান ও পণ্যের বিবরণ: ${botRow.system_prompt}। ডেলিভারি: ভেতরে ৳${botRow.delivery_inside || 70}, বাইরে ৳${botRow.delivery_outside || 130}। হিস্ট্রি: ${conversationHistoryText}`;
   } else {
-    systemPrompt = `তুমি ${botRow.bot_name} এর সেলস অ্যাসিস্ট্যান্ট। পণ্য দেখতে চাইলে নাম, দাম এবং লিংক দাও। ক্যাটালগ তালিকা:\n${catalogContext || 'কোনো নির্দিষ্ট পণ্য পাওয়া যায়নি'}\nহিস্ট্রি: ${conversationHistoryText}`;
+    systemPrompt = `তুমি ${botRow.bot_name} এর অত্যন্ত দক্ষ ও নম্র সেলস প্রতিনিধি।
+নিয়মাবলী (কঠোরভাবে মানতে হবে):
+১. ওয়েলকাম মেসেজ বা সাধারণ কুশল বিনিময় (যেমন: hi, hello, সালাম): কখনোই একগাদা প্রোডাক্ট বা লম্বা তালিকা একসাথে ঢেলে দেবে না! সুন্দর করে সালাম ও শুভেচ্ছা জানাবে এবং বলবে যে আমাদের স্টকে (${availableCategories || 'বিভিন্ন আকর্ষণীয় পণ্য'}) যেমন: ${sampleProducts || 'পণ্যসমূহ'} রয়েছে। কাস্টমার কী ধরনের পণ্য খুঁজছেন তা জানতে চাইবে।
+২. ছবি বা ভয়েস মেসেজ: কাস্টমার যদি কোনো পণ্যের ছবি পাঠায় বা ভয়েসে কিছু বলে, তুমি ছবি/ভয়েসের পণ্যের সাথে নিচের স্টকের পণ্যের তুলনা করে সঠিক নাম ও দাম জানাবে।
+৩. নির্দিষ্ট তথ্য: কাস্টমার যে পণ্যটি দেখতে চাইবে শুধুমাত্র সেই নির্দিষ্ট পণ্যের নাম, দাম ও সাইজ/কালার বলবে।
+৪. স্টক তথ্য:
+${catalogContext || 'আমাদের স্টকে পণ্যগুলো রয়েছে।'}
+৫. ডেলিভারি চার্জ: সিটির ভেতরে ৳${botRow.delivery_inside || 70}, সিটির বাইরে ৳${botRow.delivery_outside || 130}।
+হিস্ট্রি: ${conversationHistoryText}`;
   }
 
-  const userPrompt = imageBuffer ? `গ্রাহক পণ্যের ছবি পাঠিয়েছেন এবং লিখেছেন: "${cleanInput}"` : `গ্রাহক: "${cleanInput}"`;
+  let userPrompt = '';
+  if (imageBuffer) {
+    userPrompt = `[ছবি বিশ্লেষণ নির্দেশ]: গ্রাহক এই পণ্যের একটি ছবি পাঠিয়েছেন। ছবিটি মনোযোগ দিয়ে দেখো এবং আমাদের স্টকের পণ্যের সাথে মিলিয়ে বলো এই পণ্যটি আমাদের স্টকে আছে কি না। থাকলে তার নাম ও মূল্য জানাও। গ্রাহক ক্যাপশনে লিখেছেন: "${cleanInput || 'এই পণ্যটি কি আপনাদের কাছে আছে?'}"`;
+  } else if (cleanInput) {
+    userPrompt = `গ্রাহক: "${cleanInput}"`;
+  } else {
+    userPrompt = 'গ্রাহক একটি বার্তা পাঠিয়েছেন।';
+  }
+
   let reply = await executeGeminiForTenant(botRow, userPrompt, systemPrompt, imageBuffer, imageMime);
   reply = reply.replace(/\*\*/g, '*');
 
@@ -1130,37 +1221,42 @@ async function startTenantBot(botId) {
         const typingDelay = Math.min(3000, Math.max(1500, reply.length * 20));
         await delay(typingDelay);
 
-        // 📸 কাস্টমার ছবি চাইলে সরাসরি প্রোডাক্টের ছবি সেন্ড করার বুদ্ধিমান লজিক
-        const wantsPic = /ছবি|পিক|pic|image|photo|দেখাও|দেখান|দেখি/i.test(text);
+        // 📸 কাস্টমার ছবি চাইলে, অথবা ভয়েস/ছবি পাঠিয়ে পণ্যের সন্ধান করলে সাথে সাথে আমাদের স্টকের আসল ছবি পাঠানো
+        const wantsPic = /ছবি|পিক|pic|image|photo|দেখাও|দেখান|দেখি|দেখতে চাই/i.test(text) || (isImage && !text) || (isAudio && /আছে|দাম|পণ্য/i.test(text));
         let sentWithImage = false;
 
         if (wantsPic) {
           try {
-            // প্রোডাক্ট থেকে ম্যাচিং ছবি খোঁজা
-            const matchedProd = await pool.query(
+            // ১. কাস্টমারের টেক্সটের সাথে মিল রেখে প্রোডাক্ট খোঁজা
+            const allProds = await pool.query(
               `SELECT name, image_url, price FROM bot_products 
                WHERE bot_id = $1 AND image_url IS NOT NULL AND image_url != '' 
-               ORDER BY id DESC LIMIT 1`,
+               ORDER BY id DESC`,
               [botId]
             );
 
-            if (matchedProd.rows.length > 0 && matchedProd.rows[0].image_url) {
-              const imgData = matchedProd.rows[0];
-              // যদি Base64 ইমেজ হয়
-              if (imgData.image_url.startsWith('data:image')) {
-                const base64Data = imgData.image_url.split(',')[1];
-                const imgBuffer = Buffer.from(base64Data, 'base64');
-                await sock.sendMessage(sender, { 
-                  image: imgBuffer, 
-                  caption: `📸 *${imgData.name}* (মূল্য: ৳${imgData.price})\n\n${reply}` 
-                });
-                sentWithImage = true;
-              } else if (imgData.image_url.startsWith('http')) {
-                await sock.sendMessage(sender, { 
-                  image: { url: imgData.image_url }, 
-                  caption: `📸 *${imgData.name}* (মূল্য: ৳${imgData.price})\n\n${reply}` 
-                });
-                sentWithImage = true;
+            if (allProds.rows.length > 0) {
+              // কাস্টমার যে প্রোডাক্টের নাম লিখেছে সেটা আগে খোঁজা
+              let targetProd = allProds.rows.find(p => text.toLowerCase().includes(p.name.toLowerCase()));
+              if (!targetProd) targetProd = allProds.rows[0]; // না মিললে সর্বশেষ প্রোডাক্ট
+
+              if (targetProd && targetProd.image_url) {
+                let imgBuffer = null;
+                if (targetProd.image_url.startsWith('data:image')) {
+                  const base64Data = targetProd.image_url.split(',')[1];
+                  imgBuffer = Buffer.from(base64Data, 'base64');
+                } else if (targetProd.image_url.startsWith('http')) {
+                  imgBuffer = { url: targetProd.image_url };
+                }
+
+                if (imgBuffer) {
+                  await sock.sendMessage(sender, { 
+                    image: imgBuffer, 
+                    caption: `📸 *${targetProd.name}* — ৳${targetProd.price}\n\n${reply}` 
+                  });
+                  sentWithImage = true;
+                  addBotLog(botId, 'success', `🖼️ কাস্টমারকে [${targetProd.name}] এর ছবি পাঠানো হয়েছে!`);
+                }
               }
             }
           } catch (imgErr) {
@@ -1168,7 +1264,7 @@ async function startTenantBot(botId) {
           }
         }
 
-        // যদি ছবি পাঠানো না হয়ে থাকে, সাধারণ টেক্সট মেসেজ যাবে
+        // যদি ছবি না পাঠানো হয়, সাধারণ টেক্সট রিপ্লাই যাবে
         if (!sentWithImage) {
           await sock.sendMessage(sender, { text: reply });
         }
@@ -1377,12 +1473,12 @@ app.get('/api/user/bot-logs', async (req, res) => {
 // ৩. ইউজার থেকে বটের তথ্য আপডেট (Edit Bot Info)
 app.post('/api/user/update-bot-settings', async (req, res) => {
   try {
-    const { botId, bot_name, alert_phone, bot_type, system_prompt, delivery_inside, delivery_outside } = req.body;
+    const { botId, bot_name, alert_phone, knowledge_source, bot_type, system_prompt, delivery_inside, delivery_outside } = req.body;
     await pool.query(
       `UPDATE whatsapp_bots 
-       SET bot_name = $1, alert_phone = $2, bot_type = $3, system_prompt = $4, delivery_inside = $5, delivery_outside = $6 
-       WHERE id = $7`,
-      [bot_name, alert_phone, bot_type, system_prompt, delivery_inside || 70, delivery_outside || 130, botId]
+       SET bot_name = $1, alert_phone = $2, knowledge_source = $3, bot_type = $4, system_prompt = $5, delivery_inside = $6, delivery_outside = $7 
+       WHERE id = $8`,
+      [bot_name, alert_phone, knowledge_source || 'catalog', bot_type, system_prompt, delivery_inside || 70, delivery_outside || 130, botId]
     );
     addBotLog(botId, 'success', '⚙️ বটের তথ্য ও নির্দেশিকা সফলভাবে আপডেট হয়েছে!');
     res.json({ success: true, message: '✅ বটের তথ্য সফলভাবে আপডেট হয়েছে!' });
@@ -1502,14 +1598,14 @@ app.get('/api/user/products', async (req, res) => {
   }
 });
 
-// ➕ ২. ড্যাশবোর্ড থেকে সরাসরি নতুন প্রোডাক্ট অ্যাড করার API
+// ➕ ২. ড্যাশবোর্ড থেকে সরাসরি নতুন প্রোডাক্ট অ্যাড করার API (ছবি সাপোর্ট সহ)
 app.post('/api/user/products/add', async (req, res) => {
   try {
-    const { botId, name, price, category, description, buy_link } = req.body;
+    const { botId, name, price, category, description, buy_link, image_url } = req.body;
     await pool.query(
-      `INSERT INTO bot_products (bot_id, name, price, category, description, buy_link)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-      [botId, name, parseFloat(price) || 0, category || 'General', description || '', buy_link || '']
+      `INSERT INTO bot_products (bot_id, name, price, category, description, buy_link, image_url)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [botId, name, parseFloat(price) || 0, category || 'General', description || '', buy_link || '', image_url || '']
     );
     addBotLog(botId, 'success', `📦 নতুন পণ্য যোগ হয়েছে: ${name} (৳${price})`);
     res.json({ success: true, message: 'প্রোডাক্ট সফলভাবে যোগ হয়েছে!' });
@@ -1805,6 +1901,7 @@ app.listen(PORT, '0.0.0.0', async () => {
     
     // 🔔 অর্ডার অ্যালার্ট নম্বর এবং অর্ডার ট্র্যাকিং টেবিল
     await pool.query('ALTER TABLE whatsapp_bots ADD COLUMN IF NOT EXISTS alert_phone VARCHAR(50);');
+    await pool.query('ALTER TABLE whatsapp_bots ADD COLUMN IF NOT EXISTS knowledge_source VARCHAR(30) DEFAULT \'catalog\';');
     await pool.query(`
       CREATE TABLE IF NOT EXISTS bot_orders (
         id SERIAL PRIMARY KEY,
