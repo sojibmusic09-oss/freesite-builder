@@ -431,7 +431,7 @@ router.get('/integrations', async (req, res) => {
   }
 });
 
-// ১৩. OpenAPI 3.0 ডকুমেন্টেশন
+// ১৩. OpenAPI 3.0 ডকুমেন্টেশন (Valid Paths সহ)
 router.get('/openapi.json', (req, res) => {
   const protocol = req.protocol;
   const host = req.get('host');
@@ -449,7 +449,113 @@ router.get('/openapi.json', (req, res) => {
         SecretKeyAuth: { type: 'apiKey', in: 'header', name: 'X-SECRET-KEY' }
       }
     },
-    security: [{ ApiKeyAuth: [], SecretKeyAuth: [] }]
+    security: [{ ApiKeyAuth: [], SecretKeyAuth: [] }],
+    paths: {
+      '/health': {
+        get: {
+          summary: 'Check API & Database Health',
+          responses: { '200': { description: 'System healthy' } }
+        }
+      },
+      '/products': {
+        get: {
+          summary: 'List Products (Pagination & Filter)',
+          parameters: [
+            { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+            { name: 'limit', in: 'query', schema: { type: 'integer', default: 20 } },
+            { name: 'category_id', in: 'query', schema: { type: 'integer' } },
+            { name: 'stock_status', in: 'query', schema: { type: 'string' } }
+          ],
+          responses: { '200': { description: 'Product list' } }
+        },
+        post: {
+          summary: 'Create New Product',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['name', 'regular_price'],
+                  properties: {
+                    name: { type: 'string' },
+                    regular_price: { type: 'number' },
+                    discount_price: { type: 'number' },
+                    description: { type: 'string' },
+                    stock_quantity: { type: 'integer' },
+                    brand: { type: 'string' },
+                    sku: { type: 'string' }
+                  }
+                }
+              }
+            }
+          },
+          responses: { '201': { description: 'Product created' } }
+        }
+      },
+      '/products/{id}': {
+        get: {
+          summary: 'Get Single Product by ID',
+          parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+          responses: { '200': { description: 'Product details' } }
+        },
+        put: {
+          summary: 'Update Product',
+          parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+          responses: { '200': { description: 'Product updated' } }
+        },
+        delete: {
+          summary: 'Delete Product & Cloud Images',
+          parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+          responses: { '200': { description: 'Product deleted' } }
+        }
+      },
+      '/products/search': {
+        get: {
+          summary: 'Search Products by Keyword',
+          parameters: [{ name: 'q', in: 'query', required: true, schema: { type: 'string' } }],
+          responses: { '200': { description: 'Matching products' } }
+        }
+      },
+      '/categories': {
+        get: {
+          summary: 'List Categories',
+          responses: { '200': { description: 'Categories array' } }
+        },
+        post: {
+          summary: 'Create Category',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['name'],
+                  properties: {
+                    name: { type: 'string' },
+                    description: { type: 'string' },
+                    image_url: { type: 'string' }
+                  }
+                }
+              }
+            }
+          },
+          responses: { '201': { description: 'Category created' } }
+        }
+      },
+      '/inventory': {
+        get: {
+          summary: 'Inventory Summary & Low Stock Alerts',
+          responses: { '200': { description: 'Inventory statistics' } }
+        }
+      },
+      '/integrations': {
+        get: {
+          summary: 'Connected Applications List',
+          responses: { '200': { description: 'Connected apps array' } }
+        }
+      }
+    }
   });
 });
 
