@@ -139,8 +139,8 @@ async function usePostgresAuthState(botId) {
 
 // ================= ১ নম্বর অগ্রাধিকার: সাবডোমেন রাউটার (TOP PRIORITY) =================
 app.use(async (req, res, next) => {
-  // API বা Admin রুট হলে ছাড়বে
-  if (req.path.startsWith('/api/') || req.path === '/admin') return next();
+  // API, Admin বা Ping রুট হলে সরাসরি ছাড়বে
+  if (req.path.startsWith('/api/') || req.path === '/admin' || req.path === '/ping') return next();
 
   // Host বিশ্লেষণ
   const rawHost = req.headers['x-forwarded-host'] || req.headers.host || '';
@@ -2732,6 +2732,69 @@ app.post('/api/admin/smart-reset', async (req, res) => {
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
+});
+
+// 🏓 আল্ট্রা-স্মার্ট পিং ও সার্ভার হেলথ মনিটর (সব তথ্যের ফুল ডিটেইলস)
+app.get('/ping', async (req, res) => {
+  const start = Date.now();
+  let dbStatus = 'CONNECTED';
+  let dbPing = 0;
+  let totalBots = 0;
+  let connectedBots = 0;
+
+  try {
+    const dbStart = Date.now();
+    await pool.query('SELECT 1');
+    dbPing = Date.now() - dbStart;
+
+    const botStats = await pool.query("SELECT COUNT(*) as total, COUNT(*) FILTER (WHERE status = 'CONNECTED') as connected FROM whatsapp_bots");
+    totalBots = parseInt(botStats.rows[0]?.total || 0, 10);
+    connectedBots = parseInt(botStats.rows[0]?.connected || 0, 10);
+  } catch (err) {
+    dbStatus = 'ERROR: ' + err.message;
+  }
+
+  // আপটাইম ক্যালকুলেশন (দিন, ঘণ্টা, মিনিট, সেকেন্ড)
+  const uptimeSec = Math.floor(process.uptime());
+  const days = Math.floor(uptimeSec / 86400);
+  const hours = Math.floor((uptimeSec % 86400) / 3600);
+  const minutes = Math.floor((uptimeSec % 3600) / 60);
+  const seconds = uptimeSec % 60;
+  const uptimeStr = (days > 0 ? days + ' দিন ' : '') + hours + ' ঘণ্টা ' + minutes + ' মিনিট ' + seconds + ' সেকেন্ড';
+
+  // র‍্যাম/মেমরি খরচ
+  const mem = process.memoryUsage();
+  const memInfo = {
+    rss: (mem.rss / 1024 / 1024).toFixed(1) + ' MB',
+    heapUsed: (mem.heapUsed / 1024 / 1024).toFixed(1) + ' MB',
+    heapTotal: (mem.heapTotal / 1024 / 1024).toFixed(1) + ' MB'
+  };
+
+  const responseTime = Date.now() - start;
+
+  // 📊 সম্পূর্ণ ডিটেইলস রেসপন্স
+  res.status(200).json({
+    status: 'ONLINE',
+    statusCode: 200,
+    message: '🚀 FreeSite Master Server is healthy and running smoothly!',
+    dhaka_time: new Date().toLocaleString('en-US', { timeZone: 'Asia/Dhaka' }),
+    response_latency: responseTime + ' ms',
+    server_health: {
+      uptime: uptimeStr,
+      node_version: process.version,
+      platform: process.platform,
+      memory_usage: memInfo
+    },
+    database_health: {
+      status: dbStatus,
+      latency: dbPing + ' ms'
+    },
+    whatsapp_engine: {
+      live_active_sockets: activeSockets.size,
+      connected_bots_in_db: connectedBots,
+      total_created_bots: totalBots
+    }
+  });
 });
 
 // মূল ডোমেইনে (শুধুমাত্র রুট হোস্টে) ক্রিয়েটর পেজ লোড হবে
