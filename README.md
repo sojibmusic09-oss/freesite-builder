@@ -1,4 +1,4 @@
-"FreeSite Anime Banner" (./anime-banner.gif)
+"FreeSite Anime Banner" (https://raw.githubusercontent.com/sojibmusic09-oss/freesite-builder/main/anime-banner.gif)
 
 <div align="center">⚡ FreeSite
 
@@ -9,12 +9,13 @@ Build Smarter. Automate Faster. Grow Without Limits.
 Developed with ❤️ by Sojib
 
 ""WhatsApp" (https://img.shields.io/badge/WhatsApp-01409084819-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)" (https://wa.me/8801409084819)
+
 ""TikTok" (https://img.shields.io/badge/TikTok-@sojib..music-000000?style=for-the-badge&logo=tiktok&logoColor=white)" (https://tiktok.com/@sojib..music)
 
-"Node.js" (https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
-"PostgreSQL" (https://img.shields.io/badge/Database-Neon_PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
-"SaaS" (https://img.shields.io/badge/Architecture-Multi--Tenant-8B5CF6?style=for-the-badge)
+"Node.js" (https://img.shields.io/badge/Node.js-18%2B-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+"PostgreSQL" (https://img.shields.io/badge/Database-Neon-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
 "AI" (https://img.shields.io/badge/AI-Gemini-4285F4?style=for-the-badge)
+"Architecture" (https://img.shields.io/badge/Architecture-Multi--Tenant-8B5CF6?style=for-the-badge)
 "Status" (https://img.shields.io/badge/Status-In_Development-orange?style=for-the-badge)
 
 One Platform. Multiple Services. Intelligent Automation.
@@ -25,9 +26,9 @@ One Platform. Multiple Services. Intelligent Automation.
 
 FreeSite is a modern Multi-Tenant SaaS platform designed to combine website integration, AI-powered customer assistance, and WhatsApp automation into one centralized ecosystem.
 
-Users can connect their websites, configure personalized AI assistants, manage product catalogs, automate customer conversations, and control their services through a modern dashboard.
+Users can connect their websites, configure personalized AI assistants, manage product catalogs, automate customer conversations, and control their services through a centralized dashboard.
 
-Our mission is to make website management and business automation easier, smarter, and more accessible.
+Our vision is to make website management and business automation easier, smarter, and more accessible.
 
 ---
 
@@ -43,6 +44,7 @@ Our mission is to make website management and business automation easier, smarte
 - Generate structured product catalogs.
 - Support compatible e-commerce websites.
 - Manage multiple website connections.
+- Synchronize website product information.
 
 🤖 02. WhatsApp AI Automation
 
@@ -55,13 +57,14 @@ Our mission is to make website management and business automation easier, smarte
 - Product information assistance.
 - Human support handover.
 - Individual WhatsApp session management.
+- Configurable bot behavior.
 
 🛍️ 03. Smart Product Assistant
 
 - Automatic product discovery.
 - Product catalog synchronization.
 - Intelligent product search.
-- Accurate product price retrieval.
+- Product price retrieval.
 - Product image sharing.
 - Direct product link sharing.
 - Budget-based recommendations.
@@ -90,6 +93,7 @@ Our mission is to make website management and business automation easier, smarte
 - Server-side validation.
 - Activity logging.
 - Error monitoring.
+- Secure configuration management.
 
 🖥️ 06. Dynamic Server Management
 
@@ -119,33 +123,33 @@ Our mission is to make website management and business automation easier, smarte
 
 🧠 System Architecture
 
-                   FREE SITE SAAS
-                         |
-                 CENTRAL DASHBOARD
-                         |
-           +-------------+-------------+
-           |             |             |
-         USERS        PAYMENTS       ADMINS
-           |             |             |
-           +-------------+-------------+
-                         |
-                      CORE API
-                         |
-            +------------+------------+
-            |                         |
-       WEBSITE ENGINE              AI ENGINE
-            |                         |
-      WEBSITE ANALYZER            GEMINI AI
-            |                         |
-      PRODUCT CATALOG             AI ASSISTANT
-            |                         |
-            +------------+------------+
-                         |
-                  WHATSAPP ENGINE
-                         |
-                 CUSTOMER SUPPORT
-                         |
-                  HUMAN HANDOVER
+                  FREE SITE SAAS
+                        |
+                CENTRAL DASHBOARD
+                        |
+          +-------------+-------------+
+          |             |             |
+        USERS        PAYMENTS       ADMINS
+          |             |             |
+          +-------------+-------------+
+                        |
+                     CORE API
+                        |
+           +------------+------------+
+           |                         |
+      WEBSITE ENGINE              AI ENGINE
+           |                         |
+     WEBSITE ANALYZER            GEMINI AI
+           |                         |
+     PRODUCT CATALOG             AI ASSISTANT
+           |                         |
+           +------------+------------+
+                        |
+                 WHATSAPP ENGINE
+                        |
+                CUSTOMER SUPPORT
+                        |
+                 HUMAN HANDOVER
 
 ---
 
@@ -167,6 +171,8 @@ REST API| Website Integration
 
 💎 Subscription Plans
 
+FreeSite is designed to support flexible subscription plans.
+
 Plan| Access Level
 🆓 Free| Limited Features
 🥉 Basic| Essential Automation
@@ -174,11 +180,13 @@ Plan| Access Level
 🥇 Premium| Advanced Automation
 💎 Enterprise| Custom Capacity
 
-Subscription pricing, resource limits, and feature access are configurable by the administrator.
+Pricing, resource limits, and feature access can be configured by the administrator.
 
 ---
 
 🔐 Security & Reliability
+
+Security is an important part of the FreeSite architecture.
 
 - User-specific data isolation.
 - Secure API key storage.
@@ -243,6 +251,27 @@ Phase 04 — Production Deployment
 
 ---
 
+📁 Repository Structure
+
+freesite-builder/
+│
+├── public/
+│
+├── README.md
+├── anime-banner.gif
+├── package.json
+├── server.js
+├── database.js
+├── ai_engine.js
+├── api_v1_router.js
+├── cloud_storage.js
+├── product_cloud_db.js
+├── webhook_dispatcher.js
+├── website_analyzer.js
+└── worker.js
+
+---
+
 👨‍💻 Developer & Founder
 
 <div align="center">❤️ SOJIB
@@ -251,9 +280,9 @@ Founder & Developer of FreeSite
 
 Building intelligent automation systems and modern SaaS solutions.
 
-""WhatsApp" (https://img.shields.io/badge/Contact_Me-WhatsApp-25D366?style=for-the-badge&logo=whatsapp)" (https://wa.me/8801409084819)
+""WhatsApp" (https://img.shields.io/badge/Contact_Me-WhatsApp-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)" (https://wa.me/8801409084819)
 
-""TikTok" (https://img.shields.io/badge/Follow_Me-TikTok-black?style=for-the-badge&logo=tiktok)" (https://tiktok.com/@sojib..music)
+""TikTok" (https://img.shields.io/badge/Follow_Me-TikTok-000000?style=for-the-badge&logo=tiktok&logoColor=white)" (https://tiktok.com/@sojib..music)
 
 ---
 
