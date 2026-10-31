@@ -7,21 +7,71 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
     <style>
-        :root { --bg: #f1f5f9; --card: #ffffff; --primary: #059669; --border: #cbd5e1; --text: #0f172a; --muted: #64748b; }
+        :root {
+            --primary: #059669;
+            --text: #0f172a;
+            --muted: #64748b;
+            --glass-surface: rgba(255, 255, 255, 0.68);
+            --glass-border: rgba(255, 255, 255, 0.85);
+            --glass-border-subtle: rgba(226, 232, 240, 0.75);
+            --glass-shadow: 0 16px 40px -8px rgba(15, 23, 42, 0.05);
+            --glass-blur: blur(20px);
+        }
         * { box-sizing: border-box; margin:0; padding:0; font-family: 'Plus Jakarta Sans', 'Hind Siliguri', sans-serif; }
-        body { background: var(--bg); color: var(--text); padding: 15px; }
-        .container { max-width: 650px; margin: 0 auto; }
-        .card { background: var(--card); border: 1px solid #e2e8f0; border-radius: 18px; padding: 22px; margin-bottom: 18px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
-        h2 { font-size: 20px; font-weight: 800; color: #047857; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
-        .form-group { margin-bottom: 14px; }
-        label { display: block; font-size: 13px; color: #334155; margin-bottom: 5px; font-weight: 700; }
-        input, textarea, select { width: 100%; padding: 11px 14px; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; outline: none; }
-        input:focus, textarea:focus { border-color: var(--primary); }
-        button { width: 100%; padding: 13px; background: var(--primary); color: #fff; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 6px; font-size: 14px; }
-        .product-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-        .product-img { width: 55px; height: 55px; border-radius: 8px; object-fit: cover; border: 1px solid #cbd5e1; background: #fff; }
-        .link-box { background: #ecfdf5; border: 1px solid #10b981; color: #065f46; padding: 16px; border-radius: 12px; text-align: center; display: none; margin-top: 15px; }
-        .img-preview-box { width: 100%; height: 110px; border: 2px dashed #059669; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; background: #f0fdf4; margin-top: 4px; }
+        body {
+            background-color: #f8fafc;
+            background-image: 
+                radial-gradient(circle at 10% 10%, rgba(16, 185, 129, 0.09) 0%, transparent 40%),
+                radial-gradient(circle at 90% 20%, rgba(14, 165, 233, 0.08) 0%, transparent 40%);
+            background-attachment: fixed;
+            color: var(--text);
+            padding: 35px 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 680px; margin: 0 auto; }
+        
+        /* 💎 ফাঁকা ফাঁকা গ্লাস কার্ড */
+        .card {
+            background: var(--glass-surface);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 28px;
+            margin-bottom: 26px;
+            box-shadow: var(--glass-shadow);
+        }
+        h2 { font-size: 21px; font-weight: 800; color: #047857; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+        
+        .form-group { margin-bottom: 18px; }
+        label { display: block; font-size: 13px; color: #334155; margin-bottom: 8px; font-weight: 700; }
+        input, textarea, select {
+            width: 100%; padding: 13px 16px;
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--glass-border-subtle);
+            border-radius: 14px; font-size: 14px; color: #0f172a; outline: none; transition: 0.2s;
+        }
+        input:focus, textarea:focus, select:focus {
+            background: #ffffff; border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.14);
+        }
+        button {
+            width: 100%; padding: 14px; background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: #fff; border: 1px solid rgba(255,255,255,0.25); border-radius: 14px;
+            font-weight: 800; cursor: pointer; display: flex; justify-content: center; align-items: center;
+            gap: 8px; font-size: 14px; box-shadow: 0 8px 20px -3px rgba(5, 150, 105, 0.35); transition: 0.2s;
+        }
+        button:hover { transform: translateY(-1px); box-shadow: 0 12px 28px -4px rgba(5, 150, 105, 0.45); }
+        
+        .product-item {
+            background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(8px);
+            border: 1px solid var(--glass-border-subtle); border-radius: 16px;
+            padding: 14px 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; gap: 12px;
+        }
+        .product-img { width: 56px; height: 56px; border-radius: 10px; object-fit: cover; border: 1px solid rgba(226, 232, 240, 0.8); background: #fff; }
+        .link-box { background: rgba(236, 253, 245, 0.9); border: 1px solid #10b981; color: #065f46; padding: 20px; border-radius: 18px; text-align: center; display: none; margin-top: 20px; }
+        .img-preview-box { width: 100%; height: 120px; border: 2px dashed #059669; border-radius: 14px; display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; background: rgba(240, 253, 244, 0.6); margin-top: 6px; }
         .img-preview-box img { width: 100%; height: 100%; object-fit: contain; }
     </style>
 </head>
