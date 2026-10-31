@@ -179,6 +179,11 @@ app.use(async (req, res, next) => {
       if (botRes.rows.length > 0) {
         const bot = botRes.rows[0];
 
+        // 🛠️ সাবডোমেন থেকেও সরাসরি ক্যাটালগ বিল্ডার ওপেন হতে দেওয়া
+        if (req.path === '/catalog-builder') {
+          return res.sendFile(path.join(__dirname, 'public', 'catalog_builder.html'));
+        }
+
         // 🛍️ যদি কাস্টমাররা প্রোডাক্ট দেখার জন্য /shop বা /catalog বা /products এ ঢোকে
         if (req.path === '/shop' || req.path === '/catalog' || req.path === '/products') {
           const prods = await pool.query('SELECT * FROM bot_products WHERE bot_id = $1 ORDER BY id DESC', [bot.id]);
@@ -858,21 +863,31 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
           <a href="https://${fullUrl}/shop" target="_blank" style="font-size:12px; background:#ecfdf5; color:#047857; padding:6px 14px; border-radius:20px; font-weight:700; text-decoration:none; border:1px solid #10b981;">
             🌐 শপ ভিউ
           </a>
-          <a href="/catalog-builder" target="_blank" style="font-size:12px; background:#e0f2fe; color:#0369a1; padding:6px 14px; border-radius:20px; font-weight:700; text-decoration:none; border:1px solid #38bdf8;">
-            🛠️ ক্যাটালগ অ্যাডমিন পোর্টাল
+          <a href="https://${fullUrl}/catalog-builder" target="_blank" style="font-size:12px; background:#e0f2fe; color:#0369a1; padding:6px 14px; border-radius:20px; font-weight:700; text-decoration:none; border:1px solid #38bdf8;">
+            🛠️ ক্যাটালগ বিল্ডার পোর্টাল
           </a>
         </div>
       </div>
 
-      <!-- 🔗 আপনার লাইভ ক্যাটালগ ও শপ লিংক সবসময় দৃশ্যমান বক্স -->
-      <div style="background:rgba(236, 253, 245, 0.95); border:1px solid #10b981; border-radius:14px; padding:14px; margin-bottom:16px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-          <span style="color:#065f46; font-weight:800; font-size:13px;">🔗 আপনার শপ ও ক্যাটালগ লিংক:</span>
-          <span style="font-size:11px; color:#059669; font-weight:700;">কাস্টমারদের এই লিংকটি দিন</span>
+      <!-- 🔗 ১. ক্যাটালগ অ্যাডমিন লিংক (যেখান থেকে পণ্য আপলোড ও ম্যানেজ করবেন) -->
+      <div style="background:rgba(224, 242, 254, 0.85); border:1px solid #38bdf8; border-radius:14px; padding:12px 14px; margin-bottom:10px;">
+        <div style="font-size:12px; font-weight:800; color:#0369a1; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
+          <i class="ti ti-lock-access"></i> 🛠️ ক্যাটালগ অ্যাডমিন লিংক (প্রোডাক্ট আপলোড ও এডিট করার লিংক):
         </div>
         <div style="display:flex; gap:6px;">
-          <input type="text" id="storeShareLink" readonly value="https://${fullUrl}/shop" style="font-weight:700; background:#fff; color:#059669; padding:10px 14px; border:1px solid #a7f3d0; border-radius:10px;">
-          <button onclick="copyStoreUrl()" style="width:auto; padding:0 18px; background:#059669; font-size:13px;"><i class="ti ti-copy"></i> কপি</button>
+          <input type="text" id="adminPanelLink" readonly value="https://${fullUrl}" style="font-weight:700; background:#fff; color:#0284c7; padding:8px 12px; border:1px solid #bae6fd; border-radius:8px; font-size:13px;">
+          <button onclick="navigator.clipboard.writeText(document.getElementById('adminPanelLink').value); alert('ক্যাটালগ অ্যাডমিন লিংক কপি হয়েছে!');" style="width:auto; padding:0 14px; background:#0284c7; font-size:12px; border-radius:8px;"><i class="ti ti-copy"></i> কপি</button>
+        </div>
+      </div>
+
+      <!-- 🔗 ২. কাস্টমার ক্যাটালগ ও শপ লিংক (যা কাস্টমারদের পাঠাবেন) -->
+      <div style="background:rgba(236, 253, 245, 0.95); border:1px solid #10b981; border-radius:14px; padding:12px 14px; margin-bottom:16px;">
+        <div style="font-size:12px; font-weight:800; color:#065f46; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
+          <i class="ti ti-building-store"></i> 🛍️ কাস্টমার শপ লিংক (পণ্য দেখার ও অর্ডার করার লিংক):
+        </div>
+        <div style="display:flex; gap:6px;">
+          <input type="text" id="storeShareLink" readonly value="https://${fullUrl}/shop" style="font-weight:700; background:#fff; color:#059669; padding:8px 12px; border:1px solid #a7f3d0; border-radius:8px; font-size:13px;">
+          <button onclick="copyStoreUrl()" style="width:auto; padding:0 14px; background:#059669; font-size:12px; border-radius:8px;"><i class="ti ti-copy"></i> কপি</button>
         </div>
       </div>
 
