@@ -290,8 +290,9 @@
                         <td><b>${b.requests_today || 0}</b></td>
                         <td><span style="font-weight:700; color:${b.plan === 'premium' ? '#d97706' : '#64748b'};">${(b.plan || 'free').toUpperCase()}</span><br><small style="color:#64748b;">মেয়াদ: ${expDate}</small></td>
                         <td>${b.rate_limit_daily || 300} req/day</td>
-                        <td>
+                        <td style="display:flex; gap:6px; flex-wrap:wrap;">
                             <button class="btn-action" style="background:#e2e8f0;" onclick="changeLimit(${b.id})">Set Limit</button>
+                            <button class="btn-action" style="background:linear-gradient(135deg, #059669, #047857); color:#fff;" onclick="openAssignKeyModal(${b.id}, '${b.bot_name}')">🔑 Assign Key</button>
                         </td>
                     </tr>
                 `}).join('');
@@ -406,6 +407,28 @@
         });
         alert('লিমিট আপডেট হয়েছে!');
         loadAdminData();
+    }
+
+    // 🔑 অ্যাডমিন থেকে নির্দিষ্ট ইউজারের জন্য আলাদা আলাদা কী সেট করার পপআপ
+    async function openAssignKeyModal(botId, botName) {
+        const geminiKey = prompt(`[বট: ${botName}]\nএই ইউজারের জন্য ডেডিকেটেড Gemini API Key পেস্ট করুন (খালি রাখলে আগেরটি থাকবে):`, '');
+        if (geminiKey === null) return;
+
+        const imgbbKey = prompt(`[বট: ${botName}]\nএই ইউজারের জন্য আলাদা ImgBB API Key দিতে চাইলে পেস্ট করুন (অপশনাল):`, '');
+        if (imgbbKey === null) return;
+
+        try {
+          const res = await fetch('/api/admin/assign-bot-keys', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ botId, geminiKey, imgbbKey })
+          });
+          const d = await res.json();
+          alert(d.message);
+          loadAdminData();
+        } catch (e) {
+          alert('কানেকশন এরর!');
+        }
     }
 
     async function savePaymentNumbers() {
