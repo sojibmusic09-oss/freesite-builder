@@ -13,7 +13,6 @@ const router = express.Router();
 
 // ================= সিকিউরিটি মিডলওয়্যার: API Key & Secret Validation =================
 async function authenticateApiKey(req, res, next) {
-  // ওপেন হেলথ চেক ও ডকুমেন্টেশন অথেনটিকেশন ছাড়াই প্রবেশযোগ্য
   if (req.path === '/health' || req.path === '/docs' || req.path === '/openapi.json') {
     return next();
   }
@@ -49,7 +48,6 @@ async function authenticateApiKey(req, res, next) {
 
     req.apiApp = appRes.rows[0];
 
-    // রিকোয়েস্ট কাউন্ট ও লাস্ট এক্সেস টাইম আপডেট (নন-ব্লকিং)
     pool.query(
       `UPDATE api_applications 
        SET request_count = request_count + 1, last_access_at = NOW() 
@@ -57,7 +55,6 @@ async function authenticateApiKey(req, res, next) {
       [req.apiApp.id]
     ).catch(() => {});
 
-    // অডিট লগ সংরক্ষণ
     const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     res.on('finish', () => {
       pool.query(
@@ -75,15 +72,10 @@ async function authenticateApiKey(req, res, next) {
 
 router.use(authenticateApiKey);
 
-// ================= ১. হেলথ চেক এন্ডপয়েন্ট =================
+// ১. হেলথ চেক
 router.get('/health', async (req, res) => {
   let dbStatus = 'healthy';
-  try {
-    await pool.query('SELECT 1');
-  } catch (e) {
-    dbStatus = 'unreachable';
-  }
-
+  try { await pool.query('SELECT 1'); } catch (e) { dbStatus = 'unreachable'; }
   res.json({
     status: 'ok',
     version: 'v1.0.0',
@@ -93,7 +85,7 @@ router.get('/health', async (req, res) => {
   });
 });
 
-// ================= ২. প্রোডাক্ট তালিকা (Pagination, Filter, Sort) =================
+// ২. প্রোডাক্ট তালিকা (Pagination, Filter, Sort)
 router.get('/products', async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
@@ -106,26 +98,11 @@ router.get('/products', async (req, res) => {
     const values = [];
     let valIdx = 1;
 
-    if (category_id) {
-      conditions.push(`category_id = $${valIdx++}`);
-      values.push(parseInt(category_id, 10));
-    }
-    if (status) {
-      conditions.push(`status = $${valIdx++}`);
-      values.push(status);
-    }
-    if (stock_status) {
-      conditions.push(`stock_status = $${valIdx++}`);
-      values.push(stock_status);
-    }
-    if (min_price) {
-      conditions.push(`regular_price >= $${valIdx++}`);
-      values.push(parseFloat(min_price));
-    }
-    if (max_price) {
-      conditions.push(`regular_price <= $${valIdx++}`);
-      values.push(parseFloat(max_price));
-    }
+    if (category_id) { conditions.push(`category_id = $${valIdx++}`); values.push(parseInt(category_id, 10)); }
+    if (status) { conditions.push(`status = $${valIdx++}`); values.push(status); }
+    if (stock_status) { conditions.push(`stock_status = $${valIdx++}`); values.push(stock_status); }
+    if (min_price) { conditions.push(`regular_price >= $${valIdx++}`); values.push(parseFloat(min_price)); }
+    if (max_price) { conditions.push(`regular_price <= $${valIdx++}`); values.push(parseFloat(max_price)); }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
@@ -164,7 +141,7 @@ router.get('/products', async (req, res) => {
   }
 });
 
-// ================= ৩. নির্দিষ্ট প্রোডাক্টের বিস্তারিত =================
+// ৩. নির্দিষ্ট প্রোডাক্টের বিস্তারিত
 router.get('/products/:id', async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
@@ -189,17 +166,14 @@ router.get('/products/:id', async (req, res) => {
 
     res.json({
       success: true,
-      data: {
-        ...product.rows[0],
-        images: gallery.rows
-      }
+      data: { ...product.rows[0], images: gallery.rows }
     });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// ================= ৪. প্রোডাক্ট লাইভ সার্চ =================
+// ৪. প্রোডাক্ট সার্চ
 router.get('/products/search', async (req, res) => {
   try {
     const q = String(req.query.q || '').trim();
@@ -219,7 +193,7 @@ router.get('/products/search', async (req, res) => {
   }
 });
 
-// ================= ৫. নতুন প্রোডাক্ট তৈরি (Create Product) =================
+// ৫. নতুন প্রোডাক্ট তৈরি
 router.post('/products', async (req, res) => {
   try {
     const {
@@ -251,21 +225,15 @@ router.post('/products', async (req, res) => {
     );
 
     const createdProduct = insertRes.rows[0];
-
-    // ওয়েবহুক নোটিফিকেশন ফায়ার
     triggerWebhookEvent('product.created', createdProduct);
 
-    res.status(201).json({
-      success: true,
-      message: 'Product created successfully',
-      data: createdProduct
-    });
+    res.status(201).json({ success: true, message: 'Product created successfully', data: createdProduct });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// ================= ৬. প্রোডাক্ট সম্পূর্ণ বা আংশিক আপডেট (PUT / PATCH) =================
+// ৬. প্রোডাক্ট আপডেট
 router.put('/products/:id', updateProductHandler);
 router.patch('/products/:id', updateProductHandler);
 
@@ -312,8 +280,6 @@ async function updateProductHandler(req, res) {
     );
 
     const updated = updatedRes.rows[0];
-
-    // ওয়েবহুক ইভেন্ট ট্রিগার
     triggerWebhookEvent('product.updated', updated);
     if (prev.regular_price !== updated.regular_price) triggerWebhookEvent('product.price_updated', updated);
     if (prev.stock_quantity !== updated.stock_quantity) triggerWebhookEvent('product.stock_updated', updated);
@@ -324,13 +290,12 @@ async function updateProductHandler(req, res) {
   }
 }
 
-// ================= ৭. প্রোডাক্ট মুছে ফেলা (Delete Product) =================
+// ৭. প্রোডাক্ট ডিলিট
 router.delete('/products/:id', async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     const images = await pool.query('SELECT public_id FROM product_gallery_images WHERE product_id = $1', [id]);
 
-    // Cloudinary থেকে সব ইমেজ ডিলিট
     for (const img of images.rows) {
       await deleteCloudImage(img.public_id);
     }
@@ -339,22 +304,19 @@ router.delete('/products/:id', async (req, res) => {
     if (delRes.rows.length === 0) return res.status(404).json({ success: false, message: 'Product not found' });
 
     triggerWebhookEvent('product.deleted', { id });
-
     res.json({ success: true, message: `Product #${id} and associated cloud images deleted successfully` });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// ================= ৮. প্রোডাক্ট ইমেজ ক্লাউড আপলোড =================
+// ৮. ইমেজ ক্লাউড আপলোড
 router.post('/products/:id/images', async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     const { image_base64, is_main } = req.body;
+    if (!image_base64) return res.status(400).json({ success: false, message: 'image_base64 is required' });
 
-    if (!image_base64) return res.status(400).json({ success: false, message: 'image_base64 payload is required' });
-
-    // Cloudinary-তে আপলোড
     const cloudImg = await uploadProductImage(image_base64, `products/prod_${id}`);
 
     const isMainBool = Boolean(is_main);
@@ -369,17 +331,13 @@ router.post('/products/:id/images', async (req, res) => {
       [id, cloudImg.imageUrl, cloudImg.thumbnailUrl, cloudImg.publicId, isMainBool]
     );
 
-    res.status(201).json({
-      success: true,
-      message: 'Cloud image uploaded & optimized successfully',
-      data: imgRes.rows[0]
-    });
+    res.status(201).json({ success: true, message: 'Image uploaded to Cloudinary', data: imgRes.rows[0] });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// ================= ৯. প্রোডাক্ট ইমেজ মুছে ফেলা =================
+// ৯. ইমেজ ডিলিট
 router.delete('/products/:id/images/:image_id', async (req, res) => {
   try {
     const image_id = parseInt(req.params.image_id, 10);
@@ -395,7 +353,7 @@ router.delete('/products/:id/images/:image_id', async (req, res) => {
   }
 });
 
-// ================= ১০. ক্যাটাগরি ম্যানেজমেন্ট (CRUD) =================
+// ১০. ক্যাটাগরি রাউটস
 router.get('/categories', async (req, res) => {
   try {
     const result = await pool.query(`
@@ -432,17 +390,14 @@ router.post('/categories', async (req, res) => {
 router.get('/categories/:id/products', async (req, res) => {
   try {
     const catId = parseInt(req.params.id, 10);
-    const products = await pool.query(
-      'SELECT * FROM universal_products WHERE category_id = $1 ORDER BY created_at DESC',
-      [catId]
-    );
+    const products = await pool.query('SELECT * FROM universal_products WHERE category_id = $1 ORDER BY created_at DESC', [catId]);
     res.json({ success: true, count: products.rows.length, data: products.rows });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// ================= ১১. ইনভেন্টরি ট্র্যাকিং (Low stock & status) =================
+// ১১. ইনভেন্টরি ট্র্যাকিং
 router.get('/inventory', async (req, res) => {
   try {
     const stats = await pool.query(`
@@ -460,30 +415,23 @@ router.get('/inventory', async (req, res) => {
        WHERE stock_quantity <= 5 ORDER BY stock_quantity ASC LIMIT 20`
     );
 
-    res.json({
-      success: true,
-      summary: stats.rows[0],
-      low_stock_alerts: lowStockItems.rows
-    });
+    res.json({ success: true, summary: stats.rows[0], low_stock_alerts: lowStockItems.rows });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// ================= ১২. কানেক্টেড অ্যাপ্লিকেশন ও ইন্টিগ্রেশন ইনফো =================
+// ১২. ইন্টিগ্রেশন ইনফো
 router.get('/integrations', async (req, res) => {
   try {
-    const apps = await pool.query(
-      `SELECT id, app_name, app_id, permissions, status, request_count, last_access_at, created_at 
-       FROM api_applications ORDER BY id DESC`
-    );
+    const apps = await pool.query(`SELECT id, app_name, app_id, permissions, status, request_count, last_access_at, created_at FROM api_applications ORDER BY id DESC`);
     res.json({ success: true, connected_applications: apps.rows });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// ================= ১৩. OpenAPI 3.0 ইন্টারেক্টিভ স্পেসিফিকেশন =================
+// ১৩. OpenAPI 3.0 ডকুমেন্টেশন
 router.get('/openapi.json', (req, res) => {
   const protocol = req.protocol;
   const host = req.get('host');
@@ -505,7 +453,6 @@ router.get('/openapi.json', (req, res) => {
   });
 });
 
-// লাইভ ডকুমেন্টেশন ভিউয়ার
 router.get('/docs', (req, res) => {
   res.send(`<!DOCTYPE html>
 <html>
