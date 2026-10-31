@@ -13,6 +13,7 @@ const { GoogleGenAI } = require('@google/genai');
 
 const { pool, initializeDatabase } = require('./database');
 const { analyzeAndExtractWebsiteKnowledge } = require('./website_analyzer');
+const apiV1Router = require('./api_v1_router');
 const {
   getActiveGenAIClient,
   rotateToNextApiKey,
@@ -44,6 +45,9 @@ app.set('trust proxy', 1);
 app.use(cors({ origin: '*' }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// 🌐 Universal Product API v1 মাউন্ট
+app.use('/api/v1', apiV1Router);
 
 const activeSockets = new Map();
 const botChatHistories = new Map();
