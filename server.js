@@ -753,12 +753,12 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
       <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">
         WhatsApp কানেক্ট করার আগেই এখানে মেসেজ দিয়ে টেস্ট করুন এআই আপনার ওয়েবসাইটের তথ্য ঠিকমতো বলছে কি না:
       </p>
-      <div id="testChatWindow" style="background:#f8fafc; border:1px solid var(--border); border-radius:10px; padding:12px; height:160px; overflow-y:auto; margin-bottom:10px; font-size:13px;">
+      <div id="testChatWindow" style="background:rgba(255,255,255,0.7); border:1px solid var(--glass-border-subtle); border-radius:14px; padding:14px; height:180px; overflow-y:auto; margin-bottom:10px; font-size:13px;">
         <div style="color:#64748b; font-style:italic;">বটের সাথে কথা বলতে নিচে মেসেজ লিখুন...</div>
       </div>
       <div style="display:flex; gap:8px;">
-        <input type="text" id="testMsgInput" placeholder="যেমন: টুর্নামেন্টের ফি কত? অথবা নিয়ম কী?" style="flex:1;">
-        <button onclick="sendTestChatMessage(${bot.id})" style="width:auto; padding:0 20px; background:#059669;">
+        <input type="text" id="testMsgInput" onkeypress="if(event.key==='Enter') sendTestChatMessage(${bot.id})" placeholder="যেমন: টুর্নামেন্টের ফি কত? অথবা হাই..." style="flex:1;">
+        <button id="testSendBtn" onclick="sendTestChatMessage(${bot.id})" style="width:auto; padding:0 22px; background:#059669;">
           <i class="ti ti-send"></i> পাঠান
         </button>
       </div>
@@ -971,20 +971,37 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
       </div>
     </div>
 
-    const response = await client.models.generateContent({
-        model: GEMINI_MODEL,
-        contents,
-        config: { systemInstruction: systemPrompt, temperature: 0.35, maxOutputTokens: 1200, thinkingConfig: { thinkingBudget: 0 } }
-      });
-      <div class="form-group">
-        <input type="password" id="apiKeyInput" placeholder="AIzaSy..." value="${bot.gemini_api_key || ''}">
+    <!-- 🔑 মাল্টিপল Gemini API Key (কমা দিয়ে যতখুশি বসানো যাবে) -->
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3><i class="ti ti-key"></i> ডেডিকেটেড Gemini API Keys</h3>
+        <span style="font-size:11px; font-weight:800; color:#059669; background:#ecfdf5; padding:4px 10px; border-radius:12px;">
+          ${bot.gemini_api_key ? '👑 আনলিমিটেড রোটেশন সক্রিয়' : 'ℹ️ প্ল্যাটফর্ম ডিফল্ট Key'}
+        </span>
       </div>
-      <button onclick="saveApiKey(${bot.id})"><i class="ti ti-device-floppy"></i> API Key সংরক্ষণ করুন</button>
+      <div class="form-group">
+        <label style="font-size:12px; color:var(--muted); font-weight:700;">কমা (,) দিয়ে যতখুশি Gemini API Key বসাতে পারবেন (একটি শেষ হলে অটো অন্যটিতে চলবে):</label>
+        <textarea id="apiKeyInput" rows="3" placeholder="AIzaSy1..., AIzaSy2..., AIzaSy3...">${bot.gemini_api_key || ''}</textarea>
+      </div>
+      <button onclick="saveApiKey(${bot.id})"><i class="ti ti-device-floppy"></i> API Key সমূহ সংরক্ষণ করুন</button>
     </div>
 
-    <!-- 📜 লাইভ কনসোল লগ -->
+    <!-- 📜 লাইভ কনসোল লগ (কপি, ডিলিট ও রিফ্রেশ বাটনসহ) -->
     <div class="card">
-      <h3><i class="ti ti-terminal"></i> লাইভ অ্যাক্টিভিটি টার্মিনাল</h3>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+        <h3 style="margin-bottom:0;"><i class="ti ti-terminal"></i> লাইভ অ্যাক্টিভিটি টার্মিনাল</h3>
+        <div style="display:flex; gap:6px;">
+          <button onclick="copyTerminalLogs()" style="width:auto; padding:6px 12px; font-size:11px; background:#0284c7; border-radius:8px;">
+            <i class="ti ti-copy"></i> কপি
+          </button>
+          <button onclick="refreshTerminalLogs()" style="width:auto; padding:6px 12px; font-size:11px; background:#059669; border-radius:8px;">
+            <i class="ti ti-refresh"></i> রিফ্রেশ
+          </button>
+          <button onclick="clearTerminalLogs(${bot.id})" style="width:auto; padding:6px 12px; font-size:11px; background:#ef4444; border-radius:8px;">
+            <i class="ti ti-trash"></i> ডিলিট
+          </button>
+        </div>
+      </div>
       <div class="terminal-window" id="terminalBox">
         <div class="log-line"><span class="log-time">[System]</span> টার্মিনাল প্রস্তুত...</div>
       </div>
@@ -1109,15 +1126,23 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
       });
     }
 
-    // 💬 লাইভ এআই টেস্ট চ্যাট ফাংশন
+    // 💬 লাইভ এআই টেস্ট চ্যাট ফাংশন (টাইপিং ইনডিকেটরসহ)
     async function sendTestChatMessage(botId) {
       const input = document.getElementById('testMsgInput');
+      const btn = document.getElementById('testSendBtn');
       const text = input.value.trim();
       if(!text) return;
       const win = document.getElementById('testChatWindow');
+      
+      // গ্রাহকের মেসেজ দেখানো
       win.innerHTML += '<div style="margin-bottom:8px; text-align:right;"><span style="background:#059669; color:#fff; padding:6px 12px; border-radius:12px; display:inline-block;">' + text + '</span></div>';
       input.value = '';
+
+      // ✍️ টাইপিং ইনডিকেটর যোগ
+      const typingId = 'typing_' + Date.now();
+      win.innerHTML += '<div id="' + typingId + '" style="margin-bottom:8px; text-align:left;"><span style="background:#e2e8f0; color:#475569; padding:6px 12px; border-radius:12px; display:inline-block; font-size:12px;"><i class="ti ti-dots" style="animation:pulse 1s infinite;"></i> টাইপ করছে...</span></div>';
       win.scrollTop = win.scrollHeight;
+      btn.disabled = true;
 
       try {
         const res = await fetch('/api/user/test-chat', {
@@ -1126,11 +1151,48 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
           body: JSON.stringify({ botId, message: text })
         });
         const d = await res.json();
-        win.innerHTML += '<div style="margin-bottom:8px; text-align:left;"><span style="background:#e2e8f0; color:#0f172a; padding:6px 12px; border-radius:12px; display:inline-block;">' + (d.reply || 'কোনো উত্তর নেই') + '</span></div>';
+        const typingEl = document.getElementById(typingId);
+        if (typingEl) typingEl.remove();
+
+        win.innerHTML += '<div style="margin-bottom:8px; text-align:left;"><span style="background:#f1f5f9; border:1px solid #cbd5e1; color:#0f172a; padding:8px 12px; border-radius:12px; display:inline-block; line-height:1.4;">' + (d.reply || 'কোনো উত্তর নেই') + '</span></div>';
         win.scrollTop = win.scrollHeight;
       } catch(e) {
-        win.innerHTML += '<div style="color:red; font-size:12px;">এআই রেসপন্স এরর!</div>';
+        const typingEl = document.getElementById(typingId);
+        if (typingEl) typingEl.remove();
+        win.innerHTML += '<div style="color:red; font-size:12px; margin-bottom:8px;">⚠️ এআই রেসপন্স এরর!</div>';
+      } finally {
+        btn.disabled = false;
       }
+    }
+
+    // 📋 কনসোল লগ কপি
+    function copyTerminalLogs() {
+      const box = document.getElementById('terminalBox');
+      const text = box.innerText || box.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        alert('📋 টার্মিনাল লগ সফলভাবে কপি করা হয়েছে!');
+      }).catch(() => {
+        alert('কপি ব্যর্থ হয়েছে!');
+      });
+    }
+
+    // 🔄 কনসোল লগ রিফ্রেশ
+    function refreshTerminalLogs() {
+      fetchLiveUpdates();
+    }
+
+    // 🗑️ কনসোল লগ মুছে ফেলা (ক্লিয়ার)
+    async function clearTerminalLogs(botId) {
+      if(!confirm('আপনি কি টার্মিনালের সমস্ত লগ মুছে ফেলতে চান?')) return;
+      document.getElementById('terminalBox').innerHTML = '<div class="log-line"><span class="log-time">[System]</span> 🧹 কনসোল পরিষ্কার করা হচ্ছে...</div>';
+      try {
+        await fetch('/api/user/clear-logs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ botId })
+        });
+        fetchLiveUpdates();
+      } catch (e) {}
     }
 
     // 🔄 ওয়েবসাইট রি-অ্যানালাইজ ফাংশন (১০ দিনের ট্রায়াল ও প্রিমিয়াম প্রটেক্টেড)
@@ -1319,8 +1381,75 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
 </html>`;
 }
 
-// ================= AI মেসেজ এক্সিকিউশন =================
+// ================= AI মেসেজ এক্সিকিউশন (systemInstruction ফিক্স ও কী অটো-রোটেশন) =================
 async function executeGeminiForTenant(botRow, userPrompt, systemPrompt, imageBuffer = null, imageMime = 'image/jpeg') {
+  const dailyLimit = botRow.rate_limit_daily || 300;
+  if ((botRow.requests_today || 0) >= dailyLimit && botRow.plan !== 'premium') {
+    addBotLog(botRow.id, 'warn', `⚠️ আজকের ফ্রি লিমিট (${dailyLimit} মেসেজ) শেষ!`);
+    return 'ভাইয়া, আজকের জন্য আমাদের স্বয়ংক্রিয় এআই সেবার ফ্রি লিমিট শেষ হয়ে গিয়েছে। আরও আনলিমিটেড সেবার জন্য অ্যাডমিনের সাথে যোগাযোগ করুন ❤️';
+  }
+
+  let reply = '';
+  let usedTokens = 0;
+  const safeInstruction = typeof systemPrompt === 'string' && systemPrompt.trim() ? systemPrompt.trim() : 'তুমি একজন অমায়িক ও পেশাদার কাস্টমার সহকারী।';
+
+  // 🔑 কমা দিয়ে আলাদা করা একাধিক কী বের করা
+  const customKeys = (botRow.gemini_api_key || '')
+    .split(',')
+    .map(k => k.trim())
+    .filter(k => k.length > 20);
+
+  if (customKeys.length > 0) {
+    for (let i = 0; i < customKeys.length; i++) {
+      const activeKey = customKeys[i];
+      try {
+        const client = new GoogleGenAI({ apiKey: activeKey });
+        const contents = [];
+        if (imageBuffer) contents.push({ inlineData: { data: imageBuffer.toString('base64'), mimeType: imageMime } });
+        contents.push(userPrompt);
+
+        const response = await client.models.generateContent({
+          model: GEMINI_MODEL || 'gemini-2.5-flash',
+          contents,
+          config: {
+            systemInstruction: safeInstruction,
+            temperature: 0.35,
+            maxOutputTokens: 1200
+          }
+        });
+
+        reply = response.text?.trim() || response.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+        usedTokens = response.usageMetadata?.totalTokenCount || 50;
+
+        if (reply) break;
+      } catch (err) {
+        addBotLog(botRow.id, 'warn', `⚠️ Key #${i + 1} ফেইল: ${err.message} (পরবর্তী কী দিয়ে চেষ্টা চলছে...)`);
+      }
+    }
+  }
+
+  // যদি ইউজারের সব কী ব্যর্থ হয়, তবে প্ল্যাটফর্ম ব্যাকআপ ইঞ্জিন চালাবে
+  if (!reply) {
+    try {
+      reply = await callGeminiUltraFast(userPrompt, safeInstruction, imageBuffer, imageMime);
+      usedTokens = 45;
+    } catch (fallbackErr) {
+      addBotLog(botRow.id, 'warn', `প্ল্যাটফর্ম ব্যাকআপ এরর: ${fallbackErr.message}`);
+    }
+  }
+
+  try {
+    await pool.query(
+      `UPDATE whatsapp_bots 
+       SET tokens_used = COALESCE(tokens_used, 0) + $1, 
+           requests_today = COALESCE(requests_today, 0) + 1 
+       WHERE id = $2`,
+      [usedTokens, botRow.id]
+    );
+  } catch (e) {}
+
+  return reply;
+}
   const dailyLimit = botRow.rate_limit_daily || 300;
   if ((botRow.requests_today || 0) >= dailyLimit && botRow.plan !== 'premium') {
     addBotLog(botRow.id, 'warn', `⚠️ আজকের ফ্রি লিমিট (${dailyLimit} মেসেজ) শেষ!`);
@@ -1330,28 +1459,52 @@ async function executeGeminiForTenant(botRow, userPrompt, systemPrompt, imageBuf
   let reply = '';
   let usedTokens = 0;
 
-  if (botRow.gemini_api_key && botRow.gemini_api_key.trim().length > 20) {
-    try {
-      const client = new GoogleGenAI({ apiKey: botRow.gemini_api_key.trim() });
-      const contents = [];
-      if (imageBuffer) contents.push({ inlineData: { data: imageBuffer.toString('base64'), mimeType: imageMime } });
-      contents.push(userPrompt);
+  // 🔑 কমা দিয়ে আলাদা করা একাধিক কী বের করা
+  const customKeys = (botRow.gemini_api_key || '')
+    .split(',')
+    .map(k => k.trim())
+    .filter(k => k.length > 20);
 
-      const response = await client.models.generateContent({
-        model: GEMINI_MODEL,
-        contents,
-        config: { systemInstruction, temperature: 0.35, maxOutputTokens: 1200, thinkingConfig: { thinkingBudget: 0 } }
-      });
-      reply = response.text?.trim() || response.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
-      usedTokens = response.usageMetadata?.totalTokenCount || 50;
-    } catch (err) {
-      addBotLog(botRow.id, 'warn', `ইউজার কী ব্যর্থ: ${err.message}`);
+  // কমা দেওয়া সব কী-তে একটার পর একটা চেষ্টা করবে (Auto Failover Rotation)
+  if (customKeys.length > 0) {
+    for (let i = 0; i < customKeys.length; i++) {
+      const activeKey = customKeys[i];
+      try {
+        const client = new GoogleGenAI({ apiKey: activeKey });
+        const contents = [];
+        if (imageBuffer) contents.push({ inlineData: { data: imageBuffer.toString('base64'), mimeType: imageMime } });
+        contents.push(userPrompt);
+
+        const response = await client.models.generateContent({
+          model: GEMINI_MODEL || 'gemini-2.5-flash',
+          contents,
+          config: {
+            systemInstruction: systemPrompt, // ✅ সিনট্যাক্স এরর ১০০% ফিক্স
+            temperature: 0.35,
+            maxOutputTokens: 1200
+          }
+        });
+
+        reply = response.text?.trim() || response.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+        usedTokens = response.usageMetadata?.totalTokenCount || 50;
+
+        if (reply) {
+          break; // সফল হলে পরবর্তী কীতে যাওয়ার দরকার নেই
+        }
+      } catch (err) {
+        addBotLog(botRow.id, 'warn', `⚠️ Key #${i + 1} ফেইল: ${err.message} (পরবর্তী কী দিয়ে চেষ্টা চলছে...)`);
+      }
     }
   }
 
+  // যদি ইউজারের সব কী ব্যর্থ হয়, তবে প্ল্যাটফর্ম ব্যাকআপ ইঞ্জিন চালাবে
   if (!reply) {
-    reply = await callGeminiUltraFast(userPrompt, systemPrompt, imageBuffer, imageMime);
-    usedTokens = 45;
+    try {
+      reply = await callGeminiUltraFast(userPrompt, systemPrompt, imageBuffer, imageMime);
+      usedTokens = 45;
+    } catch (fallbackErr) {
+      addBotLog(botRow.id, 'warn', `প্ল্যাটফর্ম ব্যাকআপ এরর: ${fallbackErr.message}`);
+    }
   }
 
   try {
@@ -1419,17 +1572,30 @@ async function handleDynamicCustomerMessage(botRow, customerPhone, text, sock, i
 
   let systemPrompt = '';
   if (botRow.bot_type === 'personal') {
-    systemPrompt = `তুমি ${botRow.bot_name} এর অত্যন্ত বুদ্ধিমান ও মিষ্টি ব্যক্তিগত সহকারী (Personal AI Assistant)। ব্যবহারকারীর পরিচয়: ${botRow.system_prompt || 'ব্যক্তিগত ইউজার'}। কাস্টমারকে "ভাইয়া" সম্বোধন করবে। হিস্ট্রি: ${conversationHistoryText}`;
+    systemPrompt = `তুমি ${botRow.bot_name} এর অত্যন্ত অমায়িক ও সাহায্যকারী ব্যক্তিগত সহকারী (Personal AI Assistant)।
+ব্যবহারকারীর নিজস্ব পরিচয়/নির্দেশনা: ${botRow.system_prompt || 'ব্যক্তিগত ইউজার'}।
+নিয়মাবলী:
+- গ্রাহককে 'ভাইয়া' বা সম্মান দিয়ে কথা বলবে।
+- গ্রাহক যা জানতে চাইবে কেবল সেটুকুর প্রাসঙ্গিক ও সংক্ষিপ্ত উত্তর দেবে। অপ্রয়োজনীয় কথা বলবে না।
+কথোপকথন ইতিহাস:
+${conversationHistoryText}`;
   } else {
-    systemPrompt = `তুমি ${botRow.bot_name} এর অত্যন্ত মার্জিত ও পেশাদার সেলস অ্যাসিস্ট্যান্ট।
-কঠোর নিয়মাবলী:
-১. ওয়েলকাম মেসেজ (Hi / Hello / সালাম): কাস্টমার নিজে যতক্ষণ পণ্য দেখতে বা জানতে না চাইবে, ভুলেও কোনো পণ্যের তালিকা বা পণ্যের দাম বলবে না! শুধু সালাম দিয়ে বলবে: "আসসালামু আলাইকুম ভাইয়া! ${botRow.bot_name}-এ স্বাগতম। আমাদের কাছে (${availableCategories || 'নানা রকম পণ্য'}) রয়েছে। আপনি কি বিশেষ কিছু খুঁজছেন?"
-২. ডেমো পণ্য প্রদর্শন (৩, ৫ বা ৭টি নিয়ম): কাস্টমার যখন পণ্য দেখতে চাইবে বা পণ্যের কথা জিজ্ঞেস করবে, তখন সবগুলো একসাথে চাপিয়ে না দিয়ে প্রসঙ্গের ওপর ভিত্তি করে ৩টি, ৫টি অথবা সর্বোচ্চ ৭টি সেরা পণ্যের নাম, বর্তমান মূল্য এবং আলাদা লিংক উল্লেখ করবে। পূর্বের মূল্য থাকলে অফার হিসেবে উল্লেখ করবে।
-৩. ছবি বা ভয়েস মেসেজ: কাস্টমার ছবি বা ভয়েস পাঠালে স্টকের সাথে মিলিয়ে নির্দিষ্ট পণ্যের উত্তর দেবে।
-৪. স্টক তথ্য:
-${catalogContext || 'স্টক ডাটা লোড করা আছে।'}
-ডেলিভারি চার্জ: ভেতরে ৳${botRow.delivery_inside || 70}, বাইরে ৳${botRow.delivery_outside || 130}।
-হিস্ট্রি: ${conversationHistoryText}`;
+    systemPrompt = `তুমি ${botRow.bot_name} এর একজন আসল মানুষের মতো বিনয়ী ও অমায়িক হেল্পডেস্ক/সেলস অ্যাসিস্ট্যান্ট।
+ওয়েবসাইট/প্ল্যাটফর্মের মূল বিবরণ ও নির্দেশিকা:
+${botRow.system_prompt || 'আমরা মানসম্মত পণ্য ও সেবা দিয়ে থাকি।'}
+
+⛔ অতি গুরুত্বপূর্ণ কঠোর নিয়মাবলী (কখনোই ভঙ্গ করবে না):
+১. সাধারণ হাই/হ্যালো/সালাম: গ্রাহক শুধু সালাম বা হাই দিলে বিনয়ের সাথে উত্তর দাও (যেমন: "ওয়ালাইকুম আসসালাম ভাইয়া! কেমন আছেন? আপনাকে কীভাবে সাহায্য করতে পারি?")। কোনো পণ্য, দাম, তালিকা বা ডেলিভারি চার্জ নিজে থেকে জোর করে চাপাবে না!
+২. টুর্নামেন্ট/গেমিং/সার্ভিস সাইট হলে: যদি সাইটটি গেমিং, টুর্নামেন্ট বা কোনো সার্ভিসের হয়, তবে সাধারণ মানুষের মতো নিয়ম, রেজিস্ট্রেশন ফি ও প্রসেস সুন্দরভাবে বুঝিয়ে বলো।
+৩. পণ্য জানতে চাওয়া: গ্রাহক যতক্ষণ নির্দিষ্ট কোনো পণ্য বা দাম জানতে না চাইবে অথবা কিনতে না চাইবে, ততক্ষণ নিজে থেকে "আপনি কি অর্ডার করতে চান?" বা ডেলিভারি চার্জ বলবে না।
+৪. পণ্য উপস্থাপন: গ্রাহক যখন পণ্য চাইবে কেবল তখনই সম্পর্কিত সর্বোচ্চ ২-৩টি পণ্যের নাম, দাম ও লিংক স্বাভাবিকভাবে দেবে।
+৫. কৃত্রিম বা রোবোটিক আচরণ সম্পূর্ণ নিষিদ্ধ। আসল মানুষের মতো সহজ, সরল ও আন্তরিক ভঙ্গিতে কথা বলো।
+
+স্টক ডাটা রেফারেন্স (প্রয়োজনে ব্যবহারের জন্য):
+${catalogContext || 'কোনো নির্দিষ্ট প্রোডাক্ট খোঁজা হয়নি।'}
+ডেলিভারি চার্জ (কেবলমাত্র পণ্য অর্ডার করার সময় উল্লেখ করবে): সিটির ভেতরে ৳${botRow.delivery_inside || 70}, বাইরে ৳${botRow.delivery_outside || 130}।
+কথোপকথন ইতিহাস:
+${conversationHistoryText}`;
   }
 
   let userPrompt = '';
@@ -1554,11 +1720,10 @@ async function startTenantBot(botId) {
         const isImage = Boolean(msgContent.imageMessage);
         if (!text && !isAudio && !isImage) return;
 
-        // 🛡️ হিউম্যান রিডিং ডিলে
-        await delay(1200 + Math.random() * 800);
+        // 🛡️ সিন করা ও রিয়েল-টাইম টাইপিং ইনডিকেটর চালু রাখা
         try {
           await sock.readMessages([msg.key]);
-          await sock.sendPresenceUpdate('composing', sender);
+          await sock.sendPresenceUpdate('composing', sender); // ✍️ টাইপিং শুরু
         } catch (e) {}
 
         let imageBuffer = null;
@@ -1585,8 +1750,9 @@ async function startTenantBot(botId) {
         let reply = await handleDynamicCustomerMessage(botRow, cleanSender, text, sock, imageBuffer, imageMime);
         if (isAudio) reply = `🎤 *ভয়েস রেকর্ড:* "${text}"\n\n${reply}`;
 
-        // 🛡️ হিউম্যান টাইপিং ডিলে
-        const typingDelay = Math.min(3000, Math.max(1500, reply.length * 20));
+        // 🛡️ মানুষের মতো টাইপিং বজায় রাখা
+        try { await sock.sendPresenceUpdate('composing', sender); } catch (_) {}
+        const typingDelay = Math.min(2500, Math.max(1000, reply.length * 15));
         await delay(typingDelay);
 
         // 📸 কাস্টমার ছবি চাইলে, অথবা ভয়েস/ছবি পাঠিয়ে পণ্যের সন্ধান করলে সাথে সাথে আমাদের স্টকের আসল ছবি পাঠানো
@@ -1836,6 +2002,15 @@ app.get('/api/user/bot-logs', async (req, res) => {
     }
   } catch (e) {}
   res.json({ success: true, logs, stats });
+});
+
+// 🗑️ কনসোল লগ ডিলিট / ক্লিয়ার API
+app.post('/api/user/clear-logs', (req, res) => {
+  const botId = Number(req.body.botId);
+  if (botLiveLogs.has(botId)) {
+    botLiveLogs.set(botId, [{ time: new Date().toLocaleTimeString('en-US', { hour12: false }), type: 'info', message: '🧹 কনসোল লগ সম্পূর্ণ পরিষ্কার করা হয়েছে।' }]);
+  }
+  res.json({ success: true, message: 'লগ মুছে ফেলা হয়েছে।' });
 });
 
 // ৩. ইউজার থেকে বটের তথ্য আপডেট (Edit Bot Info)
