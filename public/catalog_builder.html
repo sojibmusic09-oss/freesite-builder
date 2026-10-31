@@ -67,7 +67,7 @@
         .product-item {
             background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(8px);
             border: 1px solid var(--glass-border-subtle); border-radius: 16px;
-            padding: 14px 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; gap: 12px;
+            padding: 14px 18px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px;
         }
         .product-img { width: 56px; height: 56px; border-radius: 10px; object-fit: cover; border: 1px solid rgba(226, 232, 240, 0.8); background: #fff; }
         .link-box { background: rgba(236, 253, 245, 0.9); border: 1px solid #10b981; color: #065f46; padding: 20px; border-radius: 18px; text-align: center; display: none; margin-top: 20px; }
@@ -77,7 +77,7 @@
 </head>
 <body>
 <div class="container">
-    <!-- স্টোর প্রোফাইল (অটো সেভ হবে) -->
+    <!-- স্টোর প্রোফাইল -->
     <div class="card">
         <h2><i class="ti ti-building-store"></i> শপ প্রোফাইল ও লিংক কনফিগার</h2>
         <p style="font-size:12px; color:var(--muted); margin-bottom:15px;">একবার লিখে সেভ করলে রিফ্রেশ দিলেও আর মুছবে না!</p>
@@ -98,9 +98,9 @@
         </div>
     </div>
 
-    <!-- 📸 নতুন পণ্য যোগ করুন (ছবিসহ) -->
-    <div class="card">
-        <h3 style="font-size:16px; font-weight:700; color:#065f46; margin-bottom:12px;">➕ নতুন পণ্য যোগ করুন (ছবিসহ)</h3>
+    <!-- 📸 নতুন পণ্য যোগ ও এডিট ফর্ম -->
+    <div class="card" id="formCard">
+        <h3 id="formHeading" style="font-size:16px; font-weight:700; color:#065f46; margin-bottom:12px;">➕ নতুন পণ্য যোগ করুন</h3>
         
         <div class="form-group">
             <label>পণ্যের নাম:</label>
@@ -113,37 +113,35 @@
                 <input type="number" id="pPrice" placeholder="যেমন: 1250">
             </div>
             <div class="form-group">
-                <label>ক্যাটাগরি (তৈরি করা ক্যাটাগরি নিচে আসবে):</label>
+                <label>ক্যাটাগরি:</label>
                 <div style="display:flex; gap:6px;">
-                    <!-- ড্রপডাউন লিস্ট (তৈরি করা ক্যাটাগরি থাকলে দেখাবে) -->
                     <select id="pCategorySelect" onchange="onCategorySelect(this)" style="display:none; flex:1; max-width:50%;">
                         <option value="">-- সিলেক্ট --</option>
                     </select>
-                    <!-- নতুন ক্যাটাগরি টাইপ করার ইনপুট -->
                     <input type="text" id="pCategory" placeholder="যেমন: ঘড়ি / গ্যাজেট" style="flex:1;">
                 </div>
             </div>
         </div>
 
-        <!-- 🖼️ ১. মূল পণ্যের ছবি সিলেক্ট স্লট -->
+        <!-- 🖼️ স্লট ১: মূল ছবি -->
         <div class="form-group">
-            <label>📸 পণ্যের মূল ছবি (Main Cover Picture):</label>
+            <label style="color:#065f46; font-weight:800;">📸 ১. পণ্যের মূল ছবি (Main Picture):</label>
             <div class="img-preview-box" onclick="document.getElementById('pImgFile').click()">
-                <span id="imgUploadText" style="font-size:13px; color:#047857; font-weight:700;"><i class="ti ti-camera"></i> মূল ছবি আপলোড করুন</span>
+                <span id="imgUploadText" style="font-size:13px; color:#047857; font-weight:700;"><i class="ti ti-camera"></i> মূল ছবি আপলোড করতে ট্যাপ করুন</span>
                 <img id="imgPreview" style="display:none;">
             </div>
             <input type="file" id="pImgFile" accept="image/*" style="display:none;" onchange="handleImageSelect(event)">
         </div>
 
-        <!-- 📸 ২. ডেমো ছবি আপলোড স্লট (আলাদা ডেডিকেটেড স্লট) -->
-        <div class="form-group" style="background:rgba(238, 242, 255, 0.6); padding:12px; border-radius:14px; border:1px dashed #6366f1;">
-            <label style="color:#3730a3;"><i class="ti ti-sparkles"></i> 📸 পণ্যের ডেমো ছবি স্লট (Demo / Preview Picture):</label>
-            <div class="img-preview-box" style="border-color:#6366f1; background:rgba(245, 247, 255, 0.8);" onclick="document.getElementById('pDemoImgFile').click()">
-                <span id="demoImgUploadText" style="font-size:13px; color:#4f46e5; font-weight:700;"><i class="ti ti-photo-plus"></i> ডেমো ছবি আপলোড করতে ট্যাপ করুন</span>
+        <!-- 📸 স্লট ২: ডেমো ছবি আপলোড স্লট -->
+        <div class="form-group" style="background:rgba(238, 242, 255, 0.7); border:2px dashed #6366f1; border-radius:16px; padding:12px;">
+            <label style="color:#3730a3; font-weight:800;"><i class="ti ti-photo-plus"></i> 📸 ২. ডেমো ছবি আপলোড স্লট (Demo Picture Slot):</label>
+            <div class="img-preview-box" style="border-color:#6366f1; background:rgba(255,255,255,0.7);" onclick="document.getElementById('pDemoImgFile').click()">
+                <span id="demoImgUploadText" style="font-size:13px; color:#4f46e5; font-weight:700;"><i class="ti ti-sparkles"></i> ডেমো ছবি আপলোড করতে ট্যাপ করুন</span>
                 <img id="demoImgPreview" style="display:none;">
             </div>
             <input type="file" id="pDemoImgFile" accept="image/*" style="display:none;" onchange="handleDemoImageSelect(event)">
-            <small style="color:#6366f1; font-size:11px; display:block; margin-top:4px;">👉 কাস্টমার ডেমো দেখতে চাইলে বা ৪ কোণা লিংকে ঢুকলে এই ডেমো পিকটি দেখতে পাবে।</small>
+            <small style="color:#4338ca; font-size:11px; display:block; margin-top:4px;">👉 কাস্টমার ডেমো দেখতে চাইলে বা লিংকে ঢুকলে এই ডেমো পিকটি প্রদর্শিত হবে।</small>
         </div>
 
         <div class="form-group">
@@ -155,7 +153,7 @@
             <button type="button" id="btnProductAction" onclick="addProductToList()" style="flex:1; background:#0284c7;">
                 <i class="ti ti-plus"></i> তালিকায় পণ্যটি যোগ করুন
             </button>
-            <button type="button" id="btnCancelEdit" onclick="cancelEditMode()" style="display:none; width:auto; background:#64748b; padding:0 18px;">
+            <button type="button" id="btnCancelEdit" onclick="cancelEditMode()" style="display:none; width:auto; background:#64748b; padding:0 20px;">
                 বাতিল
             </button>
         </div>
@@ -185,10 +183,9 @@
     let products = [];
     let currentImageBase64 = '';
     let currentDemoImageBase64 = '';
-    let editIndex = -1; // -1 মানে নতুন যোগ হচ্ছে, ০ বা তার বেশি মানে এডিট হচ্ছে
+    let editIndex = -1; // -1 হলে নতুন যোগ, ০ বা তার বেশি হলে এডিট মোড
     let categorySet = new Set();
 
-    // তৈরি হওয়া ক্যাটাগরিগুলো ড্রপডাউনে আপডেট করার ফাংশন
     function updateCategoryDropdown() {
         categorySet.clear();
         products.forEach(p => {
@@ -208,7 +205,6 @@
         }
     }
 
-    // ড্রপডাউন থেকে সিলেক্ট করলে ইনপুট বক্সে মান বসানো
     function onCategorySelect(el) {
         const val = el.value;
         const input = document.getElementById('pCategory');
@@ -220,7 +216,7 @@
         }
     }
 
-    // মূল ছবি সিলেক্ট এবং কম্প্রেস
+    // ১. মূল ছবি সিলেক্ট
     function handleImageSelect(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -233,8 +229,7 @@
                 let w = img.width, h = img.height;
                 if (w > h && w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
                 else if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
-                canvas.width = w;
-                canvas.height = h;
+                canvas.width = w; canvas.height = h;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, w, h);
                 currentImageBase64 = canvas.toDataURL('image/jpeg', 0.7);
@@ -247,7 +242,7 @@
         reader.readAsDataURL(file);
     }
 
-    // 📸 আলাদা ডেমো ছবি সিলেক্ট এবং কম্প্রেস
+    // ২. ডেমো ছবি সিলেক্ট
     function handleDemoImageSelect(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -260,8 +255,7 @@
                 let w = img.width, h = img.height;
                 if (w > h && w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
                 else if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
-                canvas.width = w;
-                canvas.height = h;
+                canvas.width = w; canvas.height = h;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, w, h);
                 currentDemoImageBase64 = canvas.toDataURL('image/jpeg', 0.7);
@@ -274,7 +268,6 @@
         reader.readAsDataURL(file);
     }
 
-    // ড্রাফট সেভ (যাতে রিফ্রেশ দিলে না হারায়)
     function saveDraft() {
         localStorage.setItem('freesite_store_name', document.getElementById('storeName').value);
         localStorage.setItem('freesite_store_slug', document.getElementById('catalogSlug').value);
@@ -282,34 +275,7 @@
         localStorage.setItem('freesite_products', JSON.stringify(products));
     }
 
-    // ১টির বেশি ক্যাটালগ তৈরি ব্লক এবং ড্রাফট থেকে রিস্টোর
     window.onload = function() {
-        const alreadyCreated = localStorage.getItem('freesite_catalog_created');
-        const existingSlug = localStorage.getItem('freesite_store_slug');
-
-        // 🚫 যদি ইউজার ইতিমধ্যে ১টি ক্যাটালগ তৈরি করে ফেলে থাকে
-        if (alreadyCreated === 'true' && existingSlug) {
-            document.querySelector('.container').innerHTML = `
-                <div class="card" style="text-align:center; padding:35px 20px; border-top:5px solid #d97706;">
-                    <div style="font-size:42px; margin-bottom:10px;">⚠️</div>
-                    <h2 style="justify-content:center; color:#b45309; margin-bottom:10px;">আপনি ইতিমধ্যে একটি ক্যাটালগ তৈরি করেছেন!</h2>
-                    <p style="font-size:14px; color:#475569; margin-bottom:16px;">
-                        আপনার তৈরি করা ক্যাটালগ কোড: <b>${existingSlug}</b><br>
-                        একটি অ্যাকাউন্টের অধীনে একাধিক নতুন ক্যাটালগ তৈরি করা অনুমোদিত নয়।
-                    </p>
-                    <div style="background:#fef3c7; border:1px solid #fde68a; border-radius:12px; padding:15px; margin-bottom:20px; font-size:13px; color:#92400e;">
-                        ক্যাটালগে কোনো পণ্য আপডেট করতে বা নতুন ক্যাটালগ সক্রিয় করতে আমাদের সাথে হোয়াটসঅ্যাপে যোগাযোগ করুন।
-                    </div>
-                    <a href="https://wa.me/8801409084819?text=${encodeURIComponent('আসসালামু আলাইকুম, আমি আমার ক্যাটালগ (' + existingSlug + ') সংক্রান্ত বিষয়ে যোগাযোগ করতে চাই।')}" 
-                       target="_blank" 
-                       style="background:#25d366; color:#fff; padding:12px 22px; border-radius:10px; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:8px;">
-                       <i class="ti ti-brand-whatsapp" style="font-size:20px;"></i> অ্যাডমিনের সাথে হোয়াটসঅ্যাপে যোগাযোগ করুন (01409084819)
-                    </a>
-                </div>
-            `;
-            return;
-        }
-
         const sName = localStorage.getItem('freesite_store_name');
         const sSlug = localStorage.getItem('freesite_store_slug');
         const sPin = localStorage.getItem('freesite_store_pin');
@@ -323,7 +289,6 @@
         }
     };
 
-    // যদি সার্ভারে আগে থেকেই সেভ থাকে তা অটো রিড করা
     async function tryRestoreFromSlug() {
         const slug = document.getElementById('catalogSlug').value.trim();
         if (slug.length < 3) return;
@@ -335,7 +300,7 @@
             document.getElementById('adminPin').value = d.admin_pin || '1234';
             products = d.items;
             renderList();
-            updateCategoryDropdown(); // রিস্টোর করা সব ক্যাটাগরি ড্রপডাউনে ভরবে
+            updateCategoryDropdown();
             saveDraft();
           }
         } catch(e) {}
@@ -350,7 +315,7 @@
 
         if (!name || !price) return alert('পণ্যের নাম এবং দাম দিতে হবে!');
 
-        const productData = {
+        const productData = { 
             id: editIndex >= 0 && products[editIndex].id ? products[editIndex].id : undefined,
             name, 
             price: parseFloat(price), 
@@ -361,14 +326,12 @@
         };
 
         if (editIndex >= 0) {
-            // এডিট আপডেট
             products[editIndex] = productData;
-            alert('✅ পণ্য সফলভাবে আপডেট করা হয়েছে!');
+            alert('✅ পণ্য সফলভাবে আপডেট হয়েছে!');
             cancelEditMode();
         } else {
-            // নতুন যোগ
             products.push(productData);
-            resetProductForm();
+            resetForm();
         }
 
         renderList();
@@ -376,7 +339,7 @@
         saveDraft();
     }
 
-    // ✏️ এডিট মোড শুরু করা
+    // ✏️ এডিট বাটন চাপলে ডেটা ফর্মে লোড হওয়া
     function startEditProduct(idx) {
         editIndex = idx;
         const p = products[idx];
@@ -386,7 +349,7 @@
         document.getElementById('pCategory').value = p.category || 'General';
         document.getElementById('pDesc').value = p.description || '';
 
-        // মূল ছবি
+        // মূল ছবি লোড
         currentImageBase64 = p.image_url || '';
         if (currentImageBase64) {
             document.getElementById('imgPreview').src = currentImageBase64;
@@ -397,7 +360,7 @@
             document.getElementById('imgUploadText').style.display = 'block';
         }
 
-        // ডেমো ছবি
+        // ডেমো ছবি লোড
         currentDemoImageBase64 = p.demo_images || '';
         if (currentDemoImageBase64) {
             document.getElementById('demoImgPreview').src = currentDemoImageBase64;
@@ -408,27 +371,27 @@
             document.getElementById('demoImgUploadText').style.display = 'block';
         }
 
-        // বাটন রূপান্তর
+        // বাটন পরিবর্তন
+        document.getElementById('formHeading').innerHTML = '✏️ পণ্য এডিট করুন: ' + p.name;
         const btn = document.getElementById('btnProductAction');
         btn.innerHTML = '<i class="ti ti-check"></i> পণ্য আপডেট করুন';
         btn.style.background = '#d97706';
         document.getElementById('btnCancelEdit').style.display = 'inline-block';
 
-        // স্ক্রল করে ফর্মে নেওয়া
-        document.getElementById('pName').scrollIntoView({ behavior: 'smooth' });
+        document.getElementById('formCard').scrollIntoView({ behavior: 'smooth' });
     }
 
-    // এডিট বাতিল করা
     function cancelEditMode() {
         editIndex = -1;
-        resetProductForm();
+        resetForm();
+        document.getElementById('formHeading').innerHTML = '➕ নতুন পণ্য যোগ করুন';
         const btn = document.getElementById('btnProductAction');
         btn.innerHTML = '<i class="ti ti-plus"></i> তালিকায় পণ্যটি যোগ করুন';
         btn.style.background = '#0284c7';
         document.getElementById('btnCancelEdit').style.display = 'none';
     }
 
-    function resetProductForm() {
+    function resetForm() {
         document.getElementById('pName').value = '';
         document.getElementById('pPrice').value = '';
         document.getElementById('pDesc').value = '';
@@ -450,30 +413,36 @@
             container.innerHTML = '<div style="font-size:13px; color:var(--muted); text-align:center; padding:15px;">এখনো কোনো পণ্য যোগ করা হয়নি।</div>';
             return;
         }
+
         const slug = document.getElementById('catalogSlug').value.trim() || 'my-shop';
+
         container.innerHTML = products.map((p, idx) => {
             const itemUrl = p.id ? `${window.location.origin}/c/${slug}/${p.id}` : '';
             return `
-            <div class="product-item" style="display:flex; flex-direction:column; align-items:stretch; gap:10px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+            <div class="product-item">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div style="display:flex; align-items:center; gap:12px;">
-                        ${p.image_url ? `<img src="${p.image_url}" class="product-img" style="width:65px; height:65px; border-radius:12px; object-fit:cover;">` : `<div class="product-img" style="width:65px; height:65px; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#94a3b8; background:#f1f5f9;"><i class="ti ti-photo-off" style="font-size:24px;"></i></div>`}
+                        <div style="position:relative;">
+                            ${p.image_url ? `<img src="${p.image_url}" class="product-img">` : `<div class="product-img" style="display:flex; align-items:center; justify-content:center; color:#94a3b8;"><i class="ti ti-photo-off"></i></div>`}
+                            ${p.demo_images ? `<span style="position:absolute; bottom:-4px; right:-4px; background:#4f46e5; color:#fff; font-size:9px; padding:1px 4px; border-radius:4px; font-weight:800;">ডেমো</span>` : ''}
+                        </div>
                         <div>
-                            <b style="font-size:15px; color:#0f172a;">${p.name}</b><br>
-                            <span style="color:#059669; font-weight:800; font-size:15px;">৳${p.price}</span> 
-                            <span style="font-size:11px; background:#ecfdf5; color:#047857; padding:2px 6px; border-radius:6px; font-weight:700;">${p.category}</span>
+                            <b style="font-size:14px; color:#0f172a;">${p.name}</b> — <span style="color:#059669; font-weight:800;">৳${p.price}</span><br>
+                            <small style="color:#64748b;">${p.category} | ${p.description || 'বিবরণ নেই'}</small>
                         </div>
                     </div>
+                    <!-- ✏️ এডিট ও 🗑️ মুছুন বাটন -->
                     <div style="display:flex; gap:6px;">
-                    <button onclick="startEditProduct(${idx})" style="width:auto; padding:6px 12px; background:#e0f2fe; color:#0369a1; font-size:12px; border:none; border-radius:8px; cursor:pointer; font-weight:700;"><i class="ti ti-edit"></i> এডিট</button>
-                    <button onclick="removeProduct(${idx})" style="width:auto; padding:6px 12px; background:#fee2e2; color:#b91c1c; font-size:12px; border:none; border-radius:8px; cursor:pointer; font-weight:700;"><i class="ti ti-trash"></i> মুছুন</button>
+                        <button onclick="startEditProduct(${idx})" style="width:auto; padding:6px 12px; background:#e0f2fe; color:#0369a1; font-size:12px; border:none; border-radius:8px; cursor:pointer; font-weight:700;"><i class="ti ti-edit"></i> এডিট</button>
+                        <button onclick="removeProduct(${idx})" style="width:auto; padding:6px 12px; background:#fee2e2; color:#b91c1c; font-size:12px; border:none; border-radius:8px; cursor:pointer; font-weight:700;"><i class="ti ti-trash"></i> মুছুন</button>
+                    </div>
                 </div>
-                </div>
+
                 ${itemUrl ? `
                 <div style="display:flex; gap:6px; background:rgba(255,255,255,0.7); padding:6px 10px; border-radius:10px; border:1px solid #e2e8f0; align-items:center;">
                     <span style="font-size:11px; color:#64748b; font-weight:700;">🔗 আলাদা লিংক:</span>
                     <input type="text" readonly value="${itemUrl}" style="flex:1; padding:4px 8px; font-size:11px; background:#fff; border:1px solid #cbd5e1; border-radius:6px; color:#059669; font-weight:600;">
-                    <button onclick="navigator.clipboard.writeText('${itemUrl}'); alert('এই পণ্যের আলাদা লিংক কপি হয়েছে!');" style="width:auto; padding:4px 10px; font-size:11px; background:#059669; border-radius:6px;">কপি</button>
+                    <button onclick="navigator.clipboard.writeText('${itemUrl}'); alert('লিংক কপি করা হয়েছে!');" style="width:auto; padding:4px 10px; font-size:11px; background:#059669; border-radius:6px;">কপি</button>
                     <a href="${itemUrl}" target="_blank" style="padding:4px 10px; font-size:11px; background:#0284c7; color:#fff; border-radius:6px; text-decoration:none; font-weight:700;">ভিউ</a>
                 </div>` : ''}
             </div>`;
@@ -481,7 +450,9 @@
     }
 
     function removeProduct(idx) {
+        if (!confirm('আপনি কি এই পণ্যটি মুছে ফেলতে চান?')) return;
         products.splice(idx, 1);
+        if (editIndex === idx) cancelEditMode();
         renderList();
         saveDraft();
     }
@@ -505,8 +476,8 @@
             if (data.success) {
                 document.getElementById('linkOutput').style.display = 'block';
                 document.getElementById('finalUrlText').value = data.catalog_url;
-                localStorage.setItem('freesite_catalog_created', 'true'); // ১টি ক্যাটালগ তৈরির লিমিট ফ্ল্যাগ
                 saveDraft();
+                tryRestoreFromSlug(); // আইডি সিঙ্ক করে আলাদা লিংক আনবে
                 alert('🎉 ক্যাটালগ সফলভাবে ডাটাবেজে সেভ হয়েছে!');
             } else {
                 alert('ত্রুটি: ' + data.message);
