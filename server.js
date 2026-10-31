@@ -971,14 +971,11 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
       </div>
     </div>
 
-    <!-- 🔑 নিজস্ব Gemini API Key -->
-    <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-        <h3><i class="ti ti-key"></i> নিজস্ব Gemini API Key</h3>
-        <span style="font-size:11px; font-weight:700; color:#059669;">
-          ${bot.gemini_api_key ? '✅ নিজস্ব Key সক্রিয়' : 'ℹ️ প্ল্যাটফর্ম ডিফল্ট Key'}
-        </span>
-      </div>
+    const response = await client.models.generateContent({
+        model: GEMINI_MODEL,
+        contents,
+        config: { systemInstruction: systemPrompt, temperature: 0.35, maxOutputTokens: 1200, thinkingConfig: { thinkingBudget: 0 } }
+      });
       <div class="form-group">
         <input type="password" id="apiKeyInput" placeholder="AIzaSy..." value="${bot.gemini_api_key || ''}">
       </div>
@@ -2191,6 +2188,25 @@ app.post('/api/admin/update-bot-limit', async (req, res) => {
     await pool.query('UPDATE whatsapp_bots SET rate_limit_daily = $1 WHERE id = $2', [newLimit, botId]);
     res.json({ success: true, message: '✅ লিমিট আপডেট সম্পন্ন!' });
   } catch (e) { res.status(500).json({ success: false }); }
+});
+
+// 🔑 অ্যাডমিন থেকে নির্দিষ্ট ইউজার/বটের জন্য আলাদা ডেডিকেটেড Gemini ও ImgBB Key অ্যাসাইন করা
+app.post('/api/admin/assign-bot-keys', async (req, res) => {
+  try {
+    const { botId, geminiKey, imgbbKey } = req.body;
+    await pool.query(
+      `UPDATE whatsapp_bots 
+       SET gemini_api_key = COALESCE(NULLIF($1, ''), gemini_api_key),
+           imgbb_api_key = COALESCE(NULLIF($2, ''), imgbb_api_key)
+       WHERE id = $3`,
+      [geminiKey ? geminiKey.trim() : null, imgbbKey ? imgbbKey.trim() : null, botId]
+    );
+
+    addBotLog(botId, 'success', `👑 অ্যাডমিন এই বটের জন্য ডেডিকেটেড এআই ও ইমেজ কী অ্যাসাইন করেছেন!`);
+    res.json({ success: true, message: '✅ ইউজারটির জন্য ডেডিকেটেড কী সফলভাবে সেট করা হয়েছে!' });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
 });
 
 // অ্যাডমিন পেমেন্ট নম্বর পরিবর্তন
