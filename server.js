@@ -850,27 +850,37 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
       </button>
     </div>
 
-    <!-- 🛍️ সরাসরি ড্যাশবোর্ড থেকে প্রোডাক্ট ম্যানেজমেন্ট (নিজস্ব ডাটাবেজ) -->
+    <!-- 🛍️ সরাসরি ড্যাশবোর্ড থেকে প্রোডাক্ট ও ক্যাটালগ ম্যানেজমেন্ট -->
     <div class="card" style="border-top: 4px solid #059669;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <h3><i class="ti ti-box"></i> ১-ক্লিকে পণ্য যোগ ও শপ লিংক</h3>
-        <a href="https://${fullUrl}/shop" target="_blank" style="font-size:12px; background:#ecfdf5; color:#047857; padding:5px 10px; border-radius:20px; font-weight:700; text-decoration:none;">
-          🌐 ভিজিট শপ
-        </a>
-      </div>
-
-      <!-- 🔗 ১-ক্লিকে লিংক প্রদর্শন বক্স -->
-      <div id="productSuccessBox" style="display:none; background:#ecfdf5; border:1px solid #10b981; border-radius:10px; padding:12px; margin-bottom:14px; text-align:center;">
-        <span style="color:#065f46; font-weight:700; font-size:13px;">🎉 প্রোডাক্ট যোগ সম্পন্ন! আপনার অনলাইন শপ লিংক:</span>
-        <div style="display:flex; gap:6px; margin-top:8px;">
-          <input type="text" id="storeShareLink" readonly value="https://${fullUrl}/shop" style="text-align:center; font-weight:700; background:#fff; color:#059669; padding:8px;">
-          <button onclick="copyStoreUrl()" style="width:auto; padding:0 15px; background:#059669; font-size:12px;"><i class="ti ti-copy"></i> কপি</button>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+        <h3><i class="ti ti-box"></i> পণ্য ম্যানেজমেন্ট ও ক্যাটালগ লিংক</h3>
+        <div style="display:flex; gap:6px;">
+          <a href="https://${fullUrl}/shop" target="_blank" style="font-size:12px; background:#ecfdf5; color:#047857; padding:6px 14px; border-radius:20px; font-weight:700; text-decoration:none; border:1px solid #10b981;">
+            🌐 শপ ভিউ
+          </a>
+          <a href="/catalog-builder" target="_blank" style="font-size:12px; background:#e0f2fe; color:#0369a1; padding:6px 14px; border-radius:20px; font-weight:700; text-decoration:none; border:1px solid #38bdf8;">
+            🛠️ ক্যাটালগ অ্যাডমিন পোর্টাল
+          </a>
         </div>
       </div>
 
-      <!-- নতুন প্রোডাক্ট যোগ করার ফর্ম -->
-      <div style="background:#f8fafc; border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:15px;">
-        <div style="font-size:13px; font-weight:700; color:#334155; margin-bottom:8px;">➕ নতুন প্রোডাক্ট যোগ করুন:</div>
+      <!-- 🔗 আপনার লাইভ ক্যাটালগ ও শপ লিংক সবসময় দৃশ্যমান বক্স -->
+      <div style="background:rgba(236, 253, 245, 0.95); border:1px solid #10b981; border-radius:14px; padding:14px; margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="color:#065f46; font-weight:800; font-size:13px;">🔗 আপনার শপ ও ক্যাটালগ লিংক:</span>
+          <span style="font-size:11px; color:#059669; font-weight:700;">কাস্টমারদের এই লিংকটি দিন</span>
+        </div>
+        <div style="display:flex; gap:6px;">
+          <input type="text" id="storeShareLink" readonly value="https://${fullUrl}/shop" style="font-weight:700; background:#fff; color:#059669; padding:10px 14px; border:1px solid #a7f3d0; border-radius:10px;">
+          <button onclick="copyStoreUrl()" style="width:auto; padding:0 18px; background:#059669; font-size:13px;"><i class="ti ti-copy"></i> কপি</button>
+        </div>
+      </div>
+
+      <!-- নতুন প্রোডাক্ট যোগ ও এডিট ফর্ম -->
+      <div id="dashFormBox" style="background:rgba(255,255,255,0.7); border:1px solid var(--glass-border-subtle); border-radius:16px; padding:16px; margin-bottom:18px;">
+        <div id="dashFormTitle" style="font-size:14px; font-weight:800; color:#065f46; margin-bottom:10px;">➕ নতুন প্রোডাক্ট যোগ করুন:</div>
+        <input type="hidden" id="dashEditProductId" value="">
+
         <div style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap:8px; margin-bottom:8px;">
           <input type="text" id="dashPName" placeholder="পণ্যের নাম (যেমন: M10 TWS Earbuds)">
           <input type="number" id="dashPPrice" placeholder="বর্তমান মূল্য (৳)">
@@ -881,47 +891,43 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
           <input type="text" id="dashPLink" placeholder="বাই লিংক (অপশনাল)">
         </div>
 
-        <!-- 📸 সরাসরি ক্যামেরা/গ্যালারি থেকে ছবি সিলেক্টের বক্স -->
-        <div style="margin-bottom:8px;">
-          <label style="font-size:12px; font-weight:700; color:#065f46;">📸 পণ্যের ছবি সিলেক্ট করুন (কাস্টমার চাইলে এআই সরাসরি পাঠাবে):</label>
-          <div onclick="document.getElementById('dashPImgFile').click()" style="border:2px dashed #059669; border-radius:10px; padding:10px; text-align:center; cursor:pointer; background:rgba(236,253,245,0.7); margin-top:4px;">
-            <span id="dashImgText" style="font-size:12px; color:#047857; font-weight:700;"><i class="ti ti-camera"></i> ছবি আপলোড করতে ট্যাপ করুন</span>
-            <img id="dashImgPreview" style="display:none; max-height:100px; margin:0 auto; border-radius:6px;">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+          <!-- 📸 স্লট ১: মূল ছবি -->
+          <div>
+            <label style="font-size:12px; font-weight:700; color:#065f46;">📸 ১. মূল ছবি (Main Pic):</label>
+            <div onclick="document.getElementById('dashPImgFile').click()" style="border:2px dashed #059669; border-radius:12px; padding:10px; text-align:center; cursor:pointer; background:rgba(236,253,245,0.7); height:90px; display:flex; align-items:center; justify-content:center;">
+              <span id="dashImgText" style="font-size:12px; color:#047857; font-weight:700;"><i class="ti ti-camera"></i> মূল ছবি দিন</span>
+              <img id="dashImgPreview" style="display:none; max-height:75px; max-width:100%; object-fit:contain; border-radius:6px;">
+            </div>
+            <input type="file" id="dashPImgFile" accept="image/*" style="display:none;" onchange="handleDashImgSelect(event)">
           </div>
-          <input type="file" id="dashPImgFile" accept="image/*" style="display:none;" onchange="handleDashImgSelect(event)">
+
+          <!-- 📸 স্লট ২: ডেমো ছবি -->
+          <div>
+            <label style="font-size:12px; font-weight:700; color:#4338ca;">📸 ২. ডেমো ছবি (Demo Pic):</label>
+            <div onclick="document.getElementById('dashPDemoImgFile').click()" style="border:2px dashed #6366f1; border-radius:12px; padding:10px; text-align:center; cursor:pointer; background:rgba(238,242,255,0.7); height:90px; display:flex; align-items:center; justify-content:center;">
+              <span id="dashDemoImgText" style="font-size:12px; color:#4f46e5; font-weight:700;"><i class="ti ti-photo-plus"></i> ডেমো ছবি দিন</span>
+              <img id="dashDemoImgPreview" style="display:none; max-height:75px; max-width:100%; object-fit:contain; border-radius:6px;">
+            </div>
+            <input type="file" id="dashPDemoImgFile" accept="image/*" style="display:none;" onchange="handleDashDemoImgSelect(event)">
+          </div>
         </div>
 
-        <textarea id="dashPDesc" rows="2" placeholder="পণ্যের বিবরণ বা ওয়ারেন্টি তথ্য" style="margin-bottom:8px;"></textarea>
-        <button onclick="addNewProductDirect(${bot.id})" style="background:#059669; padding:11px;">
-          <i class="ti ti-plus"></i> ১-ক্লিকে প্রোডাক্ট সেভ ও লিংক নিন
-        </button>
+        <textarea id="dashPDesc" rows="2" placeholder="পণ্যের বিবরণ বা সাইজ/কালার" style="margin-bottom:10px;"></textarea>
 
-        <!-- 📢 প্রোডাক্ট / ক্যাটালগ লিংক না থাকলে নিচের আকর্ষণীয় হেল্পার ব্যানার -->
-        <div style="margin-top:12px; background:rgba(236, 253, 245, 0.9); border:1px dashed #059669; border-radius:10px; padding:10px 14px; text-align:center;">
-          <span style="font-size:12px; color:#065f46; font-weight:700;">
-            👉 আপনার কি কোনো ওয়েবসাইট বা ক্যাটালগ লিংক নেই?
-          </span><br>
-          <a href="/catalog-builder" target="_blank" style="color:#047857; font-weight:800; font-size:13px; text-decoration:underline; display:inline-block; margin-top:4px;">
-            এখানে ক্লিক করে ২ মিনিটে ফ্রি ক্যাটালগ লিংক বানিয়ে নিন! 🚀
-          </a>
+        <div style="display:flex; gap:8px;">
+          <button id="btnDashSave" onclick="saveOrUpdateProductDirect(${bot.id})" style="flex:1; background:#059669; padding:12px;">
+            <i class="ti ti-plus"></i> ১-ক্লিকে প্রোডাক্ট সেভ ও লিংক নিন
+          </button>
+          <button id="btnDashCancelEdit" onclick="cancelDashEdit()" style="display:none; width:auto; background:#64748b; padding:0 18px;">
+            বাতিল
+          </button>
         </div>
       </div>
 
-      <!-- পণ্যের তালিকা টেবিল -->
-      <div style="overflow-x:auto;">
-        <table style="width:100%; font-size:13px; border-collapse:collapse;">
-          <thead>
-            <tr style="text-align:left; border-bottom:1px solid var(--border); color:var(--muted);">
-              <th style="padding:8px;">পণ্য</th>
-              <th style="padding:8px;">মূল্য</th>
-              <th style="padding:8px;">ক্যাটাগরি</th>
-              <th style="padding:8px; text-align:right;">অ্যাকশন</th>
-            </tr>
-          </thead>
-          <tbody id="dashProductTable">
-            <tr><td colspan="4" style="text-align:center; padding:12px; color:var(--muted);">পণ্য লোড হচ্ছে...</td></tr>
-          </tbody>
-        </table>
+      <!-- পণ্যের তালিকা টেবিল (আলাদা লিংক ও এডিট বাটনসহ) -->
+      <div id="dashProductTableContainer">
+        <div style="text-align:center; padding:12px; color:var(--muted);">পণ্য লোড হচ্ছে...</div>
       </div>
     </div>
 
@@ -1253,34 +1259,11 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
       }
     }
 
-    // 📦 ড্যাশবোর্ডের নিজস্ব প্রোডাক্ট লোড করা
-    async function loadDashProducts() {
-      try {
-        const res = await fetch('/api/user/products?botId=${bot.id}');
-        const data = await res.json();
-        if (data.success) {
-          const tbody = document.getElementById('dashProductTable');
-          if (data.products.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:14px; color:#64748b;">কোনো পণ্য যোগ করা নেই।</td></tr>';
-            return;
-          }
-          tbody.innerHTML = data.products.map(p => \`
-            <tr style="border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 8px;"><b>\${p.name}</b><br><small style="color:#64748b;">\${p.description || ''}</small></td>
-              <td style="padding:10px 8px; color:#059669; font-weight:700;">৳\${p.price}</td>
-              <td style="padding:10px 8px; color:#475569;">\${p.category || 'General'}</td>
-              <td style="padding:10px 8px; text-align:right;">
-                <button onclick="deleteDashProduct(\${p.id})" style="background:#fee2e2; color:#b91c1c; border:none; padding:4px 10px; border-radius:6px; font-size:12px; cursor:pointer; width:auto; display:inline-block;">ডিলিট</button>
-              </td>
-            </tr>
-          \`).join('');
-        }
-      } catch(e) {}
-    }
-
     let dashCurrentImgBase64 = '';
+    let dashCurrentDemoImgBase64 = '';
+    let loadedProductsList = [];
 
-    // ছবি সিলেক্ট এবং লাইটওয়েট কম্প্রেস (যাতে ডাটাবেজে সহজে সেভ হয়)
+    // ১. মূল ছবি সিলেক্ট
     function handleDashImgSelect(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -1293,8 +1276,7 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
           let w = img.width, h = img.height;
           if (w > h && w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
           else if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
-          canvas.width = w;
-          canvas.height = h;
+          canvas.width = w; canvas.height = h;
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, w, h);
           dashCurrentImgBase64 = canvas.toDataURL('image/jpeg', 0.65);
@@ -1307,49 +1289,179 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
       reader.readAsDataURL(file);
     }
 
-    // ➕ নতুন প্রোডাক্ট যুক্ত করার ফাংশন (ছবিসহ + রেগুলার প্রাইস)
-    async function addNewProductDirect(botId) {
+    // ২. ডেমো ছবি সিলেক্ট
+    function handleDashDemoImgSelect(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const maxDim = 600;
+          let w = img.width, h = img.height;
+          if (w > h && w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
+          else if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          dashCurrentDemoImgBase64 = canvas.toDataURL('image/jpeg', 0.65);
+          document.getElementById('dashDemoImgPreview').src = dashCurrentDemoImgBase64;
+          document.getElementById('dashDemoImgPreview').style.display = 'block';
+          document.getElementById('dashDemoImgText').style.display = 'none';
+        };
+        img.src = evt.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // 📦 ড্যাশবোর্ডের প্রোডাক্ট লোড করা (আলাদা লিংক, ডেমো ব্যাজ ও এডিট বাটনসহ)
+    async function loadDashProducts() {
+      try {
+        const res = await fetch('/api/user/products?botId=${bot.id}');
+        const data = await res.json();
+        const container = document.getElementById('dashProductTableContainer');
+        if (data.success) {
+          loadedProductsList = data.products || [];
+          if (loadedProductsList.length === 0) {
+            container.innerHTML = '<div style="text-align:center; padding:18px; color:var(--muted); font-size:13px;">বর্তমানে কোনো পণ্য তালিকায় নেই। ওপরে ফর্ম পূরণ করে যোগ করুন।</div>';
+            return;
+          }
+
+          container.innerHTML = loadedProductsList.map((p, idx) => {
+            const singleLink = p.buy_link || ('https://${fullUrl}/p/' + p.id);
+            return \`
+            <div style="background:rgba(255,255,255,0.7); border:1px solid rgba(226,232,240,0.8); border-radius:14px; padding:14px; margin-bottom:12px; display:flex; flex-direction:column; gap:10px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                  <div style="position:relative;">
+                    \${p.image_url ? \`<img src="\${p.image_url}" style="width:55px; height:55px; border-radius:10px; object-fit:cover; border:1px solid #e2e8f0;">\` : \`<div style="width:55px; height:55px; border-radius:10px; background:#f1f5f9; display:flex; align-items:center; justify-content:center; color:#94a3b8;"><i class="ti ti-photo-off"></i></div>\`}
+                    \${p.demo_images ? \`<span style="position:absolute; bottom:-3px; right:-3px; background:#4f46e5; color:#fff; font-size:9px; font-weight:800; padding:1px 4px; border-radius:4px;">ডেমো</span>\` : ''}
+                  </div>
+                  <div>
+                    <b style="font-size:14px; color:#0f172a;">\${p.name}</b><br>
+                    <span style="color:#059669; font-weight:800; font-size:15px;">৳\${p.price}</span>
+                    <span style="font-size:11px; background:#ecfdf5; color:#047857; padding:2px 8px; border-radius:6px; font-weight:700;">\${p.category || 'General'}</span>
+                  </div>
+                </div>
+                <div style="display:flex; gap:6px;">
+                  <button onclick="startEditDashProduct(\${idx})" style="width:auto; padding:6px 12px; background:#e0f2fe; color:#0369a1; font-size:12px; border:none; border-radius:8px; cursor:pointer; font-weight:700;"><i class="ti ti-edit"></i> এডিট</button>
+                  <button onclick="deleteDashProduct(\${p.id})" style="width:auto; padding:6px 12px; background:#fee2e2; color:#b91c1c; font-size:12px; border:none; border-radius:8px; cursor:pointer; font-weight:700;"><i class="ti ti-trash"></i> ডিলিট</button>
+                </div>
+              </div>
+
+              <!-- 🔗 প্রতিটা পণ্যের আলাদা লিংক বক্স -->
+              <div style="display:flex; gap:6px; background:rgba(248,250,252,0.9); padding:6px 10px; border-radius:10px; border:1px solid #e2e8f0; align-items:center;">
+                <span style="font-size:11px; color:#64748b; font-weight:700; white-space:nowrap;">🔗 আলাদা লিংক:</span>
+                <input type="text" readonly value="\${singleLink}" style="flex:1; padding:4px 8px; font-size:11px; background:#fff; border:1px solid #cbd5e1; border-radius:6px; color:#059669; font-weight:600;">
+                <button onclick="navigator.clipboard.writeText('\${singleLink}'); alert('এই পণ্যের আলাদা লিংক কপি করা হয়েছে!');" style="width:auto; padding:4px 10px; font-size:11px; background:#059669; border-radius:6px;">কপি</button>
+                <a href="\${singleLink}" target="_blank" style="padding:4px 10px; font-size:11px; background:#0284c7; color:#fff; border-radius:6px; text-decoration:none; font-weight:700;">ভিউ</a>
+              </div>
+            </div>\`;
+          }).join('');
+        }
+      } catch(e) {}
+    }
+
+    // ➕ পণ্য যোগ বা এডিট আপডেট ফাংশন
+    async function saveOrUpdateProductDirect(botId) {
+      const editId = document.getElementById('dashEditProductId').value;
       const name = document.getElementById('dashPName').value.trim();
       const price = document.getElementById('dashPPrice').value.trim();
-      const regPrice = document.getElementById('dashPRegPrice') ? document.getElementById('dashPRegPrice').value.trim() : '';
+      const regPrice = document.getElementById('dashPRegPrice').value.trim();
       const category = document.getElementById('dashPCat').value.trim() || 'General';
       const buy_link = document.getElementById('dashPLink').value.trim();
       const description = document.getElementById('dashPDesc').value.trim();
 
       if (!name || !price) return alert('পণ্যের নাম ও দাম অবশ্যই দিতে হবে!');
 
-      const res = await fetch('/api/user/products/add', {
+      const url = editId ? '/api/user/products/update' : '/api/user/products/add';
+      const bodyData = { 
+        botId, 
+        productId: editId || undefined,
+        name, 
+        price, 
+        regular_price: regPrice || null,
+        category, 
+        buy_link, 
+        description, 
+        image_url: dashCurrentImgBase64,
+        demo_images: dashCurrentDemoImgBase64
+      };
+
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          botId, 
-          name, 
-          price, 
-          regular_price: regPrice || null,
-          category, 
-          buy_link, 
-          description, 
-          image_url: dashCurrentImgBase64 
-        })
+        body: JSON.stringify(bodyData)
       });
       const data = await res.json();
       if (data.success) {
-        document.getElementById('dashPName').value = '';
-        document.getElementById('dashPPrice').value = '';
-        document.getElementById('dashPCat').value = '';
-        document.getElementById('dashPLink').value = '';
-        document.getElementById('dashPDesc').value = '';
-        document.getElementById('dashPImgFile').value = '';
-        dashCurrentImgBase64 = '';
-        document.getElementById('dashImgPreview').style.display = 'none';
-        document.getElementById('dashImgText').style.display = 'block';
-        
-        // ১-ক্লিকে লিংক বক্স সামনে নিয়ে আসা
-        document.getElementById('productSuccessBox').style.display = 'block';
+        alert(data.message || 'সফল হয়েছে!');
+        cancelDashEdit();
         loadDashProducts();
       } else {
         alert(data.message || 'ত্রুটি ঘটেছে');
       }
+    }
+
+    // ✏️ এডিট মোড শুরু করা
+    function startEditDashProduct(idx) {
+      const p = loadedProductsList[idx];
+      if (!p) return;
+
+      document.getElementById('dashEditProductId').value = p.id;
+      document.getElementById('dashPName').value = p.name;
+      document.getElementById('dashPPrice').value = p.price;
+      document.getElementById('dashPRegPrice').value = p.regular_price || '';
+      document.getElementById('dashPCat').value = p.category || 'General';
+      document.getElementById('dashPLink').value = p.buy_link || '';
+      document.getElementById('dashPDesc').value = p.description || '';
+
+      dashCurrentImgBase64 = p.image_url || '';
+      if (dashCurrentImgBase64) {
+        document.getElementById('dashImgPreview').src = dashCurrentImgBase64;
+        document.getElementById('dashImgPreview').style.display = 'block';
+        document.getElementById('dashImgText').style.display = 'none';
+      }
+
+      dashCurrentDemoImgBase64 = p.demo_images || '';
+      if (dashCurrentDemoImgBase64) {
+        document.getElementById('dashDemoImgPreview').src = dashCurrentDemoImgBase64;
+        document.getElementById('dashDemoImgPreview').style.display = 'block';
+        document.getElementById('dashDemoImgText').style.display = 'none';
+      }
+
+      document.getElementById('dashFormTitle').innerHTML = '✏️ পণ্য এডিট করুন: ' + p.name;
+      const btn = document.getElementById('btnDashSave');
+      btn.innerHTML = '<i class="ti ti-check"></i> পণ্য আপডেট করুন';
+      btn.style.background = '#d97706';
+      document.getElementById('btnDashCancelEdit').style.display = 'inline-block';
+
+      document.getElementById('dashFormBox').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function cancelDashEdit() {
+      document.getElementById('dashEditProductId').value = '';
+      document.getElementById('dashPName').value = '';
+      document.getElementById('dashPPrice').value = '';
+      document.getElementById('dashPRegPrice').value = '';
+      document.getElementById('dashPCat').value = '';
+      document.getElementById('dashPLink').value = '';
+      document.getElementById('dashPDesc').value = '';
+      document.getElementById('dashPImgFile').value = '';
+      document.getElementById('dashPDemoImgFile').value = '';
+      dashCurrentImgBase64 = '';
+      dashCurrentDemoImgBase64 = '';
+      document.getElementById('dashImgPreview').style.display = 'none';
+      document.getElementById('dashImgText').style.display = 'block';
+      document.getElementById('dashDemoImgPreview').style.display = 'none';
+      document.getElementById('dashDemoImgText').style.display = 'block';
+
+      document.getElementById('dashFormTitle').innerHTML = '➕ নতুন প্রোডাক্ট যোগ করুন:';
+      const btn = document.getElementById('btnDashSave');
+      btn.innerHTML = '<i class="ti ti-plus"></i> ১-ক্লিকে প্রোডাক্ট সেভ ও লিংক নিন';
+      btn.style.background = '#059669';
+      document.getElementById('btnDashCancelEdit').style.display = 'none';
     }
 
     function copyStoreUrl() {
@@ -1359,7 +1471,6 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
       alert('শপ লিংক কপি করা হয়েছে!');
     }
 
-    // 🗑️ প্রোডাক্ট ডিলিট ফাংশন
     async function deleteDashProduct(productId) {
       if (!confirm('আপনি কি এই পণ্যটি মুছে ফেলতে চান?')) return;
       const res = await fetch('/api/user/products/delete', {
@@ -2248,10 +2359,10 @@ async function uploadToImgBB(base64Image) {
   return base64Image;
 }
 
-// ➕ ২. ড্যাশবোর্ড থেকে সরাসরি নতুন প্রোডাক্ট অ্যাড করার API (ImgBB + ডিসকাউন্ট প্রাইস + আলাদা লিংক)
+// ➕ ২. ড্যাশবোর্ড থেকে সরাসরি নতুন প্রোডাক্ট অ্যাড করার API (ImgBB + ডেমো পিক + আলাদা লিংক)
 app.post('/api/user/products/add', async (req, res) => {
   try {
-    const { botId, name, price, regular_price, category, description, buy_link, image_url } = req.body;
+    const { botId, name, price, regular_price, category, description, buy_link, image_url, demo_images } = req.body;
     
     let finalImgUrl = image_url || '';
     if (finalImgUrl && finalImgUrl.startsWith('data:image')) {
@@ -2262,9 +2373,9 @@ app.post('/api/user/products/add', async (req, res) => {
     const sub = botRow.rows[0]?.subdomain || 'shop';
 
     const inserted = await pool.query(
-      `INSERT INTO bot_products (bot_id, name, price, regular_price, category, description, buy_link, image_url)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
-      [botId, name, parseFloat(price) || 0, parseFloat(regular_price) || null, category || 'General', description || '', buy_link || '', finalImgUrl]
+      `INSERT INTO bot_products (bot_id, name, price, regular_price, category, description, buy_link, image_url, demo_images)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
+      [botId, name, parseFloat(price) || 0, parseFloat(regular_price) || null, category || 'General', description || '', buy_link || '', finalImgUrl, demo_images || '']
     );
 
     const prodId = inserted.rows[0].id;
@@ -2272,7 +2383,34 @@ app.post('/api/user/products/add', async (req, res) => {
     await pool.query('UPDATE bot_products SET buy_link = COALESCE(NULLIF($1, \'\'), $2) WHERE id = $3', [buy_link, singleProdUrl, prodId]);
 
     addBotLog(botId, 'success', `📦 নতুন পণ্য যোগ হয়েছে: ${name} (বর্তমান: ৳${price}, লিংক: /p/${prodId})`);
-    res.json({ success: true, message: 'প্রোডাক্ট ImgBB তে সেভ হয়েছে!', product_url: singleProdUrl });
+    res.json({ success: true, message: 'প্রোডাক্ট সফলভাবে যুক্ত হয়েছে!', product_url: singleProdUrl });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// ✏️ প্রোডাক্ট এডিট/আপডেট API
+app.post('/api/user/products/update', async (req, res) => {
+  try {
+    const { botId, productId, name, price, regular_price, category, description, buy_link, image_url, demo_images } = req.body;
+    
+    let finalImgUrl = image_url || '';
+    if (finalImgUrl && finalImgUrl.startsWith('data:image')) {
+      finalImgUrl = await uploadToImgBB(finalImgUrl);
+    }
+
+    await pool.query(
+      `UPDATE bot_products 
+       SET name = $1, price = $2, regular_price = $3, category = $4, description = $5, 
+           buy_link = COALESCE(NULLIF($6, ''), buy_link),
+           image_url = COALESCE(NULLIF($7, ''), image_url),
+           demo_images = COALESCE(NULLIF($8, ''), demo_images)
+       WHERE id = $9 AND bot_id = $10`,
+      [name, parseFloat(price) || 0, parseFloat(regular_price) || null, category, description, buy_link, finalImgUrl, demo_images || '', productId, botId]
+    );
+
+    addBotLog(botId, 'success', `✏️ পণ্য আপডেট সম্পন্ন: ${name}`);
+    res.json({ success: true, message: '✅ পণ্য সফলভাবে আপডেট হয়েছে!' });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });
   }
@@ -2620,6 +2758,7 @@ app.listen(PORT, '0.0.0.0', async () => {
       ALTER TABLE store_catalog_items ADD COLUMN IF NOT EXISTS demo_images TEXT;
       ALTER TABLE bot_products ADD COLUMN IF NOT EXISTS image_url TEXT;
       ALTER TABLE bot_products ADD COLUMN IF NOT EXISTS regular_price NUMERIC(10, 2);
+      ALTER TABLE bot_products ADD COLUMN IF NOT EXISTS demo_images TEXT;
       ALTER TABLE store_catalogs ADD COLUMN IF NOT EXISTS admin_pin VARCHAR(20) DEFAULT '1234';
     `);
 
