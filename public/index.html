@@ -7,71 +7,219 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
     <style>
-        :root {
-            --bg: #f8fafc;
-            --card: #ffffff;
-            --primary: #059669;
-            --primary-soft: #ecfdf5;
-            --border: #e2e8f0;
-            --text: #0f172a;
-            --muted: #64748b;
-        }
-        * { box-sizing: border-box; margin:0; padding:0; font-family: 'Plus Jakarta Sans', 'Hind Siliguri', sans-serif; }
-        body {
-            background-color: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .setup-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 32px;
-            max-width: 480px;
-            width: 100%;
-            box-shadow: 0 10px 30px -5px rgba(0,0,0,0.05);
-        }
-        .brand-header {
-            text-align: center; margin-bottom: 24px;
-        }
-        .wa-logo {
-            width: 52px; height: 52px; background: #25d366; border-radius: 50%;
-            display: inline-flex; align-items: center; justify-content: center; color: #fff; font-size: 30px;
-            box-shadow: 0 8px 16px -4px rgba(37, 211, 102, 0.3); margin-bottom: 10px;
-        }
-        h2 { font-size: 22px; font-weight: 800; color: #047857; margin-bottom: 4px; }
-        p { font-size: 13px; color: var(--muted); }
+    :root {
+      --primary: ${primaryColor};
+      --primary-rgb: 5, 150, 105;
+      --bg: #f1f5f9;
+      --glass-bg: rgba(255, 255, 255, 0.72);
+      --glass-bg-subtle: rgba(255, 255, 255, 0.55);
+      --glass-border: rgba(255, 255, 255, 0.85);
+      --glass-border-subtle: rgba(226, 232, 240, 0.65);
+      --glass-shadow: 0 10px 32px 0 rgba(31, 38, 135, 0.06);
+      --text: #0f172a;
+      --muted: #64748b;
+    }
+    * { box-sizing: border-box; margin:0; padding:0; font-family: 'Plus Jakarta Sans', 'Hind Siliguri', sans-serif; }
+    
+    /* 🌟 সফট গ্রিড ও গ্রেডিয়েন্ট ব্যাকগ্রাউন্ড যা গ্লাস এফেক্টকে ফুটিয়ে তুলবে */
+    body {
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.08) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(14, 165, 233, 0.08) 0px, transparent 50%),
+        radial-gradient(at 50% 100%, rgba(99, 102, 241, 0.06) 0px, transparent 50%);
+      background-attachment: fixed;
+      color: var(--text);
+      padding: 20px 15px;
+      min-height: 100vh;
+    }
+    .container { max-width: 880px; margin: 0 auto; }
+    
+    /* 💎 হেডার গ্লাস স্টাইল */
+    .header {
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 22px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 22px;
+      box-shadow: var(--glass-shadow);
+    }
+    .brand-title { font-size: 21px; font-weight: 800; color: #047857; display: flex; align-items: center; gap: 10px; }
+    
+    /* স্ট্যাটাস ব্যাজ */
+    .status-badge {
+      font-size: 12px; font-weight: 700; padding: 7px 16px; border-radius: 30px;
+      backdrop-filter: blur(8px);
+    }
+    .status-badge.connected {
+      background: rgba(220, 252, 231, 0.85);
+      color: #15803d;
+      border: 1px solid rgba(187, 247, 208, 0.9);
+      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.12);
+    }
+    .status-badge.disconnected {
+      background: rgba(254, 226, 226, 0.85);
+      color: #b91c1c;
+      border: 1px solid rgba(254, 202, 202, 0.9);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.12);
+    }
 
-        .form-group { margin-bottom: 16px; }
-        label { display: block; font-size: 13px; color: #334155; margin-bottom: 6px; font-weight: 600; }
-        input, select, textarea {
-            width: 100%; padding: 12px 14px; background: #ffffff; border: 1px solid var(--border);
-            border-radius: 10px; font-size: 14px; color: #0f172a; outline: none; transition: 0.2s;
-        }
-        input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.12); }
+    /* 💎 প্রধান সব কার্ডের প্রফেশনাল ফ্রস্টেড গ্লাস ডিজাইন */
+    .card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 22px;
+      box-shadow: var(--glass-shadow);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover {
+      box-shadow: 0 14px 40px 0 rgba(31, 38, 135, 0.09);
+    }
+    .card h3 {
+      font-size: 16px; font-weight: 800; color: #065f46;
+      display: flex; align-items: center; gap: 8px; margin-bottom: 14px;
+    }
 
-        button {
-            width: 100%; padding: 14px; background: var(--primary); color: #fff; border: none;
-            border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; display: flex;
-            justify-content: center; align-items: center; gap: 8px; margin-top: 10px; transition: 0.2s;
-        }
-        button:hover { background: #047857; }
+    /* 📊 স্ট্যাটাস গ্রিড কার্ডসমূহ */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 22px; }
+    .stat-box {
+      background: var(--glass-bg-subtle);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      border-radius: 16px;
+      padding: 18px 16px;
+      text-align: center;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.02);
+      transition: 0.2s;
+    }
+    .stat-box:hover {
+      background: rgba(255, 255, 255, 0.85);
+      transform: translateY(-2px);
+    }
+    .stat-val { font-size: 26px; font-weight: 800; color: #059669; margin-top: 4px; }
+    .stat-lbl { font-size: 12px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
 
-        .success-box {
-            background: #ecfdf5; border: 1px solid #10b981; color: #065f46;
-            padding: 16px; border-radius: 12px; margin-top: 20px; display: none; text-align: center;
-        }
+    /* 📝 ফর্ম ইনপুট ফিল্ডস (Semi-transparent Glassy Input) */
+    .form-group { margin-bottom: 15px; }
+    label { display: block; font-size: 13px; color: #334155; margin-bottom: 7px; font-weight: 700; }
+    input, select, textarea {
+      width: 100%;
+      padding: 12px 15px;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--glass-border-subtle);
+      border-radius: 12px;
+      font-size: 14px;
+      color: #0f172a;
+      outline: none;
+      transition: all 0.2s ease;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.015);
+    }
+    input:focus, select:focus, textarea:focus {
+      background: #ffffff;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15), inset 0 2px 4px rgba(0,0,0,0.01);
+    }
 
-        .creator-badge {
-            margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border); text-align: center;
-            font-size: 12px; color: var(--muted); display: flex; justify-content: center; align-items: center; gap: 12px;
-        }
-        .creator-badge a { color: #059669; text-decoration: none; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
-    </style>
+    /* 🚀 মডার্ন থ্রিডি শাইন বাটন */
+    button {
+      width: 100%;
+      padding: 13px 18px;
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      box-shadow: 0 6px 18px -2px rgba(5, 150, 105, 0.35);
+      transition: all 0.2s ease;
+    }
+    button:hover {
+      background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+      box-shadow: 0 8px 24px -2px rgba(5, 150, 105, 0.45);
+      transform: translateY(-1px);
+    }
+    button:active {
+      transform: translateY(1px);
+    }
+
+    /* পেয়ারিং কোড বক্স */
+    .code-box {
+      background: rgba(240, 253, 244, 0.85);
+      backdrop-filter: blur(10px);
+      border: 2px dashed #059669;
+      padding: 18px;
+      border-radius: 16px;
+      text-align: center;
+      margin-top: 15px;
+      display: none;
+    }
+    .code-val { font-size: 30px; font-weight: 800; letter-spacing: 6px; color: #047857; font-family: monospace; }
+
+    /* টার্মিনাল লগ বক্স (সফট ডার্ক ব্লার) */
+    .terminal-window {
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      padding: 16px;
+      height: 180px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 13px;
+      color: #f8fafc;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.3);
+    }
+    .log-line { margin-bottom: 6px; }
+
+    /* পেমেন্ট বক্স */
+    .payment-box {
+      background: var(--glass-bg-subtle);
+      border: 1px solid var(--glass-border-subtle);
+      border-radius: 14px;
+      padding: 18px;
+      margin-top: 14px;
+    }
+    .pay-methods { display: flex; gap: 10px; margin-bottom: 14px; }
+    .pay-badge {
+      flex: 1; text-align: center; padding: 10px; border-radius: 10px;
+      font-size: 13px; font-weight: 700;
+      border: 1px solid var(--glass-border-subtle);
+      cursor: pointer;
+      background: rgba(255,255,255,0.7);
+      backdrop-filter: blur(6px);
+      transition: 0.2s;
+    }
+    .pay-badge.active {
+      background: rgba(236, 253, 245, 0.9);
+      border-color: #059669;
+      color: #059669;
+      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.15);
+    }
+
+    .color-dot {
+      width: 32px; height: 32px; border-radius: 50%;
+      cursor: pointer; border: 2px solid #fff;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+    .color-dot:hover { transform: scale(1.15); }
+    .color-picker { display: flex; gap: 12px; margin-top: 10px; }
+  </style>
 </head>
 <body>
 
@@ -146,18 +294,21 @@
         const type = document.getElementById('botType').value;
         const siteGrp = document.getElementById('siteUrlGroup');
         const manualGrp = document.getElementById('manualDetailsGroup');
+        const catGrp = document.getElementById('catalogUrlGroup');
         const lblBiz = document.getElementById('lblBizName');
 
-        if (type === 'business_site') {
-            siteGrp.style.display = 'block';
-            manualGrp.style.display = 'none';
-            lblBiz.innerText = 'ব্যবসার নাম / শপের নাম:';
-        } else if (type === 'business_no_site') {
-            siteGrp.style.display = 'none';
-            manualGrp.style.display = 'block';
+        // সব ফিল্ড ডিফল্টভাবে লুকান
+        siteGrp.style.display = 'none';
+        manualGrp.style.display = 'none';
+        catGrp.style.display = 'none';
+
+        if (type === 'catalog_link') {
+            catGrp.style.display = 'block';
             lblBiz.innerText = 'দোকান / ব্যবসার নাম:';
+        } else if (type === 'business_site') {
+            siteGrp.style.display = 'block';
+            lblBiz.innerText = 'ব্যবসার নাম / শপের নাম:';
         } else if (type === 'personal') {
-            siteGrp.style.display = 'none';
             manualGrp.style.display = 'block';
             lblBiz.innerText = 'আপনার নিজের নাম (Your Name):';
             document.getElementById('manualDetails').placeholder = 'যেমন: আমি ব্যস্ত থাকলে বন্ধুদের বলবে পরে কল দিতে।';
