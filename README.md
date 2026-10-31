@@ -1,4 +1,6 @@
-<div align="center"><img src="./anime-banner.gif" width="100%" alt="FreeSite Anime Animated Banner"><br>⚡ FreeSite
+"FreeSite Anime Banner" (./anime-banner.gif)
+
+<div align="center">⚡ FreeSite
 
 SaaS Website Builder & WhatsApp AI Automation Platform
 
@@ -6,26 +8,26 @@ Build Smarter. Automate Faster. Grow Without Limits.
 
 Developed with ❤️ by Sojib
 
-<br>""WhatsApp" (https://img.shields.io/badge/WhatsApp-01409084819-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)" (https://wa.me/8801409084819)
-""TikTok" (https://img.shields.io/badge/TikTok-@sojib..music-black?style=for-the-badge&logo=tiktok&logoColor=white)" (https://tiktok.com/@sojib..music)
+""WhatsApp" (https://img.shields.io/badge/WhatsApp-01409084819-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)" (https://wa.me/8801409084819)
+""TikTok" (https://img.shields.io/badge/TikTok-@sojib..music-000000?style=for-the-badge&logo=tiktok&logoColor=white)" (https://tiktok.com/@sojib..music)
 
-"Platform" (https://img.shields.io/badge/Platform-SaaS-8B5CF6?style=for-the-badge)
 "Node.js" (https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
-"Database" (https://img.shields.io/badge/Database-Neon_PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+"PostgreSQL" (https://img.shields.io/badge/Database-Neon_PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+"SaaS" (https://img.shields.io/badge/Architecture-Multi--Tenant-8B5CF6?style=for-the-badge)
 "AI" (https://img.shields.io/badge/AI-Gemini-4285F4?style=for-the-badge)
 "Status" (https://img.shields.io/badge/Status-In_Development-orange?style=for-the-badge)
 
----
-
 One Platform. Multiple Services. Intelligent Automation.
 
-</div>🌟 About The Project
+</div>---
+
+🌟 About FreeSite
 
 FreeSite is a modern Multi-Tenant SaaS platform designed to combine website integration, AI-powered customer assistance, and WhatsApp automation into one centralized ecosystem.
 
-The platform allows users to connect their websites, configure personalized AI assistants, manage product catalogs, automate customer conversations, and control their services through a modern dashboard.
+Users can connect their websites, configure personalized AI assistants, manage product catalogs, automate customer conversations, and control their services through a modern dashboard.
 
-Our vision is to make website management and business automation accessible through a single platform.
+Our mission is to make website management and business automation easier, smarter, and more accessible.
 
 ---
 
@@ -45,8 +47,8 @@ Our vision is to make website management and business automation accessible thro
 🤖 02. WhatsApp AI Automation
 
 - Individual AI assistants for users.
-- Personalized bot names.
-- Custom AI personality and system prompts.
+- Personalized bot names and personalities.
+- Custom AI system prompt editor.
 - Natural conversational responses.
 - AI-powered customer support.
 - Automatic customer inquiry handling.
@@ -165,8 +167,6 @@ REST API| Website Integration
 
 💎 Subscription Plans
 
-FreeSite is designed to support multiple subscription tiers.
-
 Plan| Access Level
 🆓 Free| Limited Features
 🥉 Basic| Essential Automation
@@ -174,13 +174,11 @@ Plan| Access Level
 🥇 Premium| Advanced Automation
 💎 Enterprise| Custom Capacity
 
-Subscription pricing, resource limits, and feature access can be configured by the administrator.
+Subscription pricing, resource limits, and feature access are configurable by the administrator.
 
 ---
 
 🔐 Security & Reliability
-
-Security is an important part of the FreeSite architecture.
 
 - User-specific data isolation.
 - Secure API key storage.
@@ -192,16 +190,16 @@ Security is an important part of the FreeSite architecture.
 - Error handling and logging.
 - Responsible WhatsApp connection management.
 
-«Note: Unofficial WhatsApp automation methods cannot guarantee zero bans. Production deployments should follow applicable platform policies.»
+«Security Note: Unofficial WhatsApp automation methods cannot guarantee zero bans. Production deployments should follow applicable WhatsApp policies.»
 
 ---
 
-📊 Platform Capabilities
+📊 Platform Modules
 
 Module| Description
 Website Engine| Website connection and analysis
 Product Engine| Product catalog management
-AI Engine| Intelligent conversation
+AI Engine| Intelligent conversations
 WhatsApp Engine| Customer communication
 Payment Engine| Subscription payments
 Server Engine| Resource allocation
@@ -236,7 +234,7 @@ Phase 03 — Business Management
 - [ ] Dynamic bot capacity.
 - [ ] Advanced admin dashboard.
 
-Phase 04 — Production
+Phase 04 — Production Deployment
 
 - [ ] Security testing.
 - [ ] Performance optimization.
@@ -253,11 +251,11 @@ Founder & Developer of FreeSite
 
 Building intelligent automation systems and modern SaaS solutions.
 
-<br>""WhatsApp" (https://img.shields.io/badge/Contact_Me-WhatsApp-25D366?style=for-the-badge&logo=whatsapp)" (https://wa.me/8801409084819)
+""WhatsApp" (https://img.shields.io/badge/Contact_Me-WhatsApp-25D366?style=for-the-badge&logo=whatsapp)" (https://wa.me/8801409084819)
 
 ""TikTok" (https://img.shields.io/badge/Follow_Me-TikTok-black?style=for-the-badge&logo=tiktok)" (https://tiktok.com/@sojib..music)
 
-<br>---
+---
 
 🇧🇩 Made with Love in Bangladesh
 
