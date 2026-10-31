@@ -1,6 +1,6 @@
 /**
  * FreeSite SaaS — Master Server (Subdomain Priority Router Fixed)
- * Architect:h Sojib | WhatsApp: 01409084819 | TikTok: @sojib..music
+ * Architect: Sojib | WhatsApp: 01409084819 | TikTok: @sojib..music
  */
 
 require('dotenv').config();
@@ -1519,7 +1519,9 @@ ${botRow.system_prompt || 'আমরা মানসম্মত পণ্য �
 ১. সাধারণ হাই/হ্যালো/সালাম: গ্রাহক শুধু সালাম বা হাই দিলে বিনয়ের সাথে উত্তর দাও (যেমন: "ওয়ালাইকুম আসসালাম ভাইয়া! কেমন আছেন? আপনাকে কীভাবে সাহায্য করতে পারি?")। কোনো পণ্য, দাম, তালিকা বা ডেলিভারি চার্জ নিজে থেকে জোর করে চাপাবে না!
 ২. টুর্নামেন্ট/গেমিং/সার্ভিস সাইট হলে: যদি সাইটটি গেমিং, টুর্নামেন্ট বা কোনো সার্ভিসের হয়, তবে সাধারণ মানুষের মতো নিয়ম, রেজিস্ট্রেশন ফি ও প্রসেস সুন্দরভাবে বুঝিয়ে বলো।
 ৩. পণ্য জানতে চাওয়া: গ্রাহক যতক্ষণ নির্দিষ্ট কোনো পণ্য বা দাম জানতে না চাইবে অথবা কিনতে না চাইবে, ততক্ষণ নিজে থেকে "আপনি কি অর্ডার করতে চান?" বা ডেলিভারি চার্জ বলবে না।
-৪. পণ্য উপস্থাপন: গ্রাহক যখন পণ্য চাইবে কেবল তখনই সম্পর্কিত সর্বোচ্চ ২-৩টি পণ্যের নাম, দাম ও লিংক স্বাভাবিকভাবে দেবে।
+৪. ছবি চাওয়া ও ডেমো পণ্যের নিয়ম: 
+   - গ্রাহক যখন কোনো পণ্যের ছবি চাইবে বা ডেমো পণ্য দেখতে চাইবে, তখন আমাদের স্টক থেকে ৬-৭টি সেরা পণ্যের নাম, বর্তমান মূল্য, সংক্ষেপ বিবরণ এবং তার "আলাদা আলাদা ডেডিকেটেড লিংক" পয়েন্ট আকারে সুন্দর করে দেবে।
+   - গ্রাহককে বিনয়ের সাথে বলবে: "ভাইয়া, নিচে আমাদের সেরা ৬-৭টি পণ্যের ডেমো তালিকা ও আলাদা আলাদা লিংক দেওয়া হলো। প্রতিটি লিংকে ক্লিক করলেই আপনি বড় ৪ কোণা কার্ডে পণ্যের আসল ছবি ও সম্পূর্ণ বিবরণ দেখতে পাবেন:"
 ৫. কৃত্রিম বা রোবোটিক আচরণ সম্পূর্ণ নিষিদ্ধ। আসল মানুষের মতো সহজ, সরল ও আন্তরিক ভঙ্গিতে কথা বলো।
 
 স্টক ডাটা রেফারেন্স (প্রয়োজনে ব্যবহারের জন্য):
@@ -1814,35 +1816,177 @@ app.get('/api/catalog/get/:slug', async (req, res) => {
 // 📖 ক্যাটালগ পেজ ভিউয়ার রাউট
 app.get('/catalog-builder', (req, res) => res.sendFile(path.join(__dirname, 'public', 'catalog_builder.html')));
 
+// 🔗 প্রতিটি ক্যাটালগ পণ্যের আলাদা ডেডিকেটেড লিংক ও বড় ৪ কোণা কার্ড (/c/:slug/:id)
+app.get('/c/:slug/:id', async (req, res) => {
+  try {
+    const { slug, id } = req.params;
+    const cat = await pool.query('SELECT * FROM store_catalogs WHERE catalog_slug = $1', [slug.toLowerCase().trim()]);
+    if (cat.rows.length === 0) return res.status(404).send('<h2>ক্যাটালগ পাওয়া যায়নি!</h2>');
+    
+    const itemRes = await pool.query('SELECT * FROM store_catalog_items WHERE id = $1 AND catalog_slug = $2', [parseInt(id, 10), slug.toLowerCase().trim()]);
+    if (itemRes.rows.length === 0) return res.status(404).send('<h2>পণ্যটি পাওয়া যায়নি!</h2>');
+
+    const item = itemRes.rows[0];
+    const store = cat.rows[0];
+    const host = req.get('host');
+    const orderWaText = encodeURIComponent(`আসসালামু আলাইকুম, আমি এই পণ্যটি অর্ডার করতে চাই:\n📦 পণ্য: ${item.name}\n💰 মূল্য: ৳${item.price}\n🔗 লিংক: ${req.protocol}://${host}/c/${slug}/${item.id}`);
+
+    res.send(`<!DOCTYPE html>
+    <html lang="bn">
+    <head>
+      <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>${item.name} — ${store.store_name}</title>
+      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+      <style>
+        * { box-sizing: border-box; margin:0; padding:0; font-family:'Plus Jakarta Sans','Hind Siliguri',sans-serif; }
+        body {
+          background-color: #f8fafc;
+          background-image: radial-gradient(circle at 10% 10%, rgba(16,185,129,0.08) 0%, transparent 40%),
+                            radial-gradient(circle at 90% 90%, rgba(14,165,233,0.08) 0%, transparent 40%);
+          color: #0f172a; padding: 25px 15px; display: flex; justify-content: center; min-height: 100vh;
+        }
+        /* 💎 বড় চারকোনা প্রিমিয়াম কার্ড */
+        .big-square-card {
+          max-width: 500px; width: 100%;
+          background: rgba(255, 255, 255, 0.78);
+          backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.95);
+          border-radius: 28px; overflow: hidden;
+          box-shadow: 0 20px 50px -10px rgba(15, 23, 42, 0.12);
+          display: flex; flex-direction: column;
+        }
+        .big-img-box {
+          width: 100%; height: 350px; background: rgba(241, 245, 249, 0.6);
+          position: relative; display: flex; align-items: center; justify-content: center;
+          border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+        }
+        .big-img-box img { width: 100%; height: 100%; object-fit: contain; }
+        .cat-badge {
+          position: absolute; top: 16px; left: 16px;
+          background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px);
+          color: #fff; font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 20px;
+        }
+        .card-content { padding: 26px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .prod-title { font-size: 22px; font-weight: 800; color: #0f172a; margin-bottom: 8px; line-height: 1.3; }
+        .price-badge { font-size: 26px; font-weight: 800; color: #059669; margin-bottom: 14px; }
+        .prod-desc { font-size: 14px; color: #475569; line-height: 1.6; margin-bottom: 22px; background: rgba(255,255,255,0.6); padding: 14px; border-radius: 14px; border: 1px solid rgba(226,232,240,0.6); }
+        .action-row { display: flex; flex-direction: column; gap: 10px; }
+        .order-btn {
+          display: flex; align-items: center; justify-content: center; gap: 8px;
+          background: linear-gradient(135deg, #25d366 0%, #15803d 100%);
+          color: #fff; padding: 16px; border-radius: 16px; font-size: 15px; font-weight: 800;
+          text-decoration: none; box-shadow: 0 8px 24px rgba(37, 211, 102, 0.3); transition: 0.2s;
+        }
+        .order-btn:hover { transform: translateY(-2px); }
+        .share-btn {
+          display: flex; align-items: center; justify-content: center; gap: 6px;
+          background: rgba(255,255,255,0.85); color: #334155; padding: 12px;
+          border-radius: 14px; font-size: 13px; font-weight: 700; border: 1px solid #cbd5e1;
+          cursor: pointer; text-decoration: none;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="big-square-card">
+        <div class="big-img-box">
+          <span class="cat-badge">${item.category || 'General'}</span>
+          ${item.image_url ? `<img src="${item.image_url}" alt="${item.name}">` : `<i class="ti ti-photo" style="font-size:64px; color:#cbd5e1;"></i>`}
+        </div>
+        <div class="card-content">
+          <div>
+            <div style="font-size:12px; color:#64748b; font-weight:700; margin-bottom:4px;">🏪 ${store.store_name}</div>
+            <h1 class="prod-title">${item.name}</h1>
+            <div class="price-badge">৳${item.price}</div>
+            <div class="prod-desc">${item.description || 'পণ্যটির বিস্তারিত জানতে নিচে হোয়াটসঅ্যাপে যোগাযোগ করুন।'}</div>
+          </div>
+          <div class="action-row">
+            <a href="https://wa.me/?text=${orderWaText}" target="_blank" class="order-btn">
+              <i class="ti ti-brand-whatsapp" style="font-size:22px;"></i> সরাসরি হোয়াটসঅ্যাপে অর্ডার করুন
+            </a>
+            <button onclick="navigator.clipboard.writeText(location.href); alert('লিংক কপি করা হয়েছে!');" class="share-btn">
+              <i class="ti ti-link"></i> এই পণ্যের লিংক কপি করুন
+            </button>
+            <a href="/catalog/${slug}" style="text-align:center; font-size:12px; color:#059669; font-weight:700; text-decoration:none; margin-top:4px;">
+              👈 সব পণ্য দেখুন
+            </a>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>`);
+  } catch(e) { res.status(500).send('Error'); }
+});
+
+// 📖 সম্পূর্ণ ক্যাটালগ ভিউয়ার (বড় ৪ কোণা কার্ড গ্রিডসহ)
 app.get('/catalog/:slug', async (req, res) => {
   try {
     const slug = req.params.slug.toLowerCase().trim();
     const cat = await pool.query('SELECT * FROM store_catalogs WHERE catalog_slug = $1', [slug]);
     if (cat.rows.length === 0) return res.status(404).send('<h2>ক্যাটালগ পাওয়া যায়নি!</h2>');
 
-    const items = await pool.query('SELECT * FROM store_catalog_items WHERE catalog_slug = $1', [slug]);
+    const items = await pool.query('SELECT * FROM store_catalog_items WHERE catalog_slug = $1 ORDER BY id DESC', [slug]);
     const store = cat.rows[0];
+    const host = req.get('host');
 
     res.send(`<!DOCTYPE html>
     <html lang="bn">
     <head>
       <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>${store.store_name} — প্রোডাক্ট ক্যাটালগ</title>
-      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
       <style>
-        body { font-family:'Plus Jakarta Sans',sans-serif; background:#f8fafc; padding:20px; color:#0f172a; max-width:600px; margin:0 auto; }
-        .card { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:15px; margin-bottom:10px; }
+        * { box-sizing: border-box; margin:0; padding:0; font-family:'Plus Jakarta Sans','Hind Siliguri',sans-serif; }
+        body { background:#f8fafc; padding:25px 15px; color:#0f172a; min-height:100vh; }
+        .catalog-container { max-width: 900px; margin: 0 auto; }
+        .header { background:rgba(255,255,255,0.85); backdrop-filter:blur(16px); padding:24px; border-radius:20px; border:1px solid #e2e8f0; text-align:center; margin-bottom:25px; }
+        .header h1 { font-size:24px; color:#047857; font-weight:800; }
+        
+        /* 💎 বড় চারকোনা কার্ড গ্রিড */
+        .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap:20px; }
+        .card {
+          background:#fff; border:1px solid #e2e8f0; border-radius:20px; overflow:hidden;
+          display:flex; flex-direction:column; box-shadow:0 8px 25px rgba(0,0,0,0.04); transition:0.2s;
+        }
+        .card:hover { transform:translateY(-3px); box-shadow:0 14px 35px rgba(0,0,0,0.08); }
+        .img-wrap { width:100%; height:220px; background:#f1f5f9; display:flex; align-items:center; justify-content:center; }
+        .img-wrap img { width:100%; height:100%; object-fit:cover; }
+        .card-body { padding:18px; flex:1; display:flex; flex-direction:column; justify-content:space-between; }
+        .card-title { font-size:16px; font-weight:800; margin-bottom:6px; color:#0f172a; }
+        .card-price { font-size:18px; font-weight:800; color:#059669; margin-bottom:12px; }
+        .card-btns { display:grid; grid-template-columns: 1fr 1fr; gap:6px; }
+        .btn-view { background:#f1f5f9; color:#334155; padding:9px; border-radius:10px; font-size:12px; font-weight:700; text-align:center; text-decoration:none; }
+        .btn-order { background:#25d366; color:#fff; padding:9px; border-radius:10px; font-size:12px; font-weight:700; text-align:center; text-decoration:none; }
       </style>
     </head>
     <body>
-      <h2 style="color:#059669; margin-bottom:15px;">🛍️ ${store.store_name}</h2>
-      ${items.rows.map(i => `
-        <div class="card">
-          <div style="font-weight:700; font-size:16px;">${i.name}</div>
-          <div style="color:#059669; font-weight:700; margin:4px 0;">মূল্য: ৳${i.price}</div>
-          <div style="font-size:13px; color:#64748b;">${i.description || ''}</div>
+      <div class="catalog-container">
+        <div class="header">
+          <h1>🛍️ ${store.store_name}</h1>
+          <p style="font-size:13px; color:#64748b; margin-top:4px;">আমাদের অফিসিয়াল প্রোডাক্ট ক্যাটালগ</p>
         </div>
-      `).join('')}
+        <div class="grid">
+          ${items.rows.map(i => `
+            <div class="card">
+              <div class="img-wrap">
+                ${i.image_url ? `<img src="${i.image_url}" alt="${i.name}">` : `<i class="ti ti-photo" style="font-size:42px; color:#cbd5e1;"></i>`}
+              </div>
+              <div class="card-body">
+                <div>
+                  <small style="color:#64748b; font-weight:700;">${i.category || 'General'}</small>
+                  <div class="card-title">${i.name}</div>
+                  <div class="card-price">৳${i.price}</div>
+                </div>
+                <div class="card-btns">
+                  <a href="/c/${slug}/${i.id}" class="btn-view">বড় ছবি ও লিংক</a>
+                  <a href="https://wa.me/?text=${encodeURIComponent('আমি এই পণ্যটি অর্ডার করতে চাই: ' + i.name + ' - ৳' + i.price + ' (লিংক: ' + req.protocol + '://' + host + '/c/' + slug + '/' + i.id + ')')}" target="_blank" class="btn-order">অর্ডার করুন</a>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
     </body>
     </html>`);
   } catch(e) { res.status(500).send('Error'); }
