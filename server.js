@@ -764,11 +764,7 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
           document.getElementById('trialLockBanner').style.display = 'block';
           document.getElementById('trialLockMsg').innerText = d.message;
           if (d.trial_used) {
-            document.getElementById('trialBtnGrp').innerHTML = `
-              <button onclick="location.href='#paySection'" style="width:auto; background:#d97706; padding:8px 16px; font-size:12px;">
-                👑 প্রিমিয়াম আপগ্রেড করুন
-              </button>
-            `;
+            document.getElementById('trialBtnGrp').innerHTML = '<button onclick="location.href=\\'#paySection\\'" style="width:auto; background:#d97706; padding:8px 16px; font-size:12px;">👑 প্রিমিয়াম আপগ্রেড করুন</button>';
           }
           btn.innerHTML = originalText;
           return;
