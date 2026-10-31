@@ -125,14 +125,25 @@
             </div>
         </div>
 
-        <!-- 🖼️ ক্যামেরা বা গ্যালারি থেকে ছবি সিলেক্ট -->
+        <!-- 🖼️ ১. মূল পণ্যের ছবি সিলেক্ট স্লট -->
         <div class="form-group">
-            <label>📸 পণ্যের ছবি সিলেক্ট করুন (কাস্টমার চাইলে এআই পাঠাবে):</label>
+            <label>📸 পণ্যের মূল ছবি (Main Cover Picture):</label>
             <div class="img-preview-box" onclick="document.getElementById('pImgFile').click()">
-                <span id="imgUploadText" style="font-size:13px; color:#047857; font-weight:700;"><i class="ti ti-camera"></i> ছবি আপলোড করতে ট্যাপ করুন</span>
+                <span id="imgUploadText" style="font-size:13px; color:#047857; font-weight:700;"><i class="ti ti-camera"></i> মূল ছবি আপলোড করুন</span>
                 <img id="imgPreview" style="display:none;">
             </div>
             <input type="file" id="pImgFile" accept="image/*" style="display:none;" onchange="handleImageSelect(event)">
+        </div>
+
+        <!-- 📸 ২. ডেমো ছবি আপলোড স্লট (আলাদা ডেডিকেটেড স্লট) -->
+        <div class="form-group" style="background:rgba(238, 242, 255, 0.6); padding:12px; border-radius:14px; border:1px dashed #6366f1;">
+            <label style="color:#3730a3;"><i class="ti ti-sparkles"></i> 📸 পণ্যের ডেমো ছবি স্লট (Demo / Preview Picture):</label>
+            <div class="img-preview-box" style="border-color:#6366f1; background:rgba(245, 247, 255, 0.8);" onclick="document.getElementById('pDemoImgFile').click()">
+                <span id="demoImgUploadText" style="font-size:13px; color:#4f46e5; font-weight:700;"><i class="ti ti-photo-plus"></i> ডেমো ছবি আপলোড করতে ট্যাপ করুন</span>
+                <img id="demoImgPreview" style="display:none;">
+            </div>
+            <input type="file" id="pDemoImgFile" accept="image/*" style="display:none;" onchange="handleDemoImageSelect(event)">
+            <small style="color:#6366f1; font-size:11px; display:block; margin-top:4px;">👉 কাস্টমার ডেমো দেখতে চাইলে বা ৪ কোণা লিংকে ঢুকলে এই ডেমো পিকটি দেখতে পাবে।</small>
         </div>
 
         <div class="form-group">
@@ -140,9 +151,14 @@
             <textarea id="pDesc" rows="2" placeholder="যেমন: ওয়াটারপ্রুফ, ৭ দিন ব্যাটারি ব্যাকআপ।"></textarea>
         </div>
 
-        <button type="button" onclick="addProductToList()" style="background:#0284c7;">
-            <i class="ti ti-plus"></i> তালিকায় পণ্যটি যোগ করুন
-        </button>
+        <div style="display:flex; gap:8px;">
+            <button type="button" id="btnProductAction" onclick="addProductToList()" style="flex:1; background:#0284c7;">
+                <i class="ti ti-plus"></i> তালিকায় পণ্যটি যোগ করুন
+            </button>
+            <button type="button" id="btnCancelEdit" onclick="cancelEditMode()" style="display:none; width:auto; background:#64748b; padding:0 18px;">
+                বাতিল
+            </button>
+        </div>
     </div>
 
     <!-- প্রোডাক্ট তালিকা -->
@@ -168,7 +184,9 @@
 <script>
     let products = [];
     let currentImageBase64 = '';
-    let categorySet = new Set(); // ক্যাটাগরি ডুপ্লিকেট ছাড়া সংরক্ষণ করতে
+    let currentDemoImageBase64 = '';
+    let editIndex = -1; // -1 মানে নতুন যোগ হচ্ছে, ০ বা তার বেশি মানে এডিট হচ্ছে
+    let categorySet = new Set();
 
     // তৈরি হওয়া ক্যাটাগরিগুলো ড্রপডাউনে আপডেট করার ফাংশন
     function updateCategoryDropdown() {
@@ -202,11 +220,10 @@
         }
     }
 
-    // ছবি সিলেক্ট এবং কম্প্রেস
+    // মূল ছবি সিলেক্ট এবং কম্প্রেস
     function handleImageSelect(e) {
         const file = e.target.files[0];
         if (!file) return;
-
         const reader = new FileReader();
         reader.onload = function(event) {
             const img = new Image();
@@ -221,10 +238,36 @@
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, w, h);
                 currentImageBase64 = canvas.toDataURL('image/jpeg', 0.7);
-                
                 document.getElementById('imgPreview').src = currentImageBase64;
                 document.getElementById('imgPreview').style.display = 'block';
                 document.getElementById('imgUploadText').style.display = 'none';
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // 📸 আলাদা ডেমো ছবি সিলেক্ট এবং কম্প্রেস
+    function handleDemoImageSelect(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                const maxDim = 600;
+                let w = img.width, h = img.height;
+                if (w > h && w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
+                else if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+                currentDemoImageBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                document.getElementById('demoImgPreview').src = currentDemoImageBase64;
+                document.getElementById('demoImgPreview').style.display = 'block';
+                document.getElementById('demoImgUploadText').style.display = 'none';
             };
             img.src = event.target.result;
         };
@@ -298,6 +341,7 @@
         } catch(e) {}
     }
 
+    // ➕ পণ্য যোগ অথবা এডিট আপডেট ফাংশন
     function addProductToList() {
         const name = document.getElementById('pName').value.trim();
         const price = document.getElementById('pPrice').value.trim();
@@ -306,27 +350,97 @@
 
         if (!name || !price) return alert('পণ্যের নাম এবং দাম দিতে হবে!');
 
-        products.push({ 
+        const productData = {
+            id: editIndex >= 0 && products[editIndex].id ? products[editIndex].id : undefined,
             name, 
             price: parseFloat(price), 
             category, 
             description: desc,
-            image_url: currentImageBase64 
-        });
+            image_url: currentImageBase64,
+            demo_images: currentDemoImageBase64
+        };
+
+        if (editIndex >= 0) {
+            // এডিট আপডেট
+            products[editIndex] = productData;
+            alert('✅ পণ্য সফলভাবে আপডেট করা হয়েছে!');
+            cancelEditMode();
+        } else {
+            // নতুন যোগ
+            products.push(productData);
+            resetProductForm();
+        }
 
         renderList();
-        updateCategoryDropdown(); // ড্রপডাউন আপডেট করা হলো
+        updateCategoryDropdown();
         saveDraft();
+    }
 
-        // ফর্ম রিসেট
+    // ✏️ এডিট মোড শুরু করা
+    function startEditProduct(idx) {
+        editIndex = idx;
+        const p = products[idx];
+
+        document.getElementById('pName').value = p.name;
+        document.getElementById('pPrice').value = p.price;
+        document.getElementById('pCategory').value = p.category || 'General';
+        document.getElementById('pDesc').value = p.description || '';
+
+        // মূল ছবি
+        currentImageBase64 = p.image_url || '';
+        if (currentImageBase64) {
+            document.getElementById('imgPreview').src = currentImageBase64;
+            document.getElementById('imgPreview').style.display = 'block';
+            document.getElementById('imgUploadText').style.display = 'none';
+        } else {
+            document.getElementById('imgPreview').style.display = 'none';
+            document.getElementById('imgUploadText').style.display = 'block';
+        }
+
+        // ডেমো ছবি
+        currentDemoImageBase64 = p.demo_images || '';
+        if (currentDemoImageBase64) {
+            document.getElementById('demoImgPreview').src = currentDemoImageBase64;
+            document.getElementById('demoImgPreview').style.display = 'block';
+            document.getElementById('demoImgUploadText').style.display = 'none';
+        } else {
+            document.getElementById('demoImgPreview').style.display = 'none';
+            document.getElementById('demoImgUploadText').style.display = 'block';
+        }
+
+        // বাটন রূপান্তর
+        const btn = document.getElementById('btnProductAction');
+        btn.innerHTML = '<i class="ti ti-check"></i> পণ্য আপডেট করুন';
+        btn.style.background = '#d97706';
+        document.getElementById('btnCancelEdit').style.display = 'inline-block';
+
+        // স্ক্রল করে ফর্মে নেওয়া
+        document.getElementById('pName').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // এডিট বাতিল করা
+    function cancelEditMode() {
+        editIndex = -1;
+        resetProductForm();
+        const btn = document.getElementById('btnProductAction');
+        btn.innerHTML = '<i class="ti ti-plus"></i> তালিকায় পণ্যটি যোগ করুন';
+        btn.style.background = '#0284c7';
+        document.getElementById('btnCancelEdit').style.display = 'none';
+    }
+
+    function resetProductForm() {
         document.getElementById('pName').value = '';
         document.getElementById('pPrice').value = '';
         document.getElementById('pDesc').value = '';
         document.getElementById('pImgFile').value = '';
+        document.getElementById('pDemoImgFile').value = '';
         document.getElementById('pCategorySelect').value = '';
         currentImageBase64 = '';
+        currentDemoImageBase64 = '';
         document.getElementById('imgPreview').style.display = 'none';
         document.getElementById('imgUploadText').style.display = 'block';
+        document.getElementById('demoImgPreview').style.display = 'none';
+        document.getElementById('demoImgUploadText').style.display = 'block';
     }
 
     function renderList() {
@@ -350,7 +464,10 @@
                             <span style="font-size:11px; background:#ecfdf5; color:#047857; padding:2px 6px; border-radius:6px; font-weight:700;">${p.category}</span>
                         </div>
                     </div>
-                    <button onclick="removeProduct(${idx})" style="width:auto; padding:6px 12px; background:#fee2e2; color:#b91c1c; font-size:12px; border:none; border-radius:8px; cursor:pointer;">মুছুন</button>
+                    <div style="display:flex; gap:6px;">
+                    <button onclick="startEditProduct(${idx})" style="width:auto; padding:6px 12px; background:#e0f2fe; color:#0369a1; font-size:12px; border:none; border-radius:8px; cursor:pointer; font-weight:700;"><i class="ti ti-edit"></i> এডিট</button>
+                    <button onclick="removeProduct(${idx})" style="width:auto; padding:6px 12px; background:#fee2e2; color:#b91c1c; font-size:12px; border:none; border-radius:8px; cursor:pointer; font-weight:700;"><i class="ti ti-trash"></i> মুছুন</button>
+                </div>
                 </div>
                 ${itemUrl ? `
                 <div style="display:flex; gap:6px; background:rgba(255,255,255,0.7); padding:6px 10px; border-radius:10px; border:1px solid #e2e8f0; align-items:center;">
