@@ -1,6 +1,6 @@
 /**
  * FreeSite SaaS — Master Server (Subdomain Priority Router Fixed)
- * Architect: Sojib | WhatsApp: 01409084819 | TikTok: @sojib..music
+ * Architect:h Sojib | WhatsApp: 01409084819 | TikTok: @sojib..music
  */
 
 require('dotenv').config();
