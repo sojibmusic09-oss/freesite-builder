@@ -1504,9 +1504,10 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
       const select = document.getElementById('dashCatSelect');
       if (catSet.size > 0) {
         select.style.display = 'block';
-        select.innerHTML = '<option value="">-- ক্যাটাগরি সিলেক্ট --</option>' +
-          Array.from(catSet).map(cat => `<option value="${cat}">${cat}</option>`).join('') +
-          '<option value="__NEW__">➕ নতুন লিখুন</option>';
+        var catOptions = Array.from(catSet).map(function(cat) {
+          return '<option value="' + cat + '">' + cat + '</option>';
+        }).join('');
+        select.innerHTML = '<option value="">-- ক্যাটাগরি সিলেক্ট --</option>' + catOptions + '<option value="__NEW__">➕ নতুন লিখুন</option>';
       } else {
         select.style.display = 'none';
       }
