@@ -1,6 +1,4 @@
-"FreeSite Anime Banner" (https://raw.githubusercontent.com/sojibmusic09-oss/freesite-builder/main/anime-banner.gif)
-
-<div align="center">⚡ FreeSite
+<div align="center"><img src="https://media1.tenor.com/m/9qy_ICBXpAkAAAAd/zero-two-anime.gif" width="100%" alt="Cute Pink Anime Girl Animation"><br>⚡ FreeSite
 
 SaaS Website Builder & WhatsApp AI Automation Platform
 
@@ -13,10 +11,9 @@ Developed with ❤️ by Sojib
 ""TikTok" (https://img.shields.io/badge/TikTok-@sojib..music-000000?style=for-the-badge&logo=tiktok&logoColor=white)" (https://tiktok.com/@sojib..music)
 
 "Node.js" (https://img.shields.io/badge/Node.js-18%2B-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
-"PostgreSQL" (https://img.shields.io/badge/Database-Neon-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+"PostgreSQL" (https://img.shields.io/badge/PostgreSQL-Neon-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
 "AI" (https://img.shields.io/badge/AI-Gemini-4285F4?style=for-the-badge)
-"Architecture" (https://img.shields.io/badge/Architecture-Multi--Tenant-8B5CF6?style=for-the-badge)
-"Status" (https://img.shields.io/badge/Status-In_Development-orange?style=for-the-badge)
+"SaaS" (https://img.shields.io/badge/Architecture-Multi--Tenant-8B5CF6?style=for-the-badge)
 
 One Platform. Multiple Services. Intelligent Automation.
 
@@ -28,7 +25,7 @@ FreeSite is a modern Multi-Tenant SaaS platform designed to combine website inte
 
 Users can connect their websites, configure personalized AI assistants, manage product catalogs, automate customer conversations, and control their services through a centralized dashboard.
 
-Our vision is to make website management and business automation easier, smarter, and more accessible.
+Our mission is to make website management and business automation easier, smarter, and more accessible.
 
 ---
 
@@ -123,33 +120,33 @@ Our vision is to make website management and business automation easier, smarter
 
 🧠 System Architecture
 
-                  FREE SITE SAAS
-                        |
-                CENTRAL DASHBOARD
-                        |
-          +-------------+-------------+
-          |             |             |
-        USERS        PAYMENTS       ADMINS
-          |             |             |
-          +-------------+-------------+
-                        |
-                     CORE API
-                        |
-           +------------+------------+
-           |                         |
-      WEBSITE ENGINE              AI ENGINE
-           |                         |
-     WEBSITE ANALYZER            GEMINI AI
-           |                         |
-     PRODUCT CATALOG             AI ASSISTANT
-           |                         |
-           +------------+------------+
-                        |
-                 WHATSAPP ENGINE
-                        |
-                CUSTOMER SUPPORT
-                        |
-                 HUMAN HANDOVER
+                 FREE SITE SAAS
+                       |
+               CENTRAL DASHBOARD
+                       |
+          +------------+------------+
+          |            |            |
+        USERS       PAYMENTS      ADMINS
+          |            |            |
+          +------------+------------+
+                       |
+                    CORE API
+                       |
+          +------------+------------+
+          |                         |
+     WEBSITE ENGINE              AI ENGINE
+          |                         |
+    WEBSITE ANALYZER             GEMINI AI
+          |                         |
+    PRODUCT CATALOG              AI ASSISTANT
+          |                         |
+          +------------+------------+
+                       |
+                WHATSAPP ENGINE
+                       |
+               CUSTOMER SUPPORT
+                       |
+                HUMAN HANDOVER
 
 ---
 
@@ -171,8 +168,6 @@ REST API| Website Integration
 
 💎 Subscription Plans
 
-FreeSite is designed to support flexible subscription plans.
-
 Plan| Access Level
 🆓 Free| Limited Features
 🥉 Basic| Essential Automation
@@ -185,8 +180,6 @@ Pricing, resource limits, and feature access can be configured by the administra
 ---
 
 🔐 Security & Reliability
-
-Security is an important part of the FreeSite architecture.
 
 - User-specific data isolation.
 - Secure API key storage.
@@ -256,9 +249,7 @@ Phase 04 — Production Deployment
 freesite-builder/
 │
 ├── public/
-│
 ├── README.md
-├── anime-banner.gif
 ├── package.json
 ├── server.js
 ├── database.js
@@ -280,9 +271,9 @@ Founder & Developer of FreeSite
 
 Building intelligent automation systems and modern SaaS solutions.
 
-""WhatsApp" (https://img.shields.io/badge/Contact_Me-WhatsApp-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)" (https://wa.me/8801409084819)
+""WhatsApp" (https://img.shields.io/badge/Contact_Me-WhatsApp-25D366?style=for-the-badge&logo=whatsapp)" (https://wa.me/8801409084819)
 
-""TikTok" (https://img.shields.io/badge/Follow_Me-TikTok-000000?style=for-the-badge&logo=tiktok&logoColor=white)" (https://tiktok.com/@sojib..music)
+""TikTok" (https://img.shields.io/badge/Follow_Me-TikTok-black?style=for-the-badge&logo=tiktok)" (https://tiktok.com/@sojib..music)
 
 ---
 
