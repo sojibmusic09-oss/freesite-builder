@@ -260,39 +260,41 @@
                     if(s.key === 'rocket_no') document.getElementById('adminRocket').value = s.value;
                 });
 
-                // পেমেন্ট তালিকা
+                // পেমেন্ট তালিকা (প্যাকেজ ও মেয়াদের তথ্যসহ)
                 document.getElementById('paymentRows').innerHTML = data.payments.map(p => `
                     <tr>
                         <td>#${p.id}</td>
                         <td><b>${p.bot_name || 'N/A'}</b></td>
-                        <td>${p.payment_method}</td>
+                        <td>${p.payment_method} (৳${p.amount || 300})</td>
                         <td>${p.sender_number}</td>
                         <td><code style="background:#e2e8f0; padding:2px 6px; border-radius:4px;">${p.trx_id}</code></td>
                         <td><span style="color:${p.status === 'APPROVED' ? '#059669' : '#d97706'}; font-weight:700;">● ${p.status}</span></td>
                         <td>
                             ${p.status === 'PENDING' 
-                              ? `<button class="btn-action btn-approve" onclick="approvePayment(${p.id})">Approve</button>`
-                              : `<span style="color:#059669; font-weight:700;">অনুমোদিত</span>`
+                              ? `<button class="btn-action btn-approve" onclick="openApproveModal(${p.id}, '${p.bot_name || 'Bot'}')">⚙️ প্যাকেজ দিয়ে Approve</button>`
+                              : `<span style="color:#059669; font-weight:700;">✅ অনুমোদিত (${p.approved_days || 30} দিন)</span>`
                             }
                         </td>
                     </tr>
                 `).join('') || '<tr><td colspan="7" style="text-align:center;">কোনো পেমেন্ট পেন্ডিং নেই</td></tr>';
 
-                // বট তালিকা
-                document.getElementById('botRows').innerHTML = data.bots.map(b => `
+                // বট তালিকা (মেয়াদ ও প্যাকেজসহ)
+                document.getElementById('botRows').innerHTML = data.bots.map(b => {
+                    const expDate = b.expires_at ? new Date(b.expires_at).toLocaleDateString('bn-BD') : 'লাইফটাইম / আনলিমিটেড';
+                    return `
                     <tr>
                         <td>#${b.id}</td>
-                        <td><b>${b.bot_name}</b></td>
+                        <td><b>${b.bot_name}</b><br><small style="color:#059669;">${b.package_name || 'Free Trial'}</small></td>
                         <td><a href="https://${b.subdomain}.sojib.de5.net" target="_blank" style="color:#059669; font-weight:600;">${b.subdomain}</a></td>
                         <td>Server #${b.server_id || '1 (Main)'}</td>
                         <td><b>${b.requests_today || 0}</b></td>
-                        <td><span style="font-weight:700; color:${b.plan === 'premium' ? '#d97706' : '#64748b'};">${(b.plan || 'free').toUpperCase()}</span></td>
+                        <td><span style="font-weight:700; color:${b.plan === 'premium' ? '#d97706' : '#64748b'};">${(b.plan || 'free').toUpperCase()}</span><br><small style="color:#64748b;">মেয়াদ: ${expDate}</small></td>
                         <td>${b.rate_limit_daily || 300} req/day</td>
                         <td>
                             <button class="btn-action" style="background:#e2e8f0;" onclick="changeLimit(${b.id})">Set Limit</button>
                         </td>
                     </tr>
-                `).join('');
+                `}).join('');
             }
         } catch(e) {}
     }
@@ -365,12 +367,29 @@
         alert(d.message);
     }
 
-    async function approvePayment(paymentId) {
-        if(!confirm('আপনি কি এই পেমেন্ট অনুমোদন করে প্রিমিয়াম সক্রিয় করতে চান?')) return;
+    // ডাইনামিক প্যাকেজ এপ্রুভাল প্রম্পট
+    async function openApproveModal(paymentId, botName) {
+        const pkgName = prompt(`বট: ${botName}\nপ্যাকেজের নাম লিখুন:`, '১ মাসের প্রিমিয়াম');
+        if (!pkgName) return;
+
+        const days = prompt(`কত দিনের মেয়াদ দিতে চান? (দিন সংখ্যা লিখুন):`, '30');
+        if (!days) return;
+
+        const limit = prompt(`প্রতিদিন কত মেসেজ রিকোয়েস্ট করতে পারবে?`, '3000');
+        if (!limit) return;
+
+        const amount = prompt(`কত টাকা পেমেন্ট নিয়েছেন?`, '300');
+
         const res = await fetch('/api/admin/approve-payment', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ paymentId })
+            body: JSON.stringify({ 
+                paymentId, 
+                packageName: pkgName, 
+                days: parseInt(days), 
+                dailyLimit: parseInt(limit), 
+                amount: parseFloat(amount) 
+            })
         });
         const data = await res.json();
         alert(data.message);
