@@ -336,18 +336,31 @@
             container.innerHTML = '<div style="font-size:13px; color:var(--muted); text-align:center; padding:15px;">এখনো কোনো পণ্য যোগ করা হয়নি।</div>';
             return;
         }
-        container.innerHTML = products.map((p, idx) => `
-            <div class="product-item">
-                <div style="display:flex; align-items:center; gap:10px;">
-                    ${p.image_url ? `<img src="${p.image_url}" class="product-img">` : `<div class="product-img" style="display:flex; align-items:center; justify-content:center; color:#94a3b8;"><i class="ti ti-photo-off"></i></div>`}
-                    <div>
-                        <b style="font-size:14px;">${p.name}</b> — <span style="color:#059669; font-weight:700;">৳${p.price}</span><br>
-                        <small style="color:#64748b;">${p.category} | ${p.description || 'বিবরণ নেই'}</small>
+        const slug = document.getElementById('catalogSlug').value.trim() || 'my-shop';
+        container.innerHTML = products.map((p, idx) => {
+            const itemUrl = p.id ? `${window.location.origin}/c/${slug}/${p.id}` : '';
+            return `
+            <div class="product-item" style="display:flex; flex-direction:column; align-items:stretch; gap:10px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        ${p.image_url ? `<img src="${p.image_url}" class="product-img" style="width:65px; height:65px; border-radius:12px; object-fit:cover;">` : `<div class="product-img" style="width:65px; height:65px; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#94a3b8; background:#f1f5f9;"><i class="ti ti-photo-off" style="font-size:24px;"></i></div>`}
+                        <div>
+                            <b style="font-size:15px; color:#0f172a;">${p.name}</b><br>
+                            <span style="color:#059669; font-weight:800; font-size:15px;">৳${p.price}</span> 
+                            <span style="font-size:11px; background:#ecfdf5; color:#047857; padding:2px 6px; border-radius:6px; font-weight:700;">${p.category}</span>
+                        </div>
                     </div>
+                    <button onclick="removeProduct(${idx})" style="width:auto; padding:6px 12px; background:#fee2e2; color:#b91c1c; font-size:12px; border:none; border-radius:8px; cursor:pointer;">মুছুন</button>
                 </div>
-                <button onclick="removeProduct(${idx})" style="width:auto; padding:5px 10px; background:#fee2e2; color:#b91c1c; font-size:12px;">মুছুন</button>
-            </div>
-        `).join('');
+                ${itemUrl ? `
+                <div style="display:flex; gap:6px; background:rgba(255,255,255,0.7); padding:6px 10px; border-radius:10px; border:1px solid #e2e8f0; align-items:center;">
+                    <span style="font-size:11px; color:#64748b; font-weight:700;">🔗 আলাদা লিংক:</span>
+                    <input type="text" readonly value="${itemUrl}" style="flex:1; padding:4px 8px; font-size:11px; background:#fff; border:1px solid #cbd5e1; border-radius:6px; color:#059669; font-weight:600;">
+                    <button onclick="navigator.clipboard.writeText('${itemUrl}'); alert('এই পণ্যের আলাদা লিংক কপি হয়েছে!');" style="width:auto; padding:4px 10px; font-size:11px; background:#059669; border-radius:6px;">কপি</button>
+                    <a href="${itemUrl}" target="_blank" style="padding:4px 10px; font-size:11px; background:#0284c7; color:#fff; border-radius:6px; text-decoration:none; font-weight:700;">ভিউ</a>
+                </div>` : ''}
+            </div>`;
+        }).join('');
     }
 
     function removeProduct(idx) {
