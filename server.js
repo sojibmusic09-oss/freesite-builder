@@ -1044,13 +1044,13 @@ async function startTenantBot(botId) {
       logger: pino({ level: 'silent' }),
       auth: state,
       printQRInTerminal: false,
-      browser: Browsers.macOS('Desktop'),
+      browser: ['Ubuntu', 'Chrome', '20.0.04'], // ✅ মোবাইল ও হোয়াটসঅ্যাপ বিজনেসের জন্য সবচেয়ে স্টেবল ক্লায়েন্ট
       syncFullHistory: false,
       markOnlineOnConnect: true,
+      generateHighQualityLinkPreview: true,
       connectTimeoutMs: 60000,
       keepAliveIntervalMs: 25000,
-      retryRequestDelayMs: 500,
-      maxMsgRetryCount: 3
+      defaultQueryTimeoutMs: 60000
     });
 
     activeSockets.set(botId, { sock, state: { connected: false, pairingCode: null } });
@@ -1560,27 +1560,50 @@ app.post('/api/user/update-api-key', async (req, res) => {
   }
 });
 
-// ৬. পেয়ারিং কোড রিকোয়েস্ট
+// ৬. পেয়ারিং কোড রিকোয়েস্ট (Couldn't link device ফিক্স সহ)
 app.post('/api/request-pairing-code', async (req, res) => {
   try {
     const { botId, phone } = req.body;
+    const bId = Number(botId);
     let cleanPhone = String(phone || '').replace(/[^0-9]/g, '');
     if (cleanPhone.startsWith('01') && cleanPhone.length === 11) cleanPhone = '88' + cleanPhone;
 
-    let botObj = activeSockets.get(Number(botId));
-    if (!botObj || !botObj.sock) {
-      await startTenantBot(Number(botId));
-      await delay(2500);
-      botObj = activeSockets.get(Number(botId));
+    if (!cleanPhone || cleanPhone.length < 10) {
+      return res.status(400).json({ success: false, message: 'সঠিক মোবাইল নম্বর দিন (যেমন: 88014...)' });
     }
 
-    if (botObj && botObj.sock && !botObj.sock.authState.creds.registered) {
-      await delay(1500);
-      const code = await botObj.sock.requestPairingCode(cleanPhone);
-      addBotLog(botId, 'info', `📲 পেয়ারিং কোড: ${code}`);
-      return res.json({ success: true, pairingCode: code });
+    // 🧹 পুরোনো কোনো হ্যাং হওয়া সকেট বা সেশন থাকলে আগে ক্লিন করা
+    let botObj = activeSockets.get(bId);
+    if (botObj && botObj.sock) {
+      try {
+        botObj.sock.ws?.close();
+        botObj.sock.ev?.removeAllListeners();
+      } catch (_) {}
+      activeSockets.delete(bId);
     }
-    return res.status(400).json({ success: false, message: 'বট ইতিমধ্যে সংযুক্ত রয়েছে।' });
+
+    // ডাটাবেজের আনরেজিস্টার্ড সেশন ডাটা মুছে ফ্রেশ ক্রেডেনশিয়ালস সেট
+    await pool.query('DELETE FROM whatsapp_sessions WHERE bot_id = $1', [bId]);
+    await pool.query('UPDATE whatsapp_bots SET phone_number = $1, status = \'DISCONNECTED\' WHERE id = $2', [cleanPhone, bId]);
+
+    // নতুন সকেট চালু
+    const newSock = await startTenantBot(bId);
+    await delay(3000); // সকেট স্ট্যাবল হওয়ার জন্য অপেক্ষা
+
+    botObj = activeSockets.get(bId);
+    if (botObj && botObj.sock) {
+      try {
+        const rawCode = await botObj.sock.requestPairingCode(cleanPhone);
+        const formattedCode = rawCode?.match(/.{1,4}/g)?.join('-') || rawCode;
+        addBotLog(bId, 'info', `📲 নতুন পেয়ারিং কোড তৈরি হয়েছে: ${formattedCode}`);
+        return res.json({ success: true, pairingCode: formattedCode });
+      } catch (pairErr) {
+        console.error('[PAIRING ERROR]:', pairErr.message);
+        return res.status(500).json({ success: false, message: 'হোয়াটসঅ্যাপ থেকে কোড তৈরিতে সমস্যা: ' + pairErr.message });
+      }
+    }
+
+    return res.status(500).json({ success: false, message: 'সার্ভারে সকেট স্টার্ট হতে পারেনি, আবার চেষ্টা করুন।' });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });
   }
