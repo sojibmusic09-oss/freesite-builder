@@ -189,8 +189,34 @@
         localStorage.setItem('freesite_products', JSON.stringify(products));
     }
 
-    // ড্রাফট থেকে রিস্টোর
+    // ১টির বেশি ক্যাটালগ তৈরি ব্লক এবং ড্রাফট থেকে রিস্টোর
     window.onload = function() {
+        const alreadyCreated = localStorage.getItem('freesite_catalog_created');
+        const existingSlug = localStorage.getItem('freesite_store_slug');
+
+        // 🚫 যদি ইউজার ইতিমধ্যে ১টি ক্যাটালগ তৈরি করে ফেলে থাকে
+        if (alreadyCreated === 'true' && existingSlug) {
+            document.querySelector('.container').innerHTML = `
+                <div class="card" style="text-align:center; padding:35px 20px; border-top:5px solid #d97706;">
+                    <div style="font-size:42px; margin-bottom:10px;">⚠️</div>
+                    <h2 style="justify-content:center; color:#b45309; margin-bottom:10px;">আপনি ইতিমধ্যে একটি ক্যাটালগ তৈরি করেছেন!</h2>
+                    <p style="font-size:14px; color:#475569; margin-bottom:16px;">
+                        আপনার তৈরি করা ক্যাটালগ কোড: <b>${existingSlug}</b><br>
+                        একটি অ্যাকাউন্টের অধীনে একাধিক নতুন ক্যাটালগ তৈরি করা অনুমোদিত নয়।
+                    </p>
+                    <div style="background:#fef3c7; border:1px solid #fde68a; border-radius:12px; padding:15px; margin-bottom:20px; font-size:13px; color:#92400e;">
+                        ক্যাটালগে কোনো পণ্য আপডেট করতে বা নতুন ক্যাটালগ সক্রিয় করতে আমাদের সাথে হোয়াটসঅ্যাপে যোগাযোগ করুন।
+                    </div>
+                    <a href="https://wa.me/8801409084819?text=${encodeURIComponent('আসসালামু আলাইকুম, আমি আমার ক্যাটালগ (' + existingSlug + ') সংক্রান্ত বিষয়ে যোগাযোগ করতে চাই।')}" 
+                       target="_blank" 
+                       style="background:#25d366; color:#fff; padding:12px 22px; border-radius:10px; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:8px;">
+                       <i class="ti ti-brand-whatsapp" style="font-size:20px;"></i> অ্যাডমিনের সাথে হোয়াটসঅ্যাপে যোগাযোগ করুন (01409084819)
+                    </a>
+                </div>
+            `;
+            return;
+        }
+
         const sName = localStorage.getItem('freesite_store_name');
         const sSlug = localStorage.getItem('freesite_store_slug');
         const sPin = localStorage.getItem('freesite_store_pin');
@@ -200,7 +226,7 @@
         if (sSlug) document.getElementById('catalogSlug').value = sSlug;
         if (sPin) document.getElementById('adminPin').value = sPin;
         if (pList) {
-            try { products = JSON.parse(pList); renderList(); } catch(e) {}
+            try { products = JSON.parse(pList); renderList(); updateCategoryDropdown(); } catch(e) {}
         }
     };
 
@@ -299,8 +325,9 @@
             if (data.success) {
                 document.getElementById('linkOutput').style.display = 'block';
                 document.getElementById('finalUrlText').value = data.catalog_url;
+                localStorage.setItem('freesite_catalog_created', 'true'); // ১টি ক্যাটালগ তৈরির লিমিট ফ্ল্যাগ
                 saveDraft();
-                alert('🎉 ক্যাটালগ সফলভাবে ডাটাবেজে সেভ হয়েছে! এখন রিফ্রেশ দিলেও আর মুছবে না।');
+                alert('🎉 ক্যাটালগ সফলভাবে ডাটাবেজে সেভ হয়েছে!');
             } else {
                 alert('ত্রুটি: ' + data.message);
             }
