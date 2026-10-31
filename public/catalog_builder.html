@@ -3,89 +3,224 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ডিজিটাল প্রোডাক্ট ক্যাটালগ মেকার — by Sojib</title>
+    <title>প্রোডাক্ট ক্যাটালগ ও ওনার পোর্টাল — by Sojib</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
     <style>
-        :root { --bg: #f8fafc; --card: #ffffff; --primary: #059669; --border: #e2e8f0; --text: #0f172a; --muted: #64748b; }
+        :root { --bg: #f1f5f9; --card: #ffffff; --primary: #059669; --border: #cbd5e1; --text: #0f172a; --muted: #64748b; }
         * { box-sizing: border-box; margin:0; padding:0; font-family: 'Plus Jakarta Sans', 'Hind Siliguri', sans-serif; }
         body { background: var(--bg); color: var(--text); padding: 15px; }
-        .container { max-width: 600px; margin: 0 auto; }
-        .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 22px; margin-bottom: 18px; box-shadow: 0 4px 20px -2px rgba(0,0,0,0.03); }
-        h2 { font-size: 20px; font-weight: 800; color: #047857; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
-        .form-group { margin-bottom: 12px; }
-        label { display: block; font-size: 13px; color: #334155; margin-bottom: 4px; font-weight: 600; }
-        input, textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; }
+        .container { max-width: 650px; margin: 0 auto; }
+        .card { background: var(--card); border: 1px solid #e2e8f0; border-radius: 18px; padding: 22px; margin-bottom: 18px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
+        h2 { font-size: 20px; font-weight: 800; color: #047857; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+        .form-group { margin-bottom: 14px; }
+        label { display: block; font-size: 13px; color: #334155; margin-bottom: 5px; font-weight: 700; }
+        input, textarea, select { width: 100%; padding: 11px 14px; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; outline: none; }
         input:focus, textarea:focus { border-color: var(--primary); }
-        button { width: 100%; padding: 12px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 6px; font-size: 14px; }
-        .product-item { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-        .link-box { background: #ecfdf5; border: 1px solid #10b981; color: #065f46; padding: 14px; border-radius: 10px; text-align: center; display: none; margin-top: 15px; }
+        button { width: 100%; padding: 13px; background: var(--primary); color: #fff; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 6px; font-size: 14px; }
+        .product-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .product-img { width: 55px; height: 55px; border-radius: 8px; object-fit: cover; border: 1px solid #cbd5e1; background: #fff; }
+        .link-box { background: #ecfdf5; border: 1px solid #10b981; color: #065f46; padding: 16px; border-radius: 12px; text-align: center; display: none; margin-top: 15px; }
+        .img-preview-box { width: 100%; height: 110px; border: 2px dashed #059669; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; background: #f0fdf4; margin-top: 4px; }
+        .img-preview-box img { width: 100%; height: 100%; object-fit: contain; }
     </style>
 </head>
 <body>
 <div class="container">
+    <!-- স্টোর প্রোফাইল (অটো সেভ হবে) -->
     <div class="card">
-        <h2><i class="ti ti-shopping-cart-plus"></i> ফ্রি প্রোডাক্ট ক্যাটালগ মেকার</h2>
-        <p style="font-size:12px; color:var(--muted); margin-bottom:15px;">যাদের কোনো ওয়েবসাইট নেই, এখানে প্রোডাক্ট যুক্ত করে লিংক তৈরি করুন।</p>
+        <h2><i class="ti ti-building-store"></i> শপ প্রোফাইল ও লিংক কনফিগার</h2>
+        <p style="font-size:12px; color:var(--muted); margin-bottom:15px;">একবার লিখে সেভ করলে রিফ্রেশ দিলেও আর মুছবে না!</p>
         
         <div class="form-group">
             <label>দোকান / ব্যবসার নাম:</label>
-            <input type="text" id="storeName" placeholder="যেমন: Diamond Ghor">
+            <input type="text" id="storeName" placeholder="যেমন: Diamond Ghor" oninput="saveDraft()">
         </div>
-        <div class="form-group">
-            <label>ক্যাটালগ লিংক কোড (ইংরেজি ছোট অক্ষরে):</label>
-            <input type="text" id="catalogSlug" placeholder="যেমন: diamondghor বা myshop">
+        <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px;">
+            <div class="form-group">
+                <label>ক্যাটালগ স্লাগ কোড:</label>
+                <input type="text" id="catalogSlug" placeholder="যেমন: diamondghor" oninput="saveDraft(); tryRestoreFromSlug();">
+            </div>
+            <div class="form-group">
+                <label>অ্যাডমিন পিন:</label>
+                <input type="password" id="adminPin" placeholder="1234" value="1234" oninput="saveDraft()">
+            </div>
         </div>
     </div>
 
-    <!-- প্রোডাক্ট এন্ট্রি বক্স -->
+    <!-- 📸 নতুন পণ্য যোগ করুন (ছবিসহ) -->
     <div class="card">
-        <h3 style="font-size:15px; font-weight:700; color:#065f46; margin-bottom:10px;">➕ নতুন পণ্য যোগ করুন</h3>
+        <h3 style="font-size:16px; font-weight:700; color:#065f46; margin-bottom:12px;">➕ নতুন পণ্য যোগ করুন (ছবিসহ)</h3>
+        
         <div class="form-group">
             <label>পণ্যের নাম:</label>
             <input type="text" id="pName" placeholder="যেমন: T900 Ultra Smart Watch">
         </div>
+
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
             <div class="form-group">
                 <label>মূল্য (৳ টাকা):</label>
                 <input type="number" id="pPrice" placeholder="যেমন: 1250">
             </div>
             <div class="form-group">
-                <label>ক্যাটাগরি:</label>
-                <input type="text" id="pCategory" placeholder="যেমন: ঘড়ি / টুর্নামেন্ট">
+                <label>ক্যাটাগরি (তৈরি করা ক্যাটাগরি নিচে আসবে):</label>
+                <div style="display:flex; gap:6px;">
+                    <!-- ড্রপডাউন লিস্ট (তৈরি করা ক্যাটাগরি থাকলে দেখাবে) -->
+                    <select id="pCategorySelect" onchange="onCategorySelect(this)" style="display:none; flex:1; max-width:50%;">
+                        <option value="">-- সিলেক্ট --</option>
+                    </select>
+                    <!-- নতুন ক্যাটাগরি টাইপ করার ইনপুট -->
+                    <input type="text" id="pCategory" placeholder="যেমন: ঘড়ি / গ্যাজেট" style="flex:1;">
+                </div>
             </div>
         </div>
+
+        <!-- 🖼️ ক্যামেরা বা গ্যালারি থেকে ছবি সিলেক্ট -->
         <div class="form-group">
-            <label>পণ্যের বিবরণ বা নিয়মাবলী:</label>
+            <label>📸 পণ্যের ছবি সিলেক্ট করুন (কাস্টমার চাইলে এআই পাঠাবে):</label>
+            <div class="img-preview-box" onclick="document.getElementById('pImgFile').click()">
+                <span id="imgUploadText" style="font-size:13px; color:#047857; font-weight:700;"><i class="ti ti-camera"></i> ছবি আপলোড করতে ট্যাপ করুন</span>
+                <img id="imgPreview" style="display:none;">
+            </div>
+            <input type="file" id="pImgFile" accept="image/*" style="display:none;" onchange="handleImageSelect(event)">
+        </div>
+
+        <div class="form-group">
+            <label>পণ্যের বিবরণ বা সাইজ/কালার:</label>
             <textarea id="pDesc" rows="2" placeholder="যেমন: ওয়াটারপ্রুফ, ৭ দিন ব্যাটারি ব্যাকআপ।"></textarea>
         </div>
+
         <button type="button" onclick="addProductToList()" style="background:#0284c7;">
             <i class="ti ti-plus"></i> তালিকায় পণ্যটি যোগ করুন
         </button>
     </div>
 
-    <!-- যুক্ত হওয়া পণ্যের তালিকা -->
+    <!-- প্রোডাক্ট তালিকা -->
     <div class="card">
-        <h3 style="font-size:15px; font-weight:700; color:#065f46; margin-bottom:10px;">📦 যোগ করা পণ্যের তালিকা (<span id="pCount">0</span>টি)</h3>
+        <h3 style="font-size:15px; font-weight:700; color:#065f46; margin-bottom:10px;">📦 যোগ করা পণ্যসমূহ (<span id="pCount">0</span>টি)</h3>
         <div id="productList">
-            <div style="font-size:12px; color:var(--muted); text-align:center;">এখনো কোনো পণ্য যোগ করা হয়নি।</div>
+            <div style="font-size:13px; color:var(--muted); text-align:center; padding:15px;">এখনো কোনো পণ্য যোগ করা হয়নি।</div>
         </div>
         
         <button type="button" onclick="saveAndGenerateLink()" style="margin-top:15px; background:#059669; font-size:15px;">
-            <i class="ti ti-link"></i> ফাইনাল ক্যাটালগ লিংক তৈরি করুন
+            <i class="ti ti-device-floppy"></i> ডাটাবেজে পার্মানেন্ট সেভ করুন
         </button>
 
         <div id="linkOutput" class="link-box">
-            <b>🎉 আপনার ক্যাটালগ লিংক তৈরি হয়েছে!</b><br>
+            <b>🎉 আপনার ক্যাটালগ পার্মানেন্ট সেভ হয়েছে!</b><br>
             <input type="text" id="finalUrlText" readonly style="margin:10px 0; text-align:center; font-weight:700; background:#fff; color:#059669;">
             <button onclick="copyCatalogLink()" style="background:#059669; padding:8px;"><i class="ti ti-copy"></i> লিংক কপি করুন</button>
-            <p style="font-size:11px; margin-top:8px;">বট তৈরির সময় ড্রপডাউনে এই লিংকটি পেস্ট করে দেবেন!</p>
+            <p style="font-size:12px; margin-top:8px;">বট তৈরির সময় এই লিংকটি দিলেই এআই ছবিসহ কাস্টমারকে পণ্য দেখাবে!</p>
         </div>
     </div>
 </div>
 
 <script>
     let products = [];
+    let currentImageBase64 = '';
+    let categorySet = new Set(); // ক্যাটাগরি ডুপ্লিকেট ছাড়া সংরক্ষণ করতে
+
+    // তৈরি হওয়া ক্যাটাগরিগুলো ড্রপডাউনে আপডেট করার ফাংশন
+    function updateCategoryDropdown() {
+        categorySet.clear();
+        products.forEach(p => {
+            if (p.category && p.category.trim() && p.category !== 'General') {
+                categorySet.add(p.category.trim());
+            }
+        });
+
+        const select = document.getElementById('pCategorySelect');
+        if (categorySet.size > 0) {
+            select.style.display = 'block';
+            select.innerHTML = '<option value="">-- আগের ক্যাটাগরি --</option>' + 
+                Array.from(categorySet).map(cat => `<option value="${cat}">${cat}</option>`).join('') +
+                '<option value="__NEW__">➕ নতুন লিখুন</option>';
+        } else {
+            select.style.display = 'none';
+        }
+    }
+
+    // ড্রপডাউন থেকে সিলেক্ট করলে ইনপুট বক্সে মান বসানো
+    function onCategorySelect(el) {
+        const val = el.value;
+        const input = document.getElementById('pCategory');
+        if (val === '__NEW__') {
+            input.value = '';
+            input.focus();
+        } else if (val) {
+            input.value = val;
+        }
+    }
+
+    // ছবি সিলেক্ট এবং কম্প্রেস
+    function handleImageSelect(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                const maxDim = 600;
+                let w = img.width, h = img.height;
+                if (w > h && w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
+                else if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+                currentImageBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                
+                document.getElementById('imgPreview').src = currentImageBase64;
+                document.getElementById('imgPreview').style.display = 'block';
+                document.getElementById('imgUploadText').style.display = 'none';
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // ড্রাফট সেভ (যাতে রিফ্রেশ দিলে না হারায়)
+    function saveDraft() {
+        localStorage.setItem('freesite_store_name', document.getElementById('storeName').value);
+        localStorage.setItem('freesite_store_slug', document.getElementById('catalogSlug').value);
+        localStorage.setItem('freesite_store_pin', document.getElementById('adminPin').value);
+        localStorage.setItem('freesite_products', JSON.stringify(products));
+    }
+
+    // ড্রাফট থেকে রিস্টোর
+    window.onload = function() {
+        const sName = localStorage.getItem('freesite_store_name');
+        const sSlug = localStorage.getItem('freesite_store_slug');
+        const sPin = localStorage.getItem('freesite_store_pin');
+        const pList = localStorage.getItem('freesite_products');
+
+        if (sName) document.getElementById('storeName').value = sName;
+        if (sSlug) document.getElementById('catalogSlug').value = sSlug;
+        if (sPin) document.getElementById('adminPin').value = sPin;
+        if (pList) {
+            try { products = JSON.parse(pList); renderList(); } catch(e) {}
+        }
+    };
+
+    // যদি সার্ভারে আগে থেকেই সেভ থাকে তা অটো রিড করা
+    async function tryRestoreFromSlug() {
+        const slug = document.getElementById('catalogSlug').value.trim();
+        if (slug.length < 3) return;
+        try {
+          const res = await fetch('/api/catalog/get/' + encodeURIComponent(slug));
+          const d = await res.json();
+          if (d.success && d.items && d.items.length > 0) {
+            document.getElementById('storeName').value = d.store_name;
+            document.getElementById('adminPin').value = d.admin_pin || '1234';
+            products = d.items;
+            renderList();
+            updateCategoryDropdown(); // রিস্টোর করা সব ক্যাটাগরি ড্রপডাউনে ভরবে
+            saveDraft();
+          }
+        } catch(e) {}
+    }
 
     function addProductToList() {
         const name = document.getElementById('pName').value.trim();
@@ -95,28 +230,46 @@
 
         if (!name || !price) return alert('পণ্যের নাম এবং দাম দিতে হবে!');
 
-        products.push({ name, price: parseFloat(price), category, description: desc });
-        renderList();
+        products.push({ 
+            name, 
+            price: parseFloat(price), 
+            category, 
+            description: desc,
+            image_url: currentImageBase64 
+        });
 
+        renderList();
+        updateCategoryDropdown(); // ড্রপডাউন আপডেট করা হলো
+        saveDraft();
+
+        // ফর্ম রিসেট
         document.getElementById('pName').value = '';
         document.getElementById('pPrice').value = '';
         document.getElementById('pDesc').value = '';
+        document.getElementById('pImgFile').value = '';
+        document.getElementById('pCategorySelect').value = '';
+        currentImageBase64 = '';
+        document.getElementById('imgPreview').style.display = 'none';
+        document.getElementById('imgUploadText').style.display = 'block';
     }
 
     function renderList() {
         document.getElementById('pCount').innerText = products.length;
         const container = document.getElementById('productList');
         if (products.length === 0) {
-            container.innerHTML = '<div style="font-size:12px; color:var(--muted); text-align:center;">এখনো কোনো পণ্য যোগ করা হয়নি।</div>';
+            container.innerHTML = '<div style="font-size:13px; color:var(--muted); text-align:center; padding:15px;">এখনো কোনো পণ্য যোগ করা হয়নি।</div>';
             return;
         }
         container.innerHTML = products.map((p, idx) => `
             <div class="product-item">
-                <div>
-                    <b>${p.name}</b> — ৳${p.price}<br>
-                    <small style="color:#64748b;">${p.category} | ${p.description || 'বিবরণ নেই'}</small>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    ${p.image_url ? `<img src="${p.image_url}" class="product-img">` : `<div class="product-img" style="display:flex; align-items:center; justify-content:center; color:#94a3b8;"><i class="ti ti-photo-off"></i></div>`}
+                    <div>
+                        <b style="font-size:14px;">${p.name}</b> — <span style="color:#059669; font-weight:700;">৳${p.price}</span><br>
+                        <small style="color:#64748b;">${p.category} | ${p.description || 'বিবরণ নেই'}</small>
+                    </div>
                 </div>
-                <button onclick="removeProduct(${idx})" style="width:auto; padding:4px 8px; background:#fee2e2; color:#b91c1c;">ডিলিট</button>
+                <button onclick="removeProduct(${idx})" style="width:auto; padding:5px 10px; background:#fee2e2; color:#b91c1c; font-size:12px;">মুছুন</button>
             </div>
         `).join('');
     }
@@ -124,11 +277,13 @@
     function removeProduct(idx) {
         products.splice(idx, 1);
         renderList();
+        saveDraft();
     }
 
     async function saveAndGenerateLink() {
         const storeName = document.getElementById('storeName').value.trim();
         let slug = document.getElementById('catalogSlug').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+        const pin = document.getElementById('adminPin').value.trim();
 
         if (!storeName) return alert('দোকানের নাম দিন!');
         if (!slug) slug = 'cat_' + Math.floor(1000 + Math.random() * 9000);
@@ -138,12 +293,14 @@
             const res = await fetch('/api/catalog/save', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ store_name: storeName, catalog_slug: slug, items: products })
+                body: JSON.stringify({ store_name: storeName, catalog_slug: slug, admin_pin: pin, items: products })
             });
             const data = await res.json();
             if (data.success) {
                 document.getElementById('linkOutput').style.display = 'block';
                 document.getElementById('finalUrlText').value = data.catalog_url;
+                saveDraft();
+                alert('🎉 ক্যাটালগ সফলভাবে ডাটাবেজে সেভ হয়েছে! এখন রিফ্রেশ দিলেও আর মুছবে না।');
             } else {
                 alert('ত্রুটি: ' + data.message);
             }
