@@ -1,4 +1,4 @@
-<div align="center">🚀 FreeSite
+<div align="center"><img src="https://media1.tenor.com/m/9qy_ICBXpAkAAAAd/zero-two-anime.gif" width="100%" alt="Cute Pink Anime Girl Animation"><br>⚡ FreeSite
 
 SaaS Website Builder & WhatsApp AI Automation Platform
 
@@ -6,13 +6,14 @@ Build Smarter. Automate Faster. Grow Without Limits.
 
 Developed with ❤️ by Sojib
 
-""WhatsApp" (https://img.shields.io/badge/WhatsApp-Contact-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)" (https://wa.me/8801409084819)
-""TikTok" (https://img.shields.io/badge/TikTok-Follow-000000?style=for-the-badge&logo=tiktok&logoColor=white)" (https://tiktok.com/@sojib..music)
+""WhatsApp" (https://img.shields.io/badge/WhatsApp-01409084819-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)" (https://wa.me/8801409084819)
 
-""Node.js" (https://img.shields.io/badge/Node.js-18%2B-339933?style=flat-square&logo=nodedotjs&logoColor=white)" (https://nodejs.org/)
-""PostgreSQL" (https://img.shields.io/badge/PostgreSQL-Database-4169E1?style=flat-square&logo=postgresql&logoColor=white)" (https://www.postgresql.org/)
-""AI Powered" (https://img.shields.io/badge/AI-Powered-8A2BE2?style=flat-square&logo=google-gemini&logoColor=white)" (https://ai.google.dev/)
-""SaaS" (https://img.shields.io/badge/Platform-Multi--Tenant-FF69B4?style=flat-square)" (#)
+""TikTok" (https://img.shields.io/badge/TikTok-@sojib..music-000000?style=for-the-badge&logo=tiktok&logoColor=white)" (https://tiktok.com/@sojib..music)
+
+"Node.js" (https://img.shields.io/badge/Node.js-18%2B-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+"PostgreSQL" (https://img.shields.io/badge/PostgreSQL-Neon-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+"AI" (https://img.shields.io/badge/AI-Gemini-4285F4?style=for-the-badge)
+"SaaS" (https://img.shields.io/badge/Architecture-Multi--Tenant-8B5CF6?style=for-the-badge)
 
 One Platform. Multiple Services. Intelligent Automation.
 
@@ -70,122 +71,131 @@ Our mission is to make website management and business automation easier, smarte
 
 - bKash payment support.
 - Nagad payment support.
-- Subscription plan management.
-- Payment verification workflow.
-- Subscription expiration tracking.
-- Account plan management.
+- Rocket payment support.
+- Manual Transaction ID submission.
+- Admin payment verification.
+- Subscription activation.
+- Subscription expiration management.
+- Flexible pricing configuration.
 - Payment history.
 
-🖥️ 05. Admin Dashboard
+🛡️ 05. Security & Traffic Management
 
-- Centralized administration.
-- User account management.
-- Website connection monitoring.
-- WhatsApp bot session monitoring.
+- API rate limiting.
+- Daily request limits.
+- User-level resource restrictions.
+- Secure authentication.
+- Session management.
+- API access control.
+- Server-side validation.
+- Activity logging.
+- Error monitoring.
+- Secure configuration management.
+
+🖥️ 06. Dynamic Server Management
+
+- Multiple server support.
+- Dynamic server allocation.
+- Admin-controlled server capacity.
+- Maximum bot allocation per server.
+- Automatic resource assignment.
+- Server health monitoring.
+- Bot connection monitoring.
+- Resource usage tracking.
+
+🎨 07. Advanced Admin Dashboard
+
+- User management.
+- Payment approval system.
 - Subscription management.
-- Payment verification.
-- Server resource monitoring.
-- System activity logs.
-- Platform configuration.
-
-⚙️ 06. Multi-Tenant Infrastructure
-
-- Individual user environments.
-- Isolated user configurations.
-- Separate website connections.
-- Independent AI assistant settings.
-- Individual WhatsApp sessions.
-- Centralized resource allocation.
-- Scalable server architecture.
-
-🔔 07. Webhook & API System
-
-- API-based integrations.
-- Webhook event dispatching.
-- External service communication.
-- Automated event notifications.
-- Structured API responses.
-- Integration-ready architecture.
+- Website connection monitoring.
+- WhatsApp bot management.
+- Server capacity configuration.
+- System-wide settings.
+- User activity monitoring.
+- Platform statistics.
+- Administrative controls.
 
 ---
 
-🏗️ Platform Architecture
+🧠 System Architecture
 
-FreeSite is designed around a modular architecture.
-
-flowchart TD
-    A[User Dashboard] --> B[Backend API]
-    B --> C[Authentication]
-    B --> D[Website Integration]
-    B --> E[AI Engine]
-    B --> F[Subscription System]
-    D --> G[Product Catalog]
-    E --> H[WhatsApp Automation]
-    G --> H
-    B --> I[Admin Dashboard]
-    B --> J[Database]
-    B --> K[Cloud Storage]
-    B --> L[Webhook Dispatcher]
-
-Platform Workflow
-
-1. User creates an account.
-2. User connects a website through its URL.
-3. The system analyzes the website.
-4. Product information is collected where accessible.
-5. User configures their AI assistant.
-6. User connects a WhatsApp session.
-7. AI assistant responds using synchronized product information.
-8. User manages everything through the dashboard.
+                 FREE SITE SAAS
+                       |
+               CENTRAL DASHBOARD
+                       |
+          +------------+------------+
+          |            |            |
+        USERS       PAYMENTS      ADMINS
+          |            |            |
+          +------------+------------+
+                       |
+                    CORE API
+                       |
+          +------------+------------+
+          |                         |
+     WEBSITE ENGINE              AI ENGINE
+          |                         |
+    WEBSITE ANALYZER             GEMINI AI
+          |                         |
+    PRODUCT CATALOG              AI ASSISTANT
+          |                         |
+          +------------+------------+
+                       |
+                WHATSAPP ENGINE
+                       |
+               CUSTOMER SUPPORT
+                       |
+                HUMAN HANDOVER
 
 ---
 
-🧰 Technology Stack
+⚙️ Technology Stack
 
 Technology| Purpose
-Node.js| Backend runtime
-Express.js| API and server
-JavaScript| Application logic
-PostgreSQL| Database architecture
-AI Engine| Intelligent responses
-WhatsApp Integration| Customer communication
-Cloud Storage| File and media management
-REST API| External integrations
-Webhooks| Event communication
+Node.js| Backend Runtime
+Express.js| API Server
+PostgreSQL| Database
+Neon| Cloud Database
+Baileys| WhatsApp Connectivity
+Gemini AI| AI Intelligence
+HTML5| Dashboard Structure
+CSS3| User Interface
+JavaScript| Frontend Logic
+REST API| Website Integration
 
 ---
 
 💎 Subscription Plans
 
-FreeSite is designed to support multiple subscription levels.
+Plan| Access Level
+🆓 Free| Limited Features
+🥉 Basic| Essential Automation
+🥈 Standard| Extended Features
+🥇 Premium| Advanced Automation
+💎 Enterprise| Custom Capacity
 
-Plan| Description
-Free| Basic platform access
-Starter| Essential automation
-Pro| Advanced automation
-Business| Business-level features
-Enterprise| Advanced resource allocation
-
-Actual features, limits, and pricing will be determined by the platform configuration.
+Pricing, resource limits, and feature access can be configured by the administrator.
 
 ---
 
 🔐 Security & Reliability
 
-Security is an important part of the FreeSite architecture.
+- User-specific data isolation.
+- Secure API key storage.
+- Database access protection.
+- Request throttling.
+- Authentication management.
+- Session protection.
+- Server-side validation.
+- Error handling and logging.
+- Responsible WhatsApp connection management.
 
-- User authentication.
-- Tenant-level data separation.
-- Secure API communication.
-- Environment-based configuration.
-- Protected administrative operations.
-- WhatsApp session isolation.
-- Subscription access validation.
-- Error handling and activity monitoring.
+«Security Note: Unofficial WhatsApp automation methods cannot guarantee zero bans. Production deployments should follow applicable WhatsApp policies.»
 
 ---
 
-🧩 Platform Modules
+📊 Platform Modules
 
 Module| Description
 Website Engine| Website connection and analysis
@@ -239,7 +249,6 @@ Phase 04 — Production Deployment
 freesite-builder/
 │
 ├── public/
-│
 ├── README.md
 ├── package.json
 ├── server.js
@@ -256,15 +265,15 @@ freesite-builder/
 
 👨‍💻 Developer & Founder
 
-<div align="center"><img src="https://media1.tenor.com/m/9qy_ICBXpAkAAAAd/zero-two-anime.gif" width="190" alt="Anime GIF">❤️ SOJIB
+<div align="center">❤️ SOJIB
 
 Founder & Developer of FreeSite
 
 Building intelligent automation systems and modern SaaS solutions.
 
-""WhatsApp" (https://img.shields.io/badge/WhatsApp-Chat-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)" (https://wa.me/8801409084819)
+""WhatsApp" (https://img.shields.io/badge/Contact_Me-WhatsApp-25D366?style=for-the-badge&logo=whatsapp)" (https://wa.me/8801409084819)
 
-""TikTok" (https://img.shields.io/badge/TikTok-Follow-000000?style=for-the-badge&logo=tiktok&logoColor=white)" (https://tiktok.com/@sojib..music)
+""TikTok" (https://img.shields.io/badge/Follow_Me-TikTok-black?style=for-the-badge&logo=tiktok)" (https://tiktok.com/@sojib..music)
 
 ---
 
