@@ -1130,9 +1130,51 @@ async function startTenantBot(botId) {
         const typingDelay = Math.min(3000, Math.max(1500, reply.length * 20));
         await delay(typingDelay);
 
-        await sock.sendMessage(sender, { text: reply });
+        // 📸 কাস্টমার ছবি চাইলে সরাসরি প্রোডাক্টের ছবি সেন্ড করার বুদ্ধিমান লজিক
+        const wantsPic = /ছবি|পিক|pic|image|photo|দেখাও|দেখান|দেখি/i.test(text);
+        let sentWithImage = false;
+
+        if (wantsPic) {
+          try {
+            // প্রোডাক্ট থেকে ম্যাচিং ছবি খোঁজা
+            const matchedProd = await pool.query(
+              `SELECT name, image_url, price FROM bot_products 
+               WHERE bot_id = $1 AND image_url IS NOT NULL AND image_url != '' 
+               ORDER BY id DESC LIMIT 1`,
+              [botId]
+            );
+
+            if (matchedProd.rows.length > 0 && matchedProd.rows[0].image_url) {
+              const imgData = matchedProd.rows[0];
+              // যদি Base64 ইমেজ হয়
+              if (imgData.image_url.startsWith('data:image')) {
+                const base64Data = imgData.image_url.split(',')[1];
+                const imgBuffer = Buffer.from(base64Data, 'base64');
+                await sock.sendMessage(sender, { 
+                  image: imgBuffer, 
+                  caption: `📸 *${imgData.name}* (মূল্য: ৳${imgData.price})\n\n${reply}` 
+                });
+                sentWithImage = true;
+              } else if (imgData.image_url.startsWith('http')) {
+                await sock.sendMessage(sender, { 
+                  image: { url: imgData.image_url }, 
+                  caption: `📸 *${imgData.name}* (মূল্য: ৳${imgData.price})\n\n${reply}` 
+                });
+                sentWithImage = true;
+              }
+            }
+          } catch (imgErr) {
+            console.error('[IMAGE SEND ERROR]:', imgErr.message);
+          }
+        }
+
+        // যদি ছবি পাঠানো না হয়ে থাকে, সাধারণ টেক্সট মেসেজ যাবে
+        if (!sentWithImage) {
+          await sock.sendMessage(sender, { text: reply });
+        }
+
         await sock.sendPresenceUpdate('paused', sender);
-        addBotLog(botId, 'success', `⚡ [এআই উত্তর পাঠানো সম্পন্ন]`);
+        addBotLog(botId, 'success', `⚡ [এআই উত্তর পাঠানো সম্পন্ন${sentWithImage ? ' (ছবিসহ)' : ''}]`);
       } catch (err) {
         addBotLog(botId, 'warn', `ত্রুটি: ${err.message}`);
       }
@@ -1146,29 +1188,39 @@ async function startTenantBot(botId) {
 
 // ================= API ENDPOINTS =================
 
-// 📦 ক্যাটালগ সেভ করার API (যাদের ওয়েবসাইট নেই তাদের জন্য)
+// 📦 ক্যাটালগ সেভ করার API (ছবি সাপোর্ট ও অটো সেভ)
 app.post('/api/catalog/save', async (req, res) => {
   try {
-    const { store_name, catalog_slug, items } = req.body;
+    const { store_name, catalog_slug, admin_pin, items } = req.body;
     const cleanSlug = String(catalog_slug || '').toLowerCase().trim().replace(/[^a-z0-9-]/g, '');
 
+    if (!cleanSlug) return res.status(400).json({ success: false, message: 'স্লাগ কোড দিন।' });
+
     await pool.query(
-      `INSERT INTO store_catalogs (catalog_slug, store_name)
-       VALUES ($1, $2)
-       ON CONFLICT (catalog_slug) DO UPDATE SET store_name = $2`,
-      [cleanSlug, store_name]
+      `INSERT INTO store_catalogs (catalog_slug, store_name, admin_pin)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (catalog_slug) DO UPDATE SET store_name = $2, admin_pin = COALESCE($3, store_catalogs.admin_pin)`,
+      [cleanSlug, store_name, admin_pin || '1234']
     );
 
-    // আগের আইটেম মুছে নতুন আইটেম ঢোকানো
+    // আগের আইটেম ডিলিট করে নতুন আইটেম যোগ
     await pool.query('DELETE FROM store_catalog_items WHERE catalog_slug = $1', [cleanSlug]);
 
     for (const item of (items || [])) {
       await pool.query(
-        `INSERT INTO store_catalog_items (catalog_slug, name, price, category, description)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [cleanSlug, item.name, item.price || 0, item.category || 'General', item.description || '']
+        `INSERT INTO store_catalog_items (catalog_slug, name, price, category, image_url, description)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [cleanSlug, item.name, item.price || 0, item.category || 'General', item.image_url || '', item.description || '']
       );
     }
+
+    // সম্পর্কিত বটের টেবিলেও সিঙ্ক করে দেওয়া (যাতে এআই সাথে সাথে ছবি পায়)
+    await pool.query(`
+      UPDATE bot_products bp
+      SET image_url = sci.image_url
+      FROM store_catalog_items sci
+      WHERE bp.name = sci.name AND sci.catalog_slug = $1
+    `, [cleanSlug]);
 
     const host = req.get('host');
     const catalogUrl = `${req.protocol}://${host}/catalog/${cleanSlug}`;
@@ -1176,6 +1228,25 @@ app.post('/api/catalog/save', async (req, res) => {
     res.json({ success: true, catalog_url: catalogUrl, slug: cleanSlug });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// 🔄 ক্যাটালগ ডাটা লোড করার API (যাতে রিফ্রেশ দিলেও ডাটা ফেরত আসে)
+app.get('/api/catalog/get/:slug', async (req, res) => {
+  try {
+    const slug = req.params.slug.toLowerCase().trim();
+    const cat = await pool.query('SELECT * FROM store_catalogs WHERE catalog_slug = $1', [slug]);
+    if (cat.rows.length === 0) return res.json({ success: false, message: 'নতুন ক্যাটালগ' });
+
+    const items = await pool.query('SELECT * FROM store_catalog_items WHERE catalog_slug = $1 ORDER BY id ASC', [slug]);
+    res.json({
+      success: true,
+      store_name: cat.rows[0].store_name,
+      admin_pin: cat.rows[0].admin_pin,
+      items: items.rows
+    });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
   }
 });
 
@@ -1738,9 +1809,13 @@ app.listen(PORT, '0.0.0.0', async () => {
         name VARCHAR(255) NOT NULL,
         price NUMERIC(10, 2) NOT NULL,
         category VARCHAR(100),
+        image_url TEXT,
         description TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+      ALTER TABLE store_catalog_items ADD COLUMN IF NOT EXISTS image_url TEXT;
+      ALTER TABLE bot_products ADD COLUMN IF NOT EXISTS image_url TEXT;
+      ALTER TABLE store_catalogs ADD COLUMN IF NOT EXISTS admin_pin VARCHAR(20) DEFAULT '1234';
     `);
 
     await pool.query(`
