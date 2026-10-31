@@ -86,10 +86,19 @@
         <div class="form-group">
             <label>বটের ধরন নির্বাচন করুন (Bot Type):</label>
             <select id="botType" onchange="toggleBotFields()">
-                <option value="business_site">🛍️ ই-কমার্স শপ (ওয়েবসাইট লিংক আছে)</option>
-                <option value="business_no_site">🏬 সাধারণ ব্যবসা / শপ (ওয়েবসাইট নেই)</option>
+                <option value="catalog_link">📦 ওয়েবসাইট নেই (ক্যাটালগ লিংক দিয়ে বট বানাবো)</option>
+                <option value="business_site">🌐 আমার ওয়েবসাইট আছে (Website URL)</option>
                 <option value="personal">👤 পার্সোনাল ইউজার (ব্যক্তিগত AI সহকারী)</option>
             </select>
+        </div>
+
+        <!-- ক্যাটালগ লিংক ইনপুট বক্স -->
+        <div class="form-group" id="catalogUrlGroup">
+            <label>আপনার ক্যাটালগ লিংক পেস্ট করুন:</label>
+            <input type="text" id="catalogUrl" placeholder="যেমন: https://.../catalog/diamondghor">
+            <small style="display:block; margin-top:5px; color:#059669; font-weight:700;">
+              👉 ক্যাটালগ লিংক নেই? <a href="/catalog-builder" target="_blank" style="text-decoration:underline; color:#059669;">এখানে ক্লিক করে ২ মিনিটে পণ্য যোগ করে লিংক বানিয়ে নিন!</a>
+            </small>
         </div>
 
         <div class="form-group">
@@ -165,6 +174,7 @@
             bot_type: document.getElementById('botType').value,
             bot_name: document.getElementById('bizName').value,
             website_url: document.getElementById('siteUrl').value,
+            catalog_url: document.getElementById('catalogUrl') ? document.getElementById('catalogUrl').value.trim() : '',
             custom_info: document.getElementById('manualDetails').value,
             subdomain: document.getElementById('subdomain').value,
             base_domain: document.getElementById('baseDomain').value
