@@ -11,6 +11,27 @@ const path = require('path');
 const pino = require('pino');
 const { GoogleGenAI } = require('@google/genai');
 
+// 🔄 প্রতিদিন রাত ১২:০০ টায় মেসেজ কাউন্টার ০ করা এবং মেয়াদ শেষ হওয়া বট ফ্রি প্ল্যানে নামিয়ে দেওয়া
+setInterval(async () => {
+  const now = new Date();
+  if (now.getHours() === 0 && now.getMinutes() === 0 && now.getSeconds() < 10) {
+    try {
+      // ১. ডেইলি কাউন্টার রিসেট
+      await pool.query('UPDATE whatsapp_bots SET requests_today = 0');
+
+      // ২. যেসব বটের মেয়াদ (expires_at) শেষ হয়ে গেছে সেগুলো স্বয়ংক্রিয়ভাবে Free হয়ে যাবে
+      await pool.query(`
+        UPDATE whatsapp_bots 
+        SET plan = 'free', rate_limit_daily = 300, package_name = 'Expired (Free)'
+        WHERE expires_at IS NOT NULL AND expires_at < NOW() AND plan != 'free'
+      `);
+      console.log('[SYSTEM]: 🔄 Daily request limits reset & expired plans downgraded.');
+    } catch (e) {
+      console.error('[RESET ERROR]:', e.message);
+    }
+  }
+}, 10000);
+
 const { pool, initializeDatabase } = require('./database');
 const { analyzeAndExtractWebsiteKnowledge } = require('./website_analyzer');
 const apiV1Router = require('./api_v1_router');
@@ -157,11 +178,18 @@ app.use(async (req, res, next) => {
 
       if (botRes.rows.length > 0) {
         const bot = botRes.rows[0];
+
+        // 🛍️ যদি কাস্টমাররা প্রোডাক্ট দেখার জন্য /shop বা /catalog বা /products এ ঢোকে
+        if (req.path === '/shop' || req.path === '/catalog' || req.path === '/products') {
+          const prods = await pool.query('SELECT * FROM bot_products WHERE bot_id = $1 ORDER BY id DESC', [bot.id]);
+          return res.send(generateStorefrontView(bot, prods.rows, `${cleanSub}.${detectedBase}`));
+        }
+
         const pNumRes = await pool.query('SELECT key, value FROM admin_settings WHERE key IN (\'bkash_no\', \'nagad_no\', \'rocket_no\')');
         const payConfig = {};
         pNumRes.rows.forEach(r => payConfig[r.key] = r.value);
 
-        // সরাসরি ইউজার ড্যাশবোর্ড রিটার্ন করবে (কোনো ক্রিয়েটর পেজ ঢুকতে পারবে না!)
+        // সরাসরি ইউজার ড্যাশবোর্ড রিটার্ন করবে
         return res.send(generateUserBrandedDashboard(bot, `${cleanSub}.${detectedBase}`, payConfig));
       } else {
         return res.status(404).send(`
@@ -181,6 +209,67 @@ app.use(async (req, res, next) => {
 
 // স্ট্যাটিক ফাইল মিডলওয়্যার (index: false দিয়ে বন্ধ করা হলো যাতে হাইজ্যাক না হয়)
 app.use(express.static(path.join(__dirname, 'public'), { index: false }));
+
+// ================= পাবলিক সাবডোমেইন ই-কমার্স শপ ভিউয়ার =================
+function generateStorefrontView(bot, products, fullUrl) {
+  const primaryColor = bot.theme_color || '#10b981';
+  return `<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${bot.bot_name} — অফিসিয়াল শপ</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <style>
+    :root { --primary: ${primaryColor}; --bg: #f8fafc; --card: #ffffff; --border: #e2e8f0; --text: #0f172a; --muted: #64748b; }
+    * { box-sizing: border-box; margin:0; padding:0; font-family: 'Plus Jakarta Sans', 'Hind Siliguri', sans-serif; }
+    body { background: var(--bg); color: var(--text); padding: 15px; }
+    .store-container { max-width: 650px; margin: 0 auto; }
+    .header { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 22px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+    .header h1 { font-size: 22px; font-weight: 800; color: #047857; margin-bottom: 6px; }
+    .header p { font-size: 13px; color: var(--muted); }
+    .wa-btn { display: inline-flex; align-items: center; gap: 6px; background: #25d366; color: #fff; text-decoration: none; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 700; margin-top: 12px; }
+    .prod-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+    .p-name { font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+    .p-price { font-size: 16px; font-weight: 800; color: #059669; }
+    .p-desc { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .order-btn { background: #059669; color: #fff; text-decoration: none; padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
+  </style>
+</head>
+<body>
+  <div class="store-container">
+    <div class="header">
+      <h1>🛍️ ${bot.bot_name}</h1>
+      <p>${bot.system_prompt ? bot.system_prompt.substring(0, 80) + '...' : 'আমাদের অনলাইন প্রোডাক্ট ক্যাটালগে আপনাকে স্বাগতম!'}</p>
+      ${bot.phone_number ? `<a href="https://wa.me/${bot.phone_number}" class="wa-btn" target="_blank"><i class="ti ti-brand-whatsapp"></i> সরাসরি হোয়াটসঅ্যাপে অর্ডার করুন</a>` : ''}
+    </div>
+
+    <div style="font-size:14px; font-weight:700; color:#334155; margin-bottom:12px;">উপলব্ধ পণ্যসমূহ (${products.length}টি)</div>
+
+    ${products.length === 0 ? '<div style="background:#fff; padding:30px; text-align:center; border-radius:12px; color:var(--muted); font-size:13px;">বর্তমানে কোনো পণ্য তালিকায় নেই।</div>' : ''}
+
+    ${products.map(p => `
+      <div class="prod-card">
+        <div>
+          <div class="p-name">${p.name}</div>
+          <div class="p-price">৳${p.price}</div>
+          <div class="p-desc">${p.category || 'General'} ${p.description ? '• ' + p.description : ''}</div>
+        </div>
+        <div>
+          ${p.buy_link ? `<a href="${p.buy_link}" target="_blank" class="order-btn">অর্ডার লিংক 👉</a>` : 
+            (bot.phone_number ? `<a href="https://wa.me/${bot.phone_number}?text=${encodeURIComponent('আমি এই প্রোডাক্টটি নিতে চাই: ' + p.name + ' (৳' + p.price + ')')}" target="_blank" class="order-btn" style="background:#25d366;"><i class="ti ti-brand-whatsapp"></i> কিনুন</a>` : '')}
+        </div>
+      </div>
+    `).join('')}
+
+    <div style="text-align:center; padding:20px; font-size:11px; color:var(--muted);">
+      Powered by FreeSite AI • Store Domain: <b>${fullUrl}</b>
+    </div>
+  </div>
+</body>
+</html>`;
+}
 
 // ================= সম্পূর্ণ ইউজার ড্যাশবোর্ড জেনারেটর =================
 function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
@@ -314,12 +403,42 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
         <label>বটের নাম / প্ল্যাটফর্ম নাম:</label>
         <input type="text" id="editBotName" value="${bot.bot_name}">
       </div>
+      <div class="form-group" style="background:#ecfdf5; border:1px solid #10b981; padding:12px; border-radius:10px;">
+        <label style="color:#065f46; font-weight:800;"><i class="ti ti-bell-ringing"></i> অর্ডার অ্যালার্ট পাওয়ার WhatsApp নম্বর:</label>
+        <input type="text" id="editAlertPhone" value="${bot.alert_phone || ''}" placeholder="যেমন: 017XXXXXXXX বা 88017XXXXXXXX">
+        <small style="color:#047857; font-size:11px; display:block; margin-top:4px;">
+          👉 কেউ হোয়াটসঅ্যাপে অর্ডার কনফার্ম করলে তাৎক্ষণিক এই নম্বরে বিস্তারিত নোটিফিকেশন চলে যাবে।
+        </small>
+      </div>
       <div class="form-group">
-        <label>ওয়েবসাইট লিংক (Website URL):</label>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <label style="margin:0;">ওয়েবসাইট লিংক (Website URL):</label>
+          <span style="font-size:11px; font-weight:700; color:#059669; background:#ecfdf5; padding:2px 8px; border-radius:10px;">
+            ${bot.plan === 'premium' ? '👑 Premium Active' : (bot.plan === 'trial' ? '🎁 Trial Active' : '🔒 10 Days Trial / Premium Feature')}
+          </span>
+        </div>
         <div style="display:flex; gap:8px;">
           <input type="url" id="editSiteUrl" value="${bot.website_url || ''}" placeholder="https://tournament-site.com">
-          <button onclick="reanalyzeWebsite(${bot.id})" style="width:auto; white-space:nowrap; background:#0284c7; font-size:13px; padding:0 15px;">
+          <button onclick="reanalyzeWebsite(${bot.id})" style="width:auto; white-space:nowrap; background:linear-gradient(135deg, #0284c7 0%, #0369a1 100%); font-size:13px; padding:0 18px;">
             <i class="ti ti-refresh"></i> রি-অ্যানালাইজ করুন
+          </button>
+        </div>
+      </div>
+
+      <!-- 🎁 ১০ দিনের ট্রায়াল / প্রিমিয়াম নোটিশ বক্স (প্রয়োজনে শো করবে) -->
+      <div id="trialLockBanner" style="display:none; background:rgba(238, 242, 255, 0.9); border:1px solid #c7d2fe; border-radius:12px; padding:15px; margin-bottom:14px; text-align:center;">
+        <div style="font-weight:800; color:#3730a3; font-size:14px; margin-bottom:4px;">
+          👑 ওয়েবসাইট এআই অ্যানালাইসিস করতে প্রিমিয়াম বা ট্রায়াল প্রয়োজন!
+        </div>
+        <p style="font-size:12px; color:#4f46e5; margin-bottom:10px;" id="trialLockMsg">
+          আপনি এখনও ১০ দিনের ফ্রি ট্রায়াল নেননি। এখনই ট্রায়াল নিয়ে ফ্রিতে ট্রাই করুন!
+        </p>
+        <div style="display:flex; justify-content:center; gap:8px;" id="trialBtnGrp">
+          <button onclick="claim10DaysTrial(${bot.id})" style="width:auto; background:#4f46e5; padding:8px 16px; font-size:12px;">
+            🎁 ১০ দিনের ফ্রি ট্রায়াল চালু করুন
+          </button>
+          <button onclick="location.href='#paySection'" style="width:auto; background:#d97706; padding:8px 16px; font-size:12px;">
+            👑 প্রিমিয়াম কিনুন
           </button>
         </div>
       </div>
@@ -348,6 +467,69 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
       <button onclick="saveBotSettings(${bot.id})" style="background:#0284c7;">
         <i class="ti ti-device-floppy"></i> বটের নতুন তথ্য সেভ করুন
       </button>
+    </div>
+
+    <!-- 🛍️ সরাসরি ড্যাশবোর্ড থেকে প্রোডাক্ট ম্যানেজমেন্ট (নিজস্ব ডাটাবেজ) -->
+    <div class="card" style="border-top: 4px solid #059669;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3><i class="ti ti-box"></i> ১-ক্লিকে পণ্য যোগ ও শপ লিংক</h3>
+        <a href="https://${fullUrl}/shop" target="_blank" style="font-size:12px; background:#ecfdf5; color:#047857; padding:5px 10px; border-radius:20px; font-weight:700; text-decoration:none;">
+          🌐 ভিজিট শপ
+        </a>
+      </div>
+
+      <!-- 🔗 ১-ক্লিকে লিংক প্রদর্শন বক্স -->
+      <div id="productSuccessBox" style="display:none; background:#ecfdf5; border:1px solid #10b981; border-radius:10px; padding:12px; margin-bottom:14px; text-align:center;">
+        <span style="color:#065f46; font-weight:700; font-size:13px;">🎉 প্রোডাক্ট যোগ সম্পন্ন! আপনার অনলাইন শপ লিংক:</span>
+        <div style="display:flex; gap:6px; margin-top:8px;">
+          <input type="text" id="storeShareLink" readonly value="https://${fullUrl}/shop" style="text-align:center; font-weight:700; background:#fff; color:#059669; padding:8px;">
+          <button onclick="copyStoreUrl()" style="width:auto; padding:0 15px; background:#059669; font-size:12px;"><i class="ti ti-copy"></i> কপি</button>
+        </div>
+      </div>
+
+      <!-- নতুন প্রোডাক্ট যোগ করার ফর্ম -->
+      <div style="background:#f8fafc; border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:15px;">
+        <div style="font-size:13px; font-weight:700; color:#334155; margin-bottom:8px;">➕ নতুন প্রোডাক্ট যোগ করুন:</div>
+        <div style="display:grid; grid-template-columns: 2fr 1fr; gap:8px; margin-bottom:8px;">
+          <input type="text" id="dashPName" placeholder="পণ্যের নাম (যেমন: M10 TWS Earbuds)">
+          <input type="number" id="dashPPrice" placeholder="দাম (৳)">
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px;">
+          <input type="text" id="dashPCat" placeholder="ক্যাটাগরি (যেমন: গ্যাজেট)">
+          <input type="text" id="dashPLink" placeholder="বাই লিংক (অপশনাল)">
+        </div>
+        <textarea id="dashPDesc" rows="2" placeholder="পণ্যের বিবরণ বা ওয়ারেন্টি তথ্য" style="margin-bottom:8px;"></textarea>
+        <button onclick="addNewProductDirect(${bot.id})" style="background:#059669; padding:11px;">
+          <i class="ti ti-plus"></i> ১-ক্লিকে প্রোডাক্ট সেভ ও লিংক নিন
+        </button>
+
+        <!-- 📢 প্রোডাক্ট / ক্যাটালগ লিংক না থাকলে নিচের আকর্ষণীয় হেল্পার ব্যানার -->
+        <div style="margin-top:12px; background:rgba(236, 253, 245, 0.9); border:1px dashed #059669; border-radius:10px; padding:10px 14px; text-align:center;">
+          <span style="font-size:12px; color:#065f46; font-weight:700;">
+            👉 আপনার কি কোনো ওয়েবসাইট বা ক্যাটালগ লিংক নেই?
+          </span><br>
+          <a href="/catalog-builder" target="_blank" style="color:#047857; font-weight:800; font-size:13px; text-decoration:underline; display:inline-block; margin-top:4px;">
+            এখানে ক্লিক করে ২ মিনিটে ফ্রি ক্যাটালগ লিংক বানিয়ে নিন! 🚀
+          </a>
+        </div>
+      </div>
+
+      <!-- পণ্যের তালিকা টেবিল -->
+      <div style="overflow-x:auto;">
+        <table style="width:100%; font-size:13px; border-collapse:collapse;">
+          <thead>
+            <tr style="text-align:left; border-bottom:1px solid var(--border); color:var(--muted);">
+              <th style="padding:8px;">পণ্য</th>
+              <th style="padding:8px;">মূল্য</th>
+              <th style="padding:8px;">ক্যাটাগরি</th>
+              <th style="padding:8px; text-align:right;">অ্যাকশন</th>
+            </tr>
+          </thead>
+          <tbody id="dashProductTable">
+            <tr><td colspan="4" style="text-align:center; padding:12px; color:var(--muted);">পণ্য লোড হচ্ছে...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- 📲 WhatsApp পেয়ারিং কোড সেকশন -->
@@ -448,6 +630,7 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
       const data = {
         botId,
         bot_name: document.getElementById('editBotName').value.trim(),
+        alert_phone: document.getElementById('editAlertPhone').value.trim(),
         bot_type: document.getElementById('editBotType').value,
         system_prompt: document.getElementById('editPrompt').value.trim(),
         delivery_inside: document.getElementById('editDelIn').value,
@@ -559,23 +742,148 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
       }
     }
 
-    // 🔄 ওয়েবসাইট রি-অ্যানালাইজ ফাংশন
+    // 🔄 ওয়েবসাইট রি-অ্যানালাইজ ফাংশন (১০ দিনের ট্রায়াল ও প্রিমিয়াম প্রটেক্টেড)
     async function reanalyzeWebsite(botId) {
       const url = document.getElementById('editSiteUrl').value.trim();
       if(!url) return alert('ওয়েবসাইট লিংক দিন!');
-      if(!confirm('এআই কি এই ওয়েবসাইটটি নতুন করে স্ক্যান করবে?')) return;
 
       const btn = event.target;
-      btn.innerText = 'অ্যানালাইসিস হচ্ছে...';
-      const res = await fetch('/api/user/reanalyze-site', {
+      const originalText = btn.innerHTML;
+      btn.innerText = 'যাচাই হচ্ছে...';
+
+      try {
+        const res = await fetch('/api/user/reanalyze-site', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ botId, website_url: url })
+        });
+        const d = await res.json();
+
+        // যদি প্রিমিয়াম বা ট্রায়াল না থাকে
+        if (d.requires_upgrade) {
+          document.getElementById('trialLockBanner').style.display = 'block';
+          document.getElementById('trialLockMsg').innerText = d.message;
+          if (d.trial_used) {
+            document.getElementById('trialBtnGrp').innerHTML = `
+              <button onclick="location.href='#paySection'" style="width:auto; background:#d97706; padding:8px 16px; font-size:12px;">
+                👑 প্রিমিয়াম আপগ্রেড করুন
+              </button>
+            `;
+          }
+          btn.innerHTML = originalText;
+          return;
+        }
+
+        if (d.success) {
+          alert(d.message);
+          location.reload();
+        } else {
+          alert('ত্রুটি: ' + d.message);
+        }
+      } catch (e) {
+        alert('সার্ভার কানেকশন এরর!');
+      } finally {
+        btn.innerHTML = originalText;
+      }
+    }
+
+    // 🎁 ১০ দিনের ফ্রি ট্রায়াল সক্রিয় করা
+    async function claim10DaysTrial(botId) {
+      if (!confirm('আপনি কি এই বটের জন্য ১০ দিনের ফ্রি ট্রায়াল চালু করতে চান?')) return;
+      try {
+        const res = await fetch('/api/user/claim-trial', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ botId })
+        });
+        const d = await res.json();
+        alert(d.message);
+        if (d.success) location.reload();
+      } catch (e) {
+        alert('কানেকশন সমস্যা!');
+      }
+    }
+
+    // 📦 ড্যাশবোর্ডের নিজস্ব প্রোডাক্ট লোড করা
+    async function loadDashProducts() {
+      try {
+        const res = await fetch('/api/user/products?botId=${bot.id}');
+        const data = await res.json();
+        if (data.success) {
+          const tbody = document.getElementById('dashProductTable');
+          if (data.products.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:14px; color:#64748b;">কোনো পণ্য যোগ করা নেই।</td></tr>';
+            return;
+          }
+          tbody.innerHTML = data.products.map(p => \`
+            <tr style="border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 8px;"><b>\${p.name}</b><br><small style="color:#64748b;">\${p.description || ''}</small></td>
+              <td style="padding:10px 8px; color:#059669; font-weight:700;">৳\${p.price}</td>
+              <td style="padding:10px 8px; color:#475569;">\${p.category || 'General'}</td>
+              <td style="padding:10px 8px; text-align:right;">
+                <button onclick="deleteDashProduct(\${p.id})" style="background:#fee2e2; color:#b91c1c; border:none; padding:4px 10px; border-radius:6px; font-size:12px; cursor:pointer; width:auto; display:inline-block;">ডিলিট</button>
+              </td>
+            </tr>
+          \`).join('');
+        }
+      } catch(e) {}
+    }
+
+    // ➕ নতুন প্রোডাক্ট যুক্ত করার ফাংশন
+    async function addNewProductDirect(botId) {
+      const name = document.getElementById('dashPName').value.trim();
+      const price = document.getElementById('dashPPrice').value.trim();
+      const category = document.getElementById('dashPCat').value.trim() || 'General';
+      const buy_link = document.getElementById('dashPLink').value.trim();
+      const description = document.getElementById('dashPDesc').value.trim();
+
+      if (!name || !price) return alert('পণ্যের নাম ও দাম অবশ্যই দিতে হবে!');
+
+      const res = await fetch('/api/user/products/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ botId, website_url: url })
+        body: JSON.stringify({ botId, name, price, category, buy_link, description })
       });
-      const d = await res.json();
-      alert(d.message);
-      location.reload();
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById('dashPName').value = '';
+        document.getElementById('dashPPrice').value = '';
+        document.getElementById('dashPCat').value = '';
+        document.getElementById('dashPLink').value = '';
+        document.getElementById('dashPDesc').value = '';
+        
+        // ১-ক্লিকে লিংক বক্স সামনে নিয়ে আসা
+        document.getElementById('productSuccessBox').style.display = 'block';
+        loadDashProducts();
+      } else {
+        alert(data.message || 'ত্রুটি ঘটেছে');
+      }
     }
+
+    function copyStoreUrl() {
+      const input = document.getElementById('storeShareLink');
+      input.select();
+      document.execCommand('copy');
+      alert('শপ লিংক কপি করা হয়েছে!');
+    }
+
+    // 🗑️ প্রোডাক্ট ডিলিট ফাংশন
+    async function deleteDashProduct(productId) {
+      if (!confirm('আপনি কি এই পণ্যটি মুছে ফেলতে চান?')) return;
+      const res = await fetch('/api/user/products/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ botId: ${bot.id}, productId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        loadDashProducts();
+      } else {
+        alert('ডিলিট করা যায়নি!');
+      }
+    }
+
+    loadDashProducts();
   </script>
 </body>
 </html>`;
@@ -645,7 +953,8 @@ async function handleDynamicCustomerMessage(botRow, customerPhone, text, sock, i
   }
 
   let catalogContext = '';
-  if (botRow.bot_type === 'business_site') {
+  // 🔒 ডাটা আইসোলেশন: business_site অথবা catalog_link যাই হোক, শুধুমাত্র এই নির্দিষ্ট bot_id-এর ডাটাই লোড হবে
+  if (botRow.bot_type === 'business_site' || botRow.bot_type === 'catalog_link') {
     const productsQuery = await pool.query('SELECT * FROM bot_products WHERE bot_id = $1', [botId]);
     const cachedCatalog = productsQuery.rows.map(p => ({
       id: p.id,
@@ -653,7 +962,7 @@ async function handleDynamicCustomerMessage(botRow, customerPhone, text, sock, i
       price: parseFloat(p.price || 0),
       category: p.category || '',
       in_stock: Boolean(p.in_stock),
-      buy_link: p.buy_link || `${botRow.website_url || ''}/?p=${p.id}`,
+      buy_link: p.buy_link || `${botRow.website_url || ''}`,
       description: p.description || ''
     }));
 
@@ -673,12 +982,49 @@ async function handleDynamicCustomerMessage(botRow, customerPhone, text, sock, i
   } else if (botRow.bot_type === 'business_no_site') {
     systemPrompt = `তুমি ${botRow.bot_name} এর সেলস অ্যাসিস্ট্যান্ট। দোকান ও পণ্যের বিবরণ: ${botRow.system_prompt}। ডেলিভারি: ভেতরে ৳${botRow.delivery_inside || 70}, বাইরে ৳${botRow.delivery_outside || 130}। হিস্ট্রি: ${conversationHistoryText}`;
   } else {
-    systemPrompt = `তুমি ${botRow.bot_name} এর সেলস অ্যাসিস্ট্যান্ট। পণ্য দেখতে চাইলে নাম, দাম এবং লিংক দাও। ক্যাটালগ: ${catalogContext}। হিস্ট্রি: ${conversationHistoryText}`;
+    systemPrompt = `তুমি ${botRow.bot_name} এর সেলস অ্যাসিস্ট্যান্ট। পণ্য দেখতে চাইলে নাম, দাম এবং লিংক দাও। ক্যাটালগ তালিকা:\n${catalogContext || 'কোনো নির্দিষ্ট পণ্য পাওয়া যায়নি'}\nহিস্ট্রি: ${conversationHistoryText}`;
   }
 
   const userPrompt = imageBuffer ? `গ্রাহক পণ্যের ছবি পাঠিয়েছেন এবং লিখেছেন: "${cleanInput}"` : `গ্রাহক: "${cleanInput}"`;
   let reply = await executeGeminiForTenant(botRow, userPrompt, systemPrompt, imageBuffer, imageMime);
   reply = reply.replace(/\*\*/g, '*');
+
+  // 🔔 🛒 স্বয়ংক্রিয় অর্ডার ডিটেকশন এবং ওনারের নম্বরে নোটিফিকেশন প্রেরণ
+  const lowerText = cleanInput.toLowerCase();
+  const isOrderIntent = lowerText.includes('order') || lowerText.includes('অর্ডার') || lowerText.includes('নিতে চাই') || lowerText.includes('কনফার্ম') || lowerText.includes('ঠিকানা');
+  const hasPhone = /01[3-9]\d{8}/.test(cleanInput);
+
+  if ((isOrderIntent || hasPhone) && sock) {
+    try {
+      const ownerAlertNumber = botRow.alert_phone || botRow.phone_number;
+      if (ownerAlertNumber) {
+        let cleanOwnerPhone = String(ownerAlertNumber).replace(/[^0-9]/g, '');
+        if (cleanOwnerPhone.startsWith('01') && cleanOwnerPhone.length === 11) cleanOwnerPhone = '88' + cleanOwnerPhone;
+        const ownerJid = cleanOwnerPhone.includes('@s.whatsapp.net') ? cleanOwnerPhone : `${cleanOwnerPhone}@s.whatsapp.net`;
+
+        const alertMsg = `🚨 *নতুন অর্ডার অ্যালার্ট!* 🛍️\n` +
+          `━━━━━━━━━━━━━━━━━━━\n` +
+          `👤 *দোকান:* ${botRow.bot_name}\n` +
+          `📞 *কাস্টমার নম্বর:* +${customerPhone}\n` +
+          `💬 *মেসেজ/ঠিকানা:* ${cleanInput}\n` +
+          `⏰ *সময়:* ${new Date().toLocaleTimeString('bn-BD')}\n` +
+          `━━━━━━━━━━━━━━━━━━━\n` +
+          `👉 *কাস্টমারকে কল করতে বা চ্যাট করতে:* wa.me/${customerPhone}`;
+
+        // ওনারের নিজস্ব বা আলাদা নম্বরে মেসেজ সেন্ড
+        await sock.sendMessage(ownerJid, { text: alertMsg });
+        addBotLog(botId, 'success', `🔔 নতুন অর্ডারের নোটিফিকেশন পাঠানো হয়েছে (${cleanOwnerPhone})-এ!`);
+
+        // ডাটাবেজে সংরক্ষণ
+        await pool.query(
+          `INSERT INTO bot_orders (bot_id, customer_phone, product_details) VALUES ($1, $2, $3)`,
+          [botId, customerPhone, cleanInput]
+        );
+      }
+    } catch (orderErr) {
+      console.error('[ORDER ALERT ERROR]:', orderErr.message);
+    }
+  }
 
   history.push({ role: 'user', text: cleanInput || 'ছবি পাঠিয়েছেন', time: Date.now() });
   history.push({ role: 'assistant', text: reply, time: Date.now() });
@@ -804,10 +1150,80 @@ async function startTenantBot(botId) {
 
 // ================= API ENDPOINTS =================
 
-// ১. বট ও ড্যাশবোর্ড তৈরি
+// 📦 ক্যাটালগ সেভ করার API (যাদের ওয়েবসাইট নেই তাদের জন্য)
+app.post('/api/catalog/save', async (req, res) => {
+  try {
+    const { store_name, catalog_slug, items } = req.body;
+    const cleanSlug = String(catalog_slug || '').toLowerCase().trim().replace(/[^a-z0-9-]/g, '');
+
+    await pool.query(
+      `INSERT INTO store_catalogs (catalog_slug, store_name)
+       VALUES ($1, $2)
+       ON CONFLICT (catalog_slug) DO UPDATE SET store_name = $2`,
+      [cleanSlug, store_name]
+    );
+
+    // আগের আইটেম মুছে নতুন আইটেম ঢোকানো
+    await pool.query('DELETE FROM store_catalog_items WHERE catalog_slug = $1', [cleanSlug]);
+
+    for (const item of (items || [])) {
+      await pool.query(
+        `INSERT INTO store_catalog_items (catalog_slug, name, price, category, description)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [cleanSlug, item.name, item.price || 0, item.category || 'General', item.description || '']
+      );
+    }
+
+    const host = req.get('host');
+    const catalogUrl = `${req.protocol}://${host}/catalog/${cleanSlug}`;
+
+    res.json({ success: true, catalog_url: catalogUrl, slug: cleanSlug });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// 📖 ক্যাটালগ পেজ ভিউয়ার রাউট
+app.get('/catalog-builder', (req, res) => res.sendFile(path.join(__dirname, 'public', 'catalog_builder.html')));
+
+app.get('/catalog/:slug', async (req, res) => {
+  try {
+    const slug = req.params.slug.toLowerCase().trim();
+    const cat = await pool.query('SELECT * FROM store_catalogs WHERE catalog_slug = $1', [slug]);
+    if (cat.rows.length === 0) return res.status(404).send('<h2>ক্যাটালগ পাওয়া যায়নি!</h2>');
+
+    const items = await pool.query('SELECT * FROM store_catalog_items WHERE catalog_slug = $1', [slug]);
+    const store = cat.rows[0];
+
+    res.send(`<!DOCTYPE html>
+    <html lang="bn">
+    <head>
+      <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>${store.store_name} — প্রোডাক্ট ক্যাটালগ</title>
+      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+      <style>
+        body { font-family:'Plus Jakarta Sans',sans-serif; background:#f8fafc; padding:20px; color:#0f172a; max-width:600px; margin:0 auto; }
+        .card { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:15px; margin-bottom:10px; }
+      </style>
+    </head>
+    <body>
+      <h2 style="color:#059669; margin-bottom:15px;">🛍️ ${store.store_name}</h2>
+      ${items.rows.map(i => `
+        <div class="card">
+          <div style="font-weight:700; font-size:16px;">${i.name}</div>
+          <div style="color:#059669; font-weight:700; margin:4px 0;">মূল্য: ৳${i.price}</div>
+          <div style="font-size:13px; color:#64748b;">${i.description || ''}</div>
+        </div>
+      `).join('')}
+    </body>
+    </html>`);
+  } catch(e) { res.status(500).send('Error'); }
+});
+
+// ১. বট ও ড্যাশবোর্ড তৈরি (ক্যাটালগ লিংক থেকে অটো প্রোডাক্ট গ্রহণ)
 app.post('/api/launch-bot-dashboard', async (req, res) => {
   try {
-    const { bot_type, bot_name, website_url, custom_info, subdomain, base_domain } = req.body;
+    const { bot_type, bot_name, website_url, catalog_url, custom_info, subdomain, base_domain } = req.body;
     const cleanSub = String(subdomain || '').toLowerCase().replace(/[^a-z0-9-]/g, '');
 
     if (!cleanSub) return res.status(400).json({ success: false, message: 'সঠিক সাবডোমেইন নাম দিন।' });
@@ -815,16 +1231,37 @@ app.post('/api/launch-bot-dashboard', async (req, res) => {
     let finalPrompt = custom_info || '';
     let extractedProducts = [];
 
+    // ১. যদি ওয়েবসাইট লিংক থাকে
     if (bot_type === 'business_site' && website_url) {
       const siteKnowledge = await analyzeAndExtractWebsiteKnowledge(website_url);
       finalPrompt = siteKnowledge.description;
       extractedProducts = siteKnowledge.products || [];
     }
 
+    // ২. যদি ওয়েবসাইট না থাকে কিন্তু ক্যাটালগ লিংক থাকে
+    if (bot_type === 'catalog_link' && catalog_url) {
+      const match = catalog_url.match(/\/catalog\/([a-z0-9-]+)/i);
+      const slug = match ? match[1] : catalog_url.trim();
+
+      const catItems = await pool.query('SELECT * FROM store_catalog_items WHERE catalog_slug = $1', [slug]);
+      const catInfo = await pool.query('SELECT store_name FROM store_catalogs WHERE catalog_slug = $1', [slug]);
+
+      if (catItems.rows.length > 0) {
+        finalPrompt = `${catInfo.rows[0]?.store_name || bot_name}-এর অফিসিয়াল ক্যাটালগ থেকে সংগৃহীত পণ্য ও সেবা।`;
+        extractedProducts = catItems.rows.map(item => ({
+          name: item.name,
+          price: item.price,
+          category: item.category,
+          description: item.description,
+          buy_link: catalog_url
+        }));
+      }
+    }
+
     const botInsert = await pool.query(
       `INSERT INTO whatsapp_bots (bot_name, website_url, system_prompt, bot_type, subdomain, status, rate_limit_daily, plan)
        VALUES ($1, $2, $3, $4, $5, 'DISCONNECTED', 300, 'free') RETURNING id`,
-      [bot_name || 'My Bot', website_url || '', finalPrompt, bot_type || 'personal', cleanSub]
+      [bot_name || 'My Bot', website_url || catalog_url || '', finalPrompt, bot_type || 'catalog_link', cleanSub]
     );
     const botId = botInsert.rows[0].id;
 
@@ -873,12 +1310,12 @@ app.get('/api/user/bot-logs', async (req, res) => {
 // ৩. ইউজার থেকে বটের তথ্য আপডেট (Edit Bot Info)
 app.post('/api/user/update-bot-settings', async (req, res) => {
   try {
-    const { botId, bot_name, bot_type, system_prompt, delivery_inside, delivery_outside } = req.body;
+    const { botId, bot_name, alert_phone, bot_type, system_prompt, delivery_inside, delivery_outside } = req.body;
     await pool.query(
       `UPDATE whatsapp_bots 
-       SET bot_name = $1, bot_type = $2, system_prompt = $3, delivery_inside = $4, delivery_outside = $5 
-       WHERE id = $6`,
-      [bot_name, bot_type, system_prompt, delivery_inside || 70, delivery_outside || 130, botId]
+       SET bot_name = $1, alert_phone = $2, bot_type = $3, system_prompt = $4, delivery_inside = $5, delivery_outside = $6 
+       WHERE id = $7`,
+      [bot_name, alert_phone, bot_type, system_prompt, delivery_inside || 70, delivery_outside || 130, botId]
     );
     addBotLog(botId, 'success', '⚙️ বটের তথ্য ও নির্দেশিকা সফলভাবে আপডেট হয়েছে!');
     res.json({ success: true, message: '✅ বটের তথ্য সফলভাবে আপডেট হয়েছে!' });
@@ -887,13 +1324,64 @@ app.post('/api/user/update-bot-settings', async (req, res) => {
   }
 });
 
-// 🔄 ড্যাশবোর্ড থেকে ওয়েবসাইট রি-অ্যানালাইসিস API (Gemini AI Powered)
+// 🎁 ১০ দিনের ফ্রি ট্রায়াল ক্লেইম করার API
+app.post('/api/user/claim-trial', async (req, res) => {
+  try {
+    const { botId } = req.body;
+    const check = await pool.query('SELECT trial_used, plan FROM whatsapp_bots WHERE id = $1', [botId]);
+    if (check.rows.length === 0) return res.status(404).json({ success: false, message: 'বট পাওয়া যায়নি!' });
+
+    if (check.rows[0].trial_used) {
+      return res.status(400).json({ 
+        success: false, 
+        message: '⚠️ আপনার ১০ দিনের ফ্রি ট্রায়াল ইতিমধ্যে শেষ হয়েছে! আনলিমিটেড অ্যাক্সেসের জন্য প্রিমিয়াম আপগ্রেড করুন।' 
+      });
+    }
+
+    // ১০ দিনের ট্রায়াল সেট
+    await pool.query(
+      `UPDATE whatsapp_bots 
+       SET trial_used = TRUE, 
+           plan = 'trial', 
+           package_name = '10 Days Trial',
+           trial_expires_at = NOW() + INTERVAL '10 days',
+           rate_limit_daily = 1500 
+       WHERE id = $1`,
+      [botId]
+    );
+
+    addBotLog(botId, 'success', '🎉 ১০ দিনের ফ্রি ট্রায়াল সক্রিয় করা হয়েছে!');
+    res.json({ success: true, message: '🎉 অভিনন্দন! আপনার ১০ দিনের ফ্রি ট্রায়াল সক্রিয় হয়েছে!' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// 🔄 ড্যাশবোর্ড থেকে ওয়েবসাইট রি-অ্যানালাইসিস API (Gemini AI Powered - Protected by Premium/Trial)
 app.post('/api/user/reanalyze-site', async (req, res) => {
   try {
     const { botId, website_url } = req.body;
-    const botRes = await pool.query('SELECT gemini_api_key FROM whatsapp_bots WHERE id = $1', [botId]);
-    const customKey = botRes.rows[0]?.gemini_api_key || null;
+    const botRes = await pool.query('SELECT gemini_api_key, plan, trial_used, trial_expires_at, expires_at FROM whatsapp_bots WHERE id = $1', [botId]);
+    if (botRes.rows.length === 0) return res.status(404).json({ success: false, message: 'বট পাওয়া যায়নি' });
+    
+    const bot = botRes.rows[0];
 
+    // ট্রায়াল বা প্রিমিয়াম ভ্যালিডেশন চেক
+    const isPremium = bot.plan === 'premium' && (!bot.expires_at || new Date(bot.expires_at) > new Date());
+    const isTrialActive = bot.plan === 'trial' && bot.trial_expires_at && new Date(bot.trial_expires_at) > new Date();
+
+    if (!isPremium && !isTrialActive) {
+      return res.status(403).json({
+        success: false,
+        requires_upgrade: true,
+        trial_used: bot.trial_used,
+        message: bot.trial_used 
+          ? '🔒 আপনার ১০ দিনের ট্রায়াল শেষ হয়েছে। লাইভ ওয়েবসাইট এআই রি-অ্যানালাইজ করতে প্রিমিয়াম আপগ্রেড করুন!' 
+          : '🔒 এটি একটি প্রিমিয়াম ফিচার! ১০ দিনের ফ্রি ট্রায়াল চালু করুন অথবা প্রিমিয়াম নিন।'
+      });
+    }
+
+    const customKey = bot.gemini_api_key || null;
     addBotLog(botId, 'info', `🌐 এআই দিয়ে ওয়েবসাইট রি-অ্যানালাইসিস শুরু হচ্ছে: ${website_url}`);
     const knowledge = await analyzeAndExtractWebsiteKnowledge(website_url, customKey);
 
@@ -931,6 +1419,45 @@ app.post('/api/user/test-chat', async (req, res) => {
     const botRow = botRes.rows[0];
     const reply = await handleDynamicCustomerMessage(botRow, 'TEST_WEB_USER', message, null);
     res.json({ success: true, reply });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// 📦 ১. ইউজারের নিজস্ব প্রোডাক্ট লিস্ট পাওয়ার API (Strict Isolation: WHERE bot_id = $1)
+app.get('/api/user/products', async (req, res) => {
+  try {
+    const botId = Number(req.query.botId);
+    const result = await pool.query('SELECT * FROM bot_products WHERE bot_id = $1 ORDER BY id DESC', [botId]);
+    res.json({ success: true, products: result.rows });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// ➕ ২. ড্যাশবোর্ড থেকে সরাসরি নতুন প্রোডাক্ট অ্যাড করার API
+app.post('/api/user/products/add', async (req, res) => {
+  try {
+    const { botId, name, price, category, description, buy_link } = req.body;
+    await pool.query(
+      `INSERT INTO bot_products (bot_id, name, price, category, description, buy_link)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [botId, name, parseFloat(price) || 0, category || 'General', description || '', buy_link || '']
+    );
+    addBotLog(botId, 'success', `📦 নতুন পণ্য যোগ হয়েছে: ${name} (৳${price})`);
+    res.json({ success: true, message: 'প্রোডাক্ট সফলভাবে যোগ হয়েছে!' });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// 🗑️ ৩. ড্যাশবোর্ড থেকে প্রোডাক্ট ডিলিট করার API
+app.post('/api/user/products/delete', async (req, res) => {
+  try {
+    const { botId, productId } = req.body;
+    await pool.query('DELETE FROM bot_products WHERE id = $1 AND bot_id = $2', [productId, botId]);
+    addBotLog(botId, 'info', `🗑️ প্রোডাক্ট মুছে ফেলা হয়েছে (ID: #${productId})`);
+    res.json({ success: true, message: 'প্রোডাক্ট মুছে ফেলা হয়েছে!' });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });
   }
@@ -1027,18 +1554,38 @@ app.post('/api/admin/set-max-bots-limit', async (req, res) => {
   } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// অ্যাডমিন থেকে পেমেন্ট অ্যাপ্রুভ
+// অ্যাডমিন থেকে ডাইনামিক প্যাকেজ, দিন ও লিমিট দিয়ে পেমেন্ট অ্যাপ্রুভ
 app.post('/api/admin/approve-payment', async (req, res) => {
   try {
-    const { paymentId } = req.body;
+    const { paymentId, days, dailyLimit, packageName, amount } = req.body;
     const payRes = await pool.query('SELECT bot_id FROM payments WHERE id = $1', [paymentId]);
     if (payRes.rows.length === 0) return res.status(404).json({ success: false });
     const botId = payRes.rows[0].bot_id;
 
-    await pool.query('UPDATE payments SET status = \'APPROVED\' WHERE id = $1', [paymentId]);
-    await pool.query('UPDATE whatsapp_bots SET plan = \'premium\', rate_limit_daily = 5000 WHERE id = $1', [botId]);
-    addBotLog(botId, 'success', '🎉 অভিনন্দন! অ্যাডমিন আপনার পেমেন্ট ভেরিফাই করেছেন এবং প্রিমিয়াম সক্রিয় হয়েছে!');
-    res.json({ success: true, message: '✅ পেমেন্ট অ্যাপ্রুভ হয়েছে এবং প্রিমিয়াম এক্টিভ হয়েছে!' });
+    const validDays = parseInt(days, 10) || 30;
+    const limit = parseInt(dailyLimit, 10) || 3000;
+    const pkg = packageName || 'Standard Premium';
+
+    // মেয়াদ ক্যালকুলেশন (বর্তমান সময় + নির্দিষ্ট দিন)
+    await pool.query(
+      `UPDATE payments 
+       SET status = 'APPROVED', amount = $1, approved_days = $2, custom_limit = $3 
+       WHERE id = $4`,
+      [parseFloat(amount) || 300, validDays, limit, paymentId]
+    );
+
+    await pool.query(
+      `UPDATE whatsapp_bots 
+       SET plan = 'premium', 
+           package_name = $1,
+           rate_limit_daily = $2, 
+           expires_at = NOW() + ($3 || ' days')::INTERVAL 
+       WHERE id = $4`,
+      [pkg, limit, validDays, botId]
+    );
+
+    addBotLog(botId, 'success', `🎉 অভিনন্দন! অ্যাডমিন আপনার ${validDays} দিনের প্রিমিয়াম (${pkg}) সক্রিয় করেছেন! ডেইলি লিমিট: ${limit}টি`);
+    res.json({ success: true, message: `✅ সফল! বটটি ${validDays} দিন এবং ডেইলি ${limit} রিকোয়েস্টে প্রিমিয়াম করা হয়েছে!` });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });
   }
@@ -1129,6 +1676,13 @@ app.listen(PORT, '0.0.0.0', async () => {
   try {
     await initializeDatabase();
     await pool.query(`
+      CREATE TABLE IF NOT EXISTS custom_catalogs (
+        id SERIAL PRIMARY KEY,
+        catalog_slug VARCHAR(100) UNIQUE,
+        store_name VARCHAR(150),
+        items_json JSONB,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
       CREATE TABLE IF NOT EXISTS payments (
         id SERIAL PRIMARY KEY,
         bot_id INT REFERENCES whatsapp_bots(id) ON DELETE CASCADE,
@@ -1146,12 +1700,52 @@ app.listen(PORT, '0.0.0.0', async () => {
     `);
     await pool.query('ALTER TABLE whatsapp_bots ADD COLUMN IF NOT EXISTS rate_limit_daily INT DEFAULT 300;');
     await pool.query('ALTER TABLE whatsapp_bots ADD COLUMN IF NOT EXISTS plan VARCHAR(30) DEFAULT \'free\';');
+    await pool.query('ALTER TABLE whatsapp_bots ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP;');
+    await pool.query('ALTER TABLE whatsapp_bots ADD COLUMN IF NOT EXISTS package_name VARCHAR(100) DEFAULT \'Free Trial\';');
+    await pool.query('ALTER TABLE whatsapp_bots ADD COLUMN IF NOT EXISTS trial_used BOOLEAN DEFAULT FALSE;');
+    await pool.query('ALTER TABLE whatsapp_bots ADD COLUMN IF NOT EXISTS trial_expires_at TIMESTAMP;');
+    await pool.query('ALTER TABLE payments ADD COLUMN IF NOT EXISTS approved_days INT DEFAULT 30;');
+    await pool.query('ALTER TABLE payments ADD COLUMN IF NOT EXISTS custom_limit INT DEFAULT 3000;');
     await pool.query('ALTER TABLE whatsapp_bots ADD COLUMN IF NOT EXISTS subdomain VARCHAR(100);');
     await pool.query('ALTER TABLE whatsapp_bots ADD COLUMN IF NOT EXISTS tokens_used INT DEFAULT 0;');
     await pool.query('ALTER TABLE whatsapp_bots ADD COLUMN IF NOT EXISTS requests_today INT DEFAULT 0;');
     await pool.query('ALTER TABLE whatsapp_bots ADD COLUMN IF NOT EXISTS gemini_api_key TEXT;');
     await pool.query('ALTER TABLE hosted_websites ADD COLUMN IF NOT EXISTS bot_id INT REFERENCES whatsapp_bots(id) ON DELETE CASCADE;');
     await pool.query('ALTER TABLE hosted_websites ADD COLUMN IF NOT EXISTS theme_color VARCHAR(30) DEFAULT \'#10b981\';');
+    
+    // 🔔 অর্ডার অ্যালার্ট নম্বর এবং অর্ডার ট্র্যাকিং টেবিল
+    await pool.query('ALTER TABLE whatsapp_bots ADD COLUMN IF NOT EXISTS alert_phone VARCHAR(50);');
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS bot_orders (
+        id SERIAL PRIMARY KEY,
+        bot_id INT REFERENCES whatsapp_bots(id) ON DELETE CASCADE,
+        customer_phone VARCHAR(50),
+        customer_name VARCHAR(150),
+        shipping_address TEXT,
+        product_details TEXT,
+        status VARCHAR(50) DEFAULT 'NEW',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // ক্যাটালগ টেবিল নিশ্চিত করা
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS store_catalogs (
+        id SERIAL PRIMARY KEY,
+        catalog_slug VARCHAR(100) UNIQUE NOT NULL,
+        store_name VARCHAR(150) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS store_catalog_items (
+        id SERIAL PRIMARY KEY,
+        catalog_slug VARCHAR(100) REFERENCES store_catalogs(catalog_slug) ON DELETE CASCADE,
+        name VARCHAR(255) NOT NULL,
+        price NUMERIC(10, 2) NOT NULL,
+        category VARCHAR(100),
+        description TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
 
     await pool.query(`
       INSERT INTO admin_settings (key, value) VALUES 
