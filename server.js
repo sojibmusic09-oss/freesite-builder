@@ -1771,9 +1771,9 @@ app.post('/api/catalog/save', async (req, res) => {
 
     for (const item of (items || [])) {
       await pool.query(
-        `INSERT INTO store_catalog_items (catalog_slug, name, price, category, image_url, description)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [cleanSlug, item.name, item.price || 0, item.category || 'General', item.image_url || '', item.description || '']
+        `INSERT INTO store_catalog_items (catalog_slug, name, price, category, image_url, demo_images, description)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [cleanSlug, item.name, item.price || 0, item.category || 'General', item.image_url || '', item.demo_images || '', item.description || '']
       );
     }
 
@@ -1898,6 +1898,16 @@ app.get('/c/:slug/:id', async (req, res) => {
             <div style="font-size:12px; color:#64748b; font-weight:700; margin-bottom:4px;">🏪 ${store.store_name}</div>
             <h1 class="prod-title">${item.name}</h1>
             <div class="price-badge">৳${item.price}</div>
+            
+            ${item.demo_images ? `
+            <!-- 📸 ডেমো পিকচার প্রিভিউ স্লট -->
+            <div style="margin-bottom:18px; background:rgba(238, 242, 255, 0.7); border:1px solid #c7d2fe; border-radius:16px; padding:12px;">
+              <div style="font-size:12px; font-weight:800; color:#3730a3; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                <i class="ti ti-photo-star"></i> 📸 পণ্যের ডেমো পিকচার ভিউ (Demo Picture):
+              </div>
+              <img src="${item.demo_images}" alt="Demo Preview" style="width:100%; height:200px; object-fit:cover; border-radius:12px; border:1px solid #e0e7ff; background:#fff;">
+            </div>` : ''}
+
             <div class="prod-desc">${item.description || 'পণ্যটির বিস্তারিত জানতে নিচে হোয়াটসঅ্যাপে যোগাযোগ করুন।'}</div>
           </div>
           <div class="action-row">
@@ -2607,6 +2617,7 @@ app.listen(PORT, '0.0.0.0', async () => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
       ALTER TABLE store_catalog_items ADD COLUMN IF NOT EXISTS image_url TEXT;
+      ALTER TABLE store_catalog_items ADD COLUMN IF NOT EXISTS demo_images TEXT;
       ALTER TABLE bot_products ADD COLUMN IF NOT EXISTS image_url TEXT;
       ALTER TABLE bot_products ADD COLUMN IF NOT EXISTS regular_price NUMERIC(10, 2);
       ALTER TABLE store_catalogs ADD COLUMN IF NOT EXISTS admin_pin VARCHAR(20) DEFAULT '1234';
