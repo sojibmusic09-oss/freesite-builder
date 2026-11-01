@@ -1956,8 +1956,10 @@ app.post('/api/catalog/save', async (req, res) => {
       WHERE bp.name = sci.name AND sci.catalog_slug = $1
     `, [cleanSlug]);
 
-    const host = req.get('host');
-    const catalogUrl = `${req.protocol}://${host}/catalog/${cleanSlug}`;
+    // 🛡️ SSL সমস্যা এড়াতে সবসময় সিঙ্গেল লেভেল মেইন ডোমেইনে ক্যাটালগ লিংক তৈরি
+    const rawHost = req.get('host') || 'sojib.de5.net';
+    const cleanHost = rawHost.includes('onrender.com') ? rawHost : 'sojib.de5.net';
+    const catalogUrl = `https://${cleanHost}/catalog/${cleanSlug}`;
 
     res.json({ success: true, catalog_url: catalogUrl, slug: cleanSlug });
   } catch (err) {
