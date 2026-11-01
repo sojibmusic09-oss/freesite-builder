@@ -2237,10 +2237,12 @@ app.post('/api/launch-bot-dashboard', async (req, res) => {
 
     addBotLog(botId, 'info', `🚀 ড্যাশবোর্ড তৈরি সম্পন্ন!`);
 
+    // 🛡️ SSL এরর ছাড়া নিরাপদ ডিরেক্ট পাথ লিংক জেনারেট
+    const safeDashboardUrl = `https://${base_domain || 'sojib.de5.net'}/dash/${cleanSub}`;
     res.json({
       success: true,
       botId,
-      dashboardUrl: `https://${cleanSub}.${base_domain || 'sojib.de5.net'}`
+      dashboardUrl: safeDashboardUrl
     });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });
