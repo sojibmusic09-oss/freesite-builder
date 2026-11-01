@@ -2136,8 +2136,10 @@ app.get('/c/:slug/:id', async (req, res) => {
 // 📖 সম্পূর্ণ ক্যাটালগ ভিউয়ার (বড় ৪ কোণা কার্ড গ্রিডসহ)
 app.get('/catalog/:slug', async (req, res) => {
   try {
-    const rawSlug = req.params.slug.toLowerCase().trim();
-    // 🧠 অটো স্পেলিং ফিক্স (diamond <-> daimond দুটোই চেক করবে)
+    const rawSlug = req.params.slug ? req.params.slug.toLowerCase().trim() : '';
+    if (!rawSlug) return res.status(404).send('<h2>ক্যাটালগ পাওয়া যায়নি!</h2>');
+
+    // 🧠 অটো ডায়মন্ড স্পেলিং ফিক্স (diamond <-> daimond দুটোই চেক করবে)
     const altSlug = rawSlug.includes('diamond') 
       ? rawSlug.replace('diamond', 'daimond') 
       : (rawSlug.includes('daimond') ? rawSlug.replace('daimond', 'diamond') : rawSlug);
@@ -2157,7 +2159,7 @@ app.get('/catalog/:slug', async (req, res) => {
       return res.send(generateStorefrontView(store, items.rows, `sojib.de5.net/catalog/${store.catalog_slug}`));
     }
 
-    // ২. সাবডোমেন বটের টেবিলে খোঁজা (daimondghor ও diamondghor উভয় স্পেলিংয়ে)
+    // ২. সাবডোমেন বটের টেবিলে খোঁজা (daimondghor, mtstore ইত্যাদি)
     let botRes = await pool.query(
       `SELECT b.*, h.theme_color 
        FROM whatsapp_bots b 
@@ -2176,80 +2178,14 @@ app.get('/catalog/:slug', async (req, res) => {
     return res.status(404).send(`
       <div style="font-family:sans-serif; text-align:center; padding:50px; background:#f8fafc; color:#0f172a; min-height:100vh;">
         <h2>⚠️ ক্যাটালগ পাওয়া যায়নি!</h2>
-        <p>স্লাগ <b>${rawSlug}</b> দিয়ে কোনো ক্যাটালগ ডাটাবেজে পাওয়া যায়নি।</p>
+        <p>স্লাগ <b>${rawSlug}</b> দিয়ে কোনো ক্যাটালগ বা শপ ডাটাবেজে পাওয়া যায়নি।</p>
         <p style="color:#64748b; font-size:13px;">সঠিক নাম দিয়ে চেষ্টা করুন: <b>daimondghor</b> অথবা <b>mtstore</b></p>
         <a href="/" style="color:#059669; font-weight:700;">হোম পেজে যান 👉</a>
       </div>
     `);
-  } catch(e) { res.status(500).send('Error'); }
-});
-    if (cat.rows.length === 0) return res.status(404).send('<h2>ক্যাটালগ পাওয়া যায়নি!</h2>');
-
-    const items = await pool.query('SELECT * FROM store_catalog_items WHERE catalog_slug = $1 ORDER BY id DESC', [slug]);
-    const store = cat.rows[0];
-    const host = req.get('host');
-
-    res.send(`<!DOCTYPE html>
-    <html lang="bn">
-    <head>
-      <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>${store.store_name} — প্রোডাক্ট ক্যাটালগ</title>
-      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-      <style>
-        * { box-sizing: border-box; margin:0; padding:0; font-family:'Plus Jakarta Sans','Hind Siliguri',sans-serif; }
-        body { background:#f8fafc; padding:25px 15px; color:#0f172a; min-height:100vh; }
-        .catalog-container { max-width: 900px; margin: 0 auto; }
-        .header { background:rgba(255,255,255,0.85); backdrop-filter:blur(16px); padding:24px; border-radius:20px; border:1px solid #e2e8f0; text-align:center; margin-bottom:25px; }
-        .header h1 { font-size:24px; color:#047857; font-weight:800; }
-        
-        /* 💎 বড় চারকোনা কার্ড গ্রিড */
-        .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap:20px; }
-        .card {
-          background:#fff; border:1px solid #e2e8f0; border-radius:20px; overflow:hidden;
-          display:flex; flex-direction:column; box-shadow:0 8px 25px rgba(0,0,0,0.04); transition:0.2s;
-        }
-        .card:hover { transform:translateY(-3px); box-shadow:0 14px 35px rgba(0,0,0,0.08); }
-        .img-wrap { width:100%; height:220px; background:#f1f5f9; display:flex; align-items:center; justify-content:center; }
-        .img-wrap img { width:100%; height:100%; object-fit:cover; }
-        .card-body { padding:18px; flex:1; display:flex; flex-direction:column; justify-content:space-between; }
-        .card-title { font-size:16px; font-weight:800; margin-bottom:6px; color:#0f172a; }
-        .card-price { font-size:18px; font-weight:800; color:#059669; margin-bottom:12px; }
-        .card-btns { display:grid; grid-template-columns: 1fr 1fr; gap:6px; }
-        .btn-view { background:#f1f5f9; color:#334155; padding:9px; border-radius:10px; font-size:12px; font-weight:700; text-align:center; text-decoration:none; }
-        .btn-order { background:#25d366; color:#fff; padding:9px; border-radius:10px; font-size:12px; font-weight:700; text-align:center; text-decoration:none; }
-      </style>
-    </head>
-    <body>
-      <div class="catalog-container">
-        <div class="header">
-          <h1>🛍️ ${store.store_name}</h1>
-          <p style="font-size:13px; color:#64748b; margin-top:4px;">আমাদের অফিসিয়াল প্রোডাক্ট ক্যাটালগ</p>
-        </div>
-        <div class="grid">
-          ${items.rows.map(i => `
-            <div class="card">
-              <div class="img-wrap">
-                ${i.image_url ? `<img src="${i.image_url}" alt="${i.name}">` : `<i class="ti ti-photo" style="font-size:42px; color:#cbd5e1;"></i>`}
-              </div>
-              <div class="card-body">
-                <div>
-                  <small style="color:#64748b; font-weight:700;">${i.category || 'General'}</small>
-                  <div class="card-title">${i.name}</div>
-                  <div class="card-price">৳${i.price}</div>
-                </div>
-                <div class="card-btns">
-                  <a href="/c/${slug}/${i.id}" class="btn-view">বড় ছবি ও লিংক</a>
-                  <a href="https://wa.me/?text=${encodeURIComponent('আমি এই পণ্যটি অর্ডার করতে চাই: ' + i.name + ' - ৳' + i.price + ' (লিংক: ' + req.protocol + '://' + host + '/c/' + slug + '/' + i.id + ')')}" target="_blank" class="btn-order">অর্ডার করুন</a>
-                </div>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    </body>
-    </html>`);
-  } catch(e) { res.status(500).send('Error'); }
+  } catch(e) {
+    res.status(500).send('Error: ' + e.message);
+  }
 });
 
 // ১. বট ও ড্যাশবোর্ড তৈরি (ক্যাটালগ লিংক থেকে অটো প্রোডাক্ট গ্রহণ)
@@ -3116,7 +3052,7 @@ app.listen(PORT, '0.0.0.0', async () => {
       ('nagad_no', '01409084819'),
       ('rocket_no', '01409084819'),
       ('max_bots_per_server', '4'),
-      ('admin_password', 'admin1234')
+      ('admin_password', '@1234567890@sojib@1234567890@sojib#')
       ON CONFLICT (key) DO NOTHING;
     `);
 
