@@ -2136,8 +2136,53 @@ app.get('/c/:slug/:id', async (req, res) => {
 // 📖 সম্পূর্ণ ক্যাটালগ ভিউয়ার (বড় ৪ কোণা কার্ড গ্রিডসহ)
 app.get('/catalog/:slug', async (req, res) => {
   try {
-    const slug = req.params.slug.toLowerCase().trim();
-    const cat = await pool.query('SELECT * FROM store_catalogs WHERE catalog_slug = $1', [slug]);
+    const rawSlug = req.params.slug.toLowerCase().trim();
+    // 🧠 অটো স্পেলিং ফিক্স (diamond <-> daimond দুটোই চেক করবে)
+    const altSlug = rawSlug.includes('diamond') 
+      ? rawSlug.replace('diamond', 'daimond') 
+      : (rawSlug.includes('daimond') ? rawSlug.replace('daimond', 'diamond') : rawSlug);
+
+    // ১. স্টোর ক্যাটালগ টেবিলে খোঁজা
+    let cat = await pool.query(
+      'SELECT * FROM store_catalogs WHERE LOWER(catalog_slug) = $1 OR LOWER(catalog_slug) = $2 LIMIT 1',
+      [rawSlug, altSlug]
+    );
+
+    if (cat.rows.length > 0) {
+      const store = cat.rows[0];
+      const items = await pool.query(
+        'SELECT * FROM store_catalog_items WHERE catalog_slug = $1 ORDER BY id DESC',
+        [store.catalog_slug]
+      );
+      return res.send(generateStorefrontView(store, items.rows, `sojib.de5.net/catalog/${store.catalog_slug}`));
+    }
+
+    // ২. সাবডোমেন বটের টেবিলে খোঁজা (daimondghor ও diamondghor উভয় স্পেলিংয়ে)
+    let botRes = await pool.query(
+      `SELECT b.*, h.theme_color 
+       FROM whatsapp_bots b 
+       LEFT JOIN hosted_websites h ON b.id = h.bot_id 
+       WHERE LOWER(b.subdomain) = $1 OR LOWER(b.subdomain) = $2
+       LIMIT 1`,
+      [rawSlug, altSlug]
+    );
+
+    if (botRes.rows.length > 0) {
+      const bot = botRes.rows[0];
+      const prods = await pool.query('SELECT * FROM bot_products WHERE bot_id = $1 ORDER BY id DESC', [bot.id]);
+      return res.send(generateStorefrontView(bot, prods.rows, `sojib.de5.net/catalog/${bot.subdomain}`));
+    }
+
+    return res.status(404).send(`
+      <div style="font-family:sans-serif; text-align:center; padding:50px; background:#f8fafc; color:#0f172a; min-height:100vh;">
+        <h2>⚠️ ক্যাটালগ পাওয়া যায়নি!</h2>
+        <p>স্লাগ <b>${rawSlug}</b> দিয়ে কোনো ক্যাটালগ ডাটাবেজে পাওয়া যায়নি।</p>
+        <p style="color:#64748b; font-size:13px;">সঠিক নাম দিয়ে চেষ্টা করুন: <b>daimondghor</b> অথবা <b>mtstore</b></p>
+        <a href="/" style="color:#059669; font-weight:700;">হোম পেজে যান 👉</a>
+      </div>
+    `);
+  } catch(e) { res.status(500).send('Error'); }
+});
     if (cat.rows.length === 0) return res.status(404).send('<h2>ক্যাটালগ পাওয়া যায়নি!</h2>');
 
     const items = await pool.query('SELECT * FROM store_catalog_items WHERE catalog_slug = $1 ORDER BY id DESC', [slug]);
@@ -2614,10 +2659,154 @@ app.post('/api/user/update-theme', async (req, res) => {
   }
 });
 
-// ================= SUPER ADMIN ENDPOINTS =================
-app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+// ================= SUPER ADMIN ENDPOINTS (PASSWORD PROTECTED) =================
 
-app.get('/api/admin/overview', async (req, res) => {
+// 🔐 অ্যাডমিন সিকিউরিটি মিডলওয়্যার
+async function checkAdminAuth(req, res, next) {
+  const inputPass = req.headers['x-admin-password'] || req.query.password;
+  const dbPass = await pool.query("SELECT value FROM admin_settings WHERE key = 'admin_password'");
+  const masterPassword = dbPass.rows[0]?.value || 'admin1234';
+
+  if (inputPass && inputPass.trim() === masterPassword.trim()) {
+    return next();
+  }
+  return res.status(401).json({ success: false, message: '🔒 অননুমোদিত অ্যাক্সেস! সঠিক অ্যাডমিন পাসওয়ার্ড দিন।' });
+}
+
+// 🔑 অ্যাডমিন লগইন ভেরিফিকেশন API
+app.post('/api/admin/login', async (req, res) => {
+  try {
+    const { password } = req.body;
+    const dbPass = await pool.query("SELECT value FROM admin_settings WHERE key = 'admin_password'");
+    const masterPassword = dbPass.rows[0]?.value || 'admin1234';
+
+    if (password && password.trim() === masterPassword.trim()) {
+      return res.json({ success: true, message: 'লগইন সফল!' });
+    }
+    return res.status(401).json({ success: false, message: '❌ ভুল পাসওয়ার্ড! আবার চেষ্টা করুন।' });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// 🔒 পাসওয়ার্ড প্রটেক্টেড অ্যাডমিন পেজ ভিউয়ার
+app.get('/admin', (req, res) => {
+  res.send(`<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Master Admin Access — FreeSite</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <style>
+    * { box-sizing: border-box; margin:0; padding:0; font-family:'Plus Jakarta Sans','Hind Siliguri',sans-serif; }
+    body {
+      background: #0f172a;
+      background-image: radial-gradient(circle at 10% 10%, rgba(16, 185, 129, 0.15) 0%, transparent 40%),
+                        radial-gradient(circle at 90% 90%, rgba(14, 165, 233, 0.12) 0%, transparent 40%);
+      color: #f8fafc; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    .login-card {
+      max-width: 420px; width: 100%;
+      background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 24px; padding: 36px 30px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); text-align: center;
+    }
+    .icon-box {
+      width: 68px; height: 68px; border-radius: 20px; background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4); display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px; color: #10b981; font-size: 32px;
+    }
+    h2 { font-size: 22px; font-weight: 800; margin-bottom: 6px; letter-spacing: -0.3px; }
+    p { font-size: 13px; color: #94a3b8; margin-bottom: 24px; }
+    input {
+      width: 100%; padding: 14px 18px; background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 14px;
+      color: #fff; font-size: 15px; outline: none; margin-bottom: 16px; transition: 0.2s; text-align: center;
+    }
+    input:focus { border-color: #10b981; box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2); }
+    button {
+      width: 100%; padding: 14px; background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      color: #fff; border: none; border-radius: 14px; font-size: 15px; font-weight: 800; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s;
+    }
+    button:hover { transform: translateY(-1px); box-shadow: 0 10px 25px rgba(5, 150, 105, 0.4); }
+    #errMsg { color: #f87171; font-size: 12px; margin-top: 12px; display: none; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="login-card" id="loginBox">
+    <div class="icon-box"><i class="ti ti-shield-lock"></i></div>
+    <h2>সুপার অ্যাডমিন সিকিউরিটি</h2>
+    <p>মাস্টার কন্ট্রোল প্যানেলে প্রবেশ করতে আপনার সিক্রেট অ্যাডমিন পাসওয়ার্ড দিন</p>
+    
+    <input type="password" id="adminPassInput" placeholder="অ্যাডমিন পাসওয়ার্ড লিখুন" onkeypress="if(event.key==='Enter') verifyAdminLogin()">
+    <button onclick="verifyAdminLogin()"><i class="ti ti-key"></i> আনলক করুন</button>
+    <div id="errMsg"></div>
+  </div>
+
+  <script>
+    // আগে লগইন করা থাকলে সরাসরি ড্যাশবোর্ড দেখাবে
+    const savedKey = sessionStorage.getItem('freesite_admin_key');
+    if (savedKey) {
+      loadFullAdminDashboard(savedKey);
+    }
+
+    async function verifyAdminLogin() {
+      const pass = document.getElementById('adminPassInput').value.trim();
+      if (!pass) return alert('পাসওয়ার্ড লিখুন!');
+
+      const btn = event.target;
+      btn.innerText = 'যাচাই হচ্ছে...';
+
+      try {
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pass })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          sessionStorage.setItem('freesite_admin_key', pass);
+          loadFullAdminDashboard(pass);
+        } else {
+          document.getElementById('errMsg').style.display = 'block';
+          document.getElementById('errMsg').innerText = data.message;
+        }
+      } catch (e) {
+        alert('সার্ভার কানেকশন সমস্যা!');
+      } finally {
+        btn.innerHTML = '<i class="ti ti-key"></i> আনলক করুন';
+      }
+    }
+
+    function loadFullAdminDashboard(pass) {
+      // সঠিক পাসওয়ার্ড দিলে মূল অ্যাডমিন HTML পেজ রেন্ডার করবে
+      fetch('/public-admin-view?password=' + encodeURIComponent(pass))
+        .then(r => r.text())
+        .then(html => {
+          document.open();
+          document.write(html);
+          document.close();
+        }).catch(() => {
+          sessionStorage.removeItem('freesite_admin_key');
+          location.reload();
+        });
+    }
+  </script>
+</body>
+</html>`);
+});
+
+// মূল অ্যাডমিন ড্যাশবোর্ড ফাইল নিরাপদভাবে রিটার্ন করার রুট
+app.get('/public-admin-view', checkAdminAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+// সব অ্যাডমিন এপিআই সুরক্ষিত করা হলো
+app.get('/api/admin/overview', checkAdminAuth, async (req, res) => {
   try {
     const bots = await pool.query('SELECT * FROM whatsapp_bots ORDER BY id DESC');
     const servers = await pool.query('SELECT * FROM worker_servers ORDER BY id DESC');
@@ -2926,7 +3115,8 @@ app.listen(PORT, '0.0.0.0', async () => {
       ('bkash_no', '01409084819'),
       ('nagad_no', '01409084819'),
       ('rocket_no', '01409084819'),
-      ('max_bots_per_server', '4')
+      ('max_bots_per_server', '4'),
+      ('admin_password', 'admin1234')
       ON CONFLICT (key) DO NOTHING;
     `);
 
