@@ -159,7 +159,7 @@ app.use(async (req, res, next) => {
   // 🛍️ প্রিমিয়াম পাথ সাপোর্ট: সরাসরি sojib.de5.net/mtstore এ ঢুকলে শপ ওপেন হবে
   else if (req.path.length > 1 && !req.path.includes('.') && !['/ping', '/admin', '/catalog-builder', '/shop'].includes(req.path)) {
     const potentialStore = req.path.replace('/', '').split('/')[0].trim().toLowerCase();
-    if (!['api', 'dash', 'catalog', 'p', 'c'].includes(potentialStore)) {
+    if (!['api', 'dash', 'catalog', 'p', 'c', 'admin', 'ping'].includes(potentialStore)) {
       detectedSub = potentialStore;
       isDirectShopPath = true;
     }
@@ -2597,11 +2597,15 @@ app.post('/api/user/update-theme', async (req, res) => {
 
 // ================= SUPER ADMIN ENDPOINTS (PASSWORD PROTECTED) =================
 
-// 🔐 অ্যাডমিন সিকিউরিটি মিডলওয়্যার
+// 🔐 অ্যাডমিন সিকিউরিটি মিডলওয়্যার (কুকি ও হেডার সাপোর্টসহ)
 async function checkAdminAuth(req, res, next) {
-  const inputPass = req.headers['x-admin-password'] || req.query.password;
+  const rawCookies = req.headers.cookie || '';
+  const match = rawCookies.match(/freesite_admin_auth=([^;]+)/);
+  const cookiePass = match ? decodeURIComponent(match[1]) : null;
+  const inputPass = req.headers['x-admin-password'] || req.query.password || cookiePass;
+
   const dbPass = await pool.query("SELECT value FROM admin_settings WHERE key = 'admin_password'");
-  const masterPassword = dbPass.rows[0]?.value || 'admin1234';
+  const masterPassword = dbPass.rows[0]?.value || '@1234567890@sojib@1234567890@sojib#';
 
   if (inputPass && inputPass.trim() === masterPassword.trim()) {
     return next();
@@ -2609,14 +2613,15 @@ async function checkAdminAuth(req, res, next) {
   return res.status(401).json({ success: false, message: '🔒 অননুমোদিত অ্যাক্সেস! সঠিক অ্যাডমিন পাসওয়ার্ড দিন।' });
 }
 
-// 🔑 অ্যাডমিন লগইন ভেরিফিকেশন API
+// 🔑 অ্যাডমিন লগইন API (সফল হলে ব্রাউজারে নিরাপদ কুকি সেট করবে)
 app.post('/api/admin/login', async (req, res) => {
   try {
     const { password } = req.body;
     const dbPass = await pool.query("SELECT value FROM admin_settings WHERE key = 'admin_password'");
-    const masterPassword = dbPass.rows[0]?.value || 'admin1234';
+    const masterPassword = dbPass.rows[0]?.value || '@1234567890@sojib@1234567890@sojib#';
 
     if (password && password.trim() === masterPassword.trim()) {
+      res.setHeader('Set-Cookie', 'freesite_admin_auth=' + encodeURIComponent(password.trim()) + '; Path=/; Max-Age=86400; SameSite=Lax');
       return res.json({ success: true, message: 'লগইন সফল!' });
     }
     return res.status(401).json({ success: false, message: '❌ ভুল পাসওয়ার্ড! আবার চেষ্টা করুন।' });
@@ -2625,8 +2630,21 @@ app.post('/api/admin/login', async (req, res) => {
   }
 });
 
-// 🔒 পাসওয়ার্ড প্রটেক্টেড অ্যাডমিন পেজ ভিউয়ার
-app.get('/admin', (req, res) => {
+// 🔒 সুপার অ্যাডমিন পেজ ভিউয়ার (পাসওয়ার্ড থাকলে সরাসরি ড্যাশবোর্ড, না থাকলে লক স্ক্রিন)
+app.get('/admin', async (req, res) => {
+  const rawCookies = req.headers.cookie || '';
+  const match = rawCookies.match(/freesite_admin_auth=([^;]+)/);
+  const cookiePass = match ? decodeURIComponent(match[1]) : null;
+
+  const dbPass = await pool.query("SELECT value FROM admin_settings WHERE key = 'admin_password'");
+  const masterPassword = dbPass.rows[0]?.value || '@1234567890@sojib@1234567890@sojib#';
+
+  // পাসওয়ার্ড অলরেডি ভেরিফাইড হলে সরাসরি মূল অ্যাডমিন প্যানেল দেখাবে
+  if (cookiePass && cookiePass.trim() === masterPassword.trim()) {
+    return res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+  }
+
+  // পাসওয়ার্ড না থাকলে লক স্ক্রিন দেখাবে
   res.send(`<!DOCTYPE html>
 <html lang="bn">
 <head>
@@ -2672,28 +2690,22 @@ app.get('/admin', (req, res) => {
   </style>
 </head>
 <body>
-  <div class="login-card" id="loginBox">
+  <div class="login-card">
     <div class="icon-box"><i class="ti ti-shield-lock"></i></div>
     <h2>সুপার অ্যাডমিন সিকিউরিটি</h2>
     <p>মাস্টার কন্ট্রোল প্যানেলে প্রবেশ করতে আপনার সিক্রেট অ্যাডমিন পাসওয়ার্ড দিন</p>
     
     <input type="password" id="adminPassInput" placeholder="অ্যাডমিন পাসওয়ার্ড লিখুন" onkeypress="if(event.key==='Enter') verifyAdminLogin()">
-    <button onclick="verifyAdminLogin()"><i class="ti ti-key"></i> আনলক করুন</button>
+    <button id="btnLogin" onclick="verifyAdminLogin()"><i class="ti ti-key"></i> আনলক করুন</button>
     <div id="errMsg"></div>
   </div>
 
   <script>
-    // আগে লগইন করা থাকলে সরাসরি ড্যাশবোর্ড দেখাবে
-    const savedKey = sessionStorage.getItem('freesite_admin_key');
-    if (savedKey) {
-      loadFullAdminDashboard(savedKey);
-    }
-
     async function verifyAdminLogin() {
       const pass = document.getElementById('adminPassInput').value.trim();
       if (!pass) return alert('পাসওয়ার্ড লিখুন!');
 
-      const btn = event.target;
+      const btn = document.getElementById('btnLogin');
       btn.innerText = 'যাচাই হচ্ছে...';
 
       try {
@@ -2705,8 +2717,8 @@ app.get('/admin', (req, res) => {
         const data = await res.json();
 
         if (data.success) {
-          sessionStorage.setItem('freesite_admin_key', pass);
-          loadFullAdminDashboard(pass);
+          // পাসওয়ার্ড সঠিক হলে সরাসরি রিলোড নিয়ে মূল ড্যাশবোর্ড চালু হবে
+          window.location.reload();
         } else {
           document.getElementById('errMsg').style.display = 'block';
           document.getElementById('errMsg').innerText = data.message;
@@ -2717,28 +2729,9 @@ app.get('/admin', (req, res) => {
         btn.innerHTML = '<i class="ti ti-key"></i> আনলক করুন';
       }
     }
-
-    function loadFullAdminDashboard(pass) {
-      // সঠিক পাসওয়ার্ড দিলে মূল অ্যাডমিন HTML পেজ রেন্ডার করবে
-      fetch('/public-admin-view?password=' + encodeURIComponent(pass))
-        .then(r => r.text())
-        .then(html => {
-          document.open();
-          document.write(html);
-          document.close();
-        }).catch(() => {
-          sessionStorage.removeItem('freesite_admin_key');
-          location.reload();
-        });
-    }
   </script>
 </body>
 </html>`);
-});
-
-// মূল অ্যাডমিন ড্যাশবোর্ড ফাইল নিরাপদভাবে রিটার্ন করার রুট
-app.get('/public-admin-view', checkAdminAuth, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
 // সব অ্যাডমিন এপিআই সুরক্ষিত করা হলো
