@@ -150,9 +150,19 @@ app.use(async (req, res, next) => {
   let detectedSub = req.query.sub || null;
   let detectedBase = 'sojib.de5.net';
 
-  // ডিরেক্ট পাথ সাপোর্ট: /dash/daimondghor
+  let isDirectShopPath = false;
+
+  // ডিরেক্ট পাথ সাপোর্ট: /dash/mtstore (Dashboard)
   if (req.path.startsWith('/dash/')) {
     detectedSub = req.path.replace('/dash/', '').split('/')[0].trim();
+  } 
+  // 🛍️ প্রিমিয়াম পাথ সাপোর্ট: সরাসরি sojib.de5.net/mtstore এ ঢুকলে শপ ওপেন হবে
+  else if (req.path.length > 1 && !req.path.includes('.') && !['/ping', '/admin', '/catalog-builder', '/shop'].includes(req.path)) {
+    const potentialStore = req.path.replace('/', '').split('/')[0].trim().toLowerCase();
+    if (!['api', 'dash', 'catalog', 'p', 'c'].includes(potentialStore)) {
+      detectedSub = potentialStore;
+      isDirectShopPath = true;
+    }
   }
 
   for (const base of targetDomains) {
@@ -223,8 +233,14 @@ app.use(async (req, res, next) => {
         const payConfig = {};
         pNumRes.rows.forEach(r => payConfig[r.key] = r.value);
 
-        // সরাসরি ইউজার ড্যাশবোর্ড রিটার্ন করবে
-        return res.send(generateUserBrandedDashboard(bot, `${cleanSub}.${detectedBase}`, payConfig));
+        // 🛍️ যদি সরাসরি sojib.de5.net/mtstore এ ঢোকে, তবে সরাসরি শপ দেখাবে
+        if (isDirectShopPath) {
+          const prods = await pool.query('SELECT * FROM bot_products WHERE bot_id = $1 ORDER BY id DESC', [bot.id]);
+          return res.send(generateStorefrontView(bot, prods.rows, `sojib.de5.net/${cleanSub}`));
+        }
+
+        // সরাসরি ইউজার ড্যাশবোর্ড রিটার্ন করবে (নিরাপদ পাথে)
+        return res.send(generateUserBrandedDashboard(bot, `sojib.de5.net/dash/${cleanSub}`, payConfig));
       } else {
         return res.status(404).send(`
           <div style="font-family:sans-serif; text-align:center; padding:50px; background:#f8fafc; color:#0f172a; min-height:100vh;">
@@ -927,14 +943,14 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
             <input type="file" id="dashPImgFile" accept="image/*" style="display:none;" onchange="handleDashImgSelect(event)">
           </div>
 
-          <!-- 📸 স্লট ২: ডেমো ছবি -->
+          <!-- 📸 স্লট ২: একসাথে ৭-৮টি ডেমো ছবি গ্যালারি স্লট -->
           <div>
-            <label style="font-size:12px; font-weight:700; color:#4338ca;">📸 ২. ডেমো ছবি (Demo Pic):</label>
-            <div onclick="document.getElementById('dashPDemoImgFile').click()" style="border:2px dashed #6366f1; border-radius:12px; padding:10px; text-align:center; cursor:pointer; background:rgba(238,242,255,0.7); height:90px; display:flex; align-items:center; justify-content:center;">
-              <span id="dashDemoImgText" style="font-size:12px; color:#4f46e5; font-weight:700;"><i class="ti ti-photo-plus"></i> ডেমো ছবি দিন</span>
-              <img id="dashDemoImgPreview" style="display:none; max-height:75px; max-width:100%; object-fit:contain; border-radius:6px;">
+            <label style="font-size:12px; font-weight:700; color:#4338ca;"><i class="ti ti-photo-star"></i> 📸 ২. ডেমো ছবি গ্যালারি (একসাথে ৭-৮টি সিলেক্ট করুন):</label>
+            <div onclick="document.getElementById('dashPDemoImgFile').click()" style="border:2px dashed #6366f1; border-radius:12px; padding:10px; text-align:center; cursor:pointer; background:rgba(238,242,255,0.7); min-height:90px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+              <span id="dashDemoImgText" style="font-size:12px; color:#4f46e5; font-weight:700;"><i class="ti ti-photo-plus"></i> ডেমো ছবি আপলোড করুন (মাল্টিপল ছবি সাপোর্ট)</span>
+              <div id="dashDemoGalleryBox" style="display:none; flex-wrap:wrap; gap:6px; margin-top:6px; justify-content:center;"></div>
             </div>
-            <input type="file" id="dashPDemoImgFile" accept="image/*" style="display:none;" onchange="handleDashDemoImgSelect(event)">
+            <input type="file" id="dashPDemoImgFile" accept="image/*" multiple style="display:none;" onchange="handleDashMultipleDemoImgSelect(event)">
           </div>
         </div>
 
@@ -1314,30 +1330,46 @@ function generateUserBrandedDashboard(bot, fullUrl, payConfig = {}) {
       reader.readAsDataURL(file);
     }
 
-    // ২. ডেমো ছবি সিলেক্ট
-    function handleDashDemoImgSelect(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        const img = new Image();
-        img.onload = function() {
-          const canvas = document.createElement('canvas');
-          const maxDim = 600;
-          let w = img.width, h = img.height;
-          if (w > h && w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
-          else if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
-          canvas.width = w; canvas.height = h;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, w, h);
-          dashCurrentDemoImgBase64 = canvas.toDataURL('image/jpeg', 0.65);
-          document.getElementById('dashDemoImgPreview').src = dashCurrentDemoImgBase64;
-          document.getElementById('dashDemoImgPreview').style.display = 'block';
-          document.getElementById('dashDemoImgText').style.display = 'none';
+    let dashDemoImagesArray = [];
+
+    // ২. একসাথে ৭-৮টি ডেমো ছবি প্রসেস ও কম্প্রেস করার ফাংশন
+    function handleDashMultipleDemoImgSelect(e) {
+      const files = Array.from(e.target.files).slice(0, 8); // সর্বোচ্চ ৮টি ছবি
+      if (!files.length) return;
+      dashDemoImagesArray = [];
+      const gallery = document.getElementById('dashDemoGalleryBox');
+      gallery.innerHTML = '';
+
+      let processed = 0;
+      files.forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          const img = new Image();
+          img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const maxDim = 600;
+            let w = img.width, h = img.height;
+            if (w > h && w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
+            else if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
+            canvas.width = w; canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            const base64 = canvas.toDataURL('image/jpeg', 0.65);
+            dashDemoImagesArray.push(base64);
+
+            gallery.innerHTML += '<img src="' + base64 + '" style="width:42px; height:42px; border-radius:6px; object-fit:cover; border:1px solid #c7d2fe;">';
+
+            processed++;
+            if (processed === files.length) {
+              gallery.style.display = 'flex';
+              document.getElementById('dashDemoImgText').innerHTML = '✅ <b>' + dashDemoImagesArray.length + 'টি ডেমো ছবি যুক্ত হয়েছে</b> (পরিবর্তন করতে ক্লিক করুন)';
+              dashCurrentDemoImgBase64 = JSON.stringify(dashDemoImagesArray);
+            }
+          };
+          img.src = evt.target.result;
         };
-        img.src = evt.target.result;
-      };
-      reader.readAsDataURL(file);
+        reader.readAsDataURL(file);
+      });
     }
 
     // 📦 ড্যাশবোর্ডের প্রোডাক্ট লোড করা (আলাদা লিংক, ডেমো ব্যাজ ও এডিট বাটনসহ)
